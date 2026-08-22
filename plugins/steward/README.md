@@ -7,14 +7,14 @@ Steward 是同时面向 Codex 与 Claude Code 的工程控制面：以仓库事�
 Codex：
 
 ```bash
-codex plugin marketplace add coachpo/plugins-codex --ref main
+codex plugin marketplace add coachpo/plugins --ref main
 codex plugin add steward@coachpo
 ```
 
 Claude Code：
 
 ```bash
-claude plugin marketplace add coachpo/plugins-codex@main
+claude plugin marketplace add coachpo/plugins@main
 claude plugin install steward@coachpo
 ```
 

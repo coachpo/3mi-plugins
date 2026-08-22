@@ -8,8 +8,8 @@
     "name": "coachpo",
     "url": "https://github.com/coachpo"
   },
-  "homepage": "https://github.com/coachpo/plugins-codex/tree/main/plugins/steward#readme",
-  "repository": "https://github.com/coachpo/plugins-codex",
+  "homepage": "https://github.com/coachpo/plugins/tree/main/plugins/steward#readme",
+  "repository": "https://github.com/coachpo/plugins",
   "license": "MIT",
   "keywords": [
     "agents-md",

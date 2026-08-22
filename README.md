@@ -1,4 +1,4 @@
-# plugins-codex
+# plugins
 
 CoachPo 的 Codex 与 Claude Code 插件市场。两个宿主从同一个 Git 仓库安装同一个 `steward` 插件，并共享同一套技能、机器契约和项目状态。
 
@@ -6,7 +6,7 @@ CoachPo 的 Codex 与 Claude Code 插件市场。两个宿主从同一个 Git �
 
 - Marketplace ID：`coachpo`
 - 显示名称：`CoachPo`
-- 仓库：`github.com/coachpo/plugins-codex`
+- 仓库：`github.com/coachpo/plugins`
 
 | Plugin | Category | 简介 |
 | --- | --- | --- |
@@ -15,7 +15,7 @@ CoachPo 的 Codex 与 Claude Code 插件市场。两个宿主从同一个 Git �
 ## Codex 安装
 
 ```bash
-codex plugin marketplace add coachpo/plugins-codex --ref main
+codex plugin marketplace add coachpo/plugins --ref main
 codex plugin add steward@coachpo
 ```
 
@@ -28,7 +28,7 @@ $steward:<skill-name>
 ## Claude Code 安装
 
 ```bash
-claude plugin marketplace add coachpo/plugins-codex@main
+claude plugin marketplace add coachpo/plugins@main
 claude plugin install steward@coachpo
 ```
 
