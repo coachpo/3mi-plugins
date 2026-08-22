@@ -24,6 +24,7 @@
     ],
     "highImpactPaths": [
       ".codex-plugin/plugin.json",
+      ".claude-plugin/plugin.json",
       "scripts/verification_pipeline.py",
       "skills/run-closed-loop-verification/scripts/**"
     ],
@@ -112,5 +113,5 @@
     "evidenceBundles": ".steward/verification/evidence",
     "aggregation": ".steward/verification/aggregation.json"
   },
-  "contentDigest": "sha256:80cc90512e852ab319d46c2bc09026673e688416c9df5706477223c0274f7c6e"
+  "contentDigest": "sha256:acd4c7ff3c495a150c1a2685aed89be336dfcbe8fb4c603ad10686b8a14a55ed"
 }

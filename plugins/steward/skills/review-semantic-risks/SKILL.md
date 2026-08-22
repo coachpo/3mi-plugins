@@ -9,6 +9,12 @@ Find behavior-level risks in the exact requested source or diff without changing
 the project. A finding is evidence, not authorization to persist, execute, or
 repair anything.
 
+This workflow requires an explicit user or coordinator request; do not silently
+upgrade ordinary review or implementation work into strict semantic review.
+
+Resolve this skill directory as `<skill-dir>`; bundled validators and references
+are relative to it.
+
 ## Select one mode
 
 | Mode | Required input | Result |
@@ -27,10 +33,12 @@ inputs and may run the documented read-only observation and validation commands.
 
 ## Review boundary
 
-Resolve the exact baseline, requested regular-file paths, applicable
-`AGENTS.md`, and authoritative requirements. Inspect relevant code, callers,
-state transitions, tests, configuration, and history. Treat comments and tests
-as evidence rather than automatic authority.
+Resolve the exact baseline, requested regular-file paths, applicable `AGENTS.md`
+and `CLAUDE.md`, and authoritative requirements. Treat a `CLAUDE.md` import of
+same-directory `@AGENTS.md` as one shared authority bridge rather than two
+competing rule sources. Inspect relevant code, callers, state transitions,
+tests, configuration, and history. Treat comments and tests as evidence rather
+than automatic authority.
 
 Do not edit, create a review file, execute project behavior or tests, initialize
 a campaign, bootstrap an adapter, or convert the result into implementation

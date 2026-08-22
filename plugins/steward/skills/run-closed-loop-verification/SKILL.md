@@ -9,6 +9,10 @@ Deliver the requested adapter or campaign operation with durable evidence. A
 completed campaign requires requested coverage on one final source baseline and
 a successful kernel audit.
 
+This workflow requires an explicit user request for the named operation or a
+current-gate request from an explicitly requested full-loop coordinator; do not
+turn an ordinary test command into a campaign.
+
 Resolve this skill directory as `<skill-dir>` and invoke the bundled kernel at
 `"<skill-dir>/scripts/campaign.py"`; never assume the target project contains it.
 
@@ -109,4 +113,5 @@ support it: adapter/campaign/output identity, `executionStatus`,
 `completionStatus`, audit result and rejection codes, `resumeMode`, coverage and
 source/catalog/trace bindings, final regression, artifacts, unverified real-host
 branches, and the smallest safe next action. Omit fields irrelevant to the
-selected operation and never create a Goal implicitly.
+selected operation. Never discover, create, or mutate host Goal state; any trace
+GOAL contract must be supplied explicitly through the adapter or request.

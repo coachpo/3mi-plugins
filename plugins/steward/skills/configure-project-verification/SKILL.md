@@ -10,6 +10,9 @@ feedback and complete CI catalog coverage. Execution, campaign recovery,
 platform evidence, full regression, and audit remain owned by
 `run-closed-loop-verification`.
 
+This workflow requires an explicit user request; do not route an ordinary
+one-off test or unrelated engineering task through it.
+
 Resolve this skill directory as `<skill-dir>` and the public CLI as
 `"<skill-dir>/../../scripts/project_verification.py"`. Inspect its current
 `--help` before choosing commands; do not copy its schemas or renderer logic.
@@ -52,9 +55,11 @@ profile/adapter command merely to discover what it does.
 If a managed Current Iteration Strategy exists and is relevant to catalog
 design, validate its content and four source digests, then read its consumer
 contract. It may narrow discretionary catalog work within the authorized outcome
-but cannot remove required cases or expand authority. Call `get_goal` only when
-an active Goal is deliberately selected as catalog/trace input; its latest status
-and objective are then authoritative, but this skill never creates or updates it.
+but cannot remove required cases or expand authority. Consume a GOAL only when
+the user explicitly supplies its seven-line text or path as catalog/trace input.
+Validate it with `python3 -B "<skill-dir>/../../scripts/goal_contract.py" view`
+and use only its canonical objective and `C*`; never discover, query, create,
+update, or report host Goal state.
 
 ## Review
 

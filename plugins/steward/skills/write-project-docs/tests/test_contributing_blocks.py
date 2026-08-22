@@ -18,6 +18,7 @@ from canonical_paths import (
     select_canonical_paths,
 )
 from contributing_blocks import (
+    ContributingBlockError,
     MvpMode,
     compose_contributing_block,
     parse_mvp_mode,
@@ -76,7 +77,7 @@ class MvpModeTests(unittest.TestCase):
         )
         for status_text in cases:
             with self.subTest(status_text=status_text):
-                with self.assertRaises(ValueError):
+                with self.assertRaises(ContributingBlockError):
                     parse_mvp_mode(status_text, ZH)
 
     def test_ignores_invisible_pseudo_states_and_ordinary_narrative(self) -> None:
@@ -123,7 +124,7 @@ class MvpModeTests(unittest.TestCase):
             "## 完成定义\n",
             MVP_SECTION_HEADING + "\n\n说明。\n\n## 完成定义\n",
         )
-        with self.assertRaises(ValueError):
+        with self.assertRaises(ContributingBlockError):
             compose_contributing_block(
                 embedded, mvp, mvp_mode=MvpMode.DISABLED, language=ZH
             )
@@ -229,7 +230,7 @@ class MvpModeTests(unittest.TestCase):
         )
         for asset in cases:
             with self.subTest(asset=asset[-40:]):
-                with self.assertRaises(ValueError):
+                with self.assertRaises(ContributingBlockError):
                     validate_mvp_asset(asset, CHINESE_PROFILE)
 
 

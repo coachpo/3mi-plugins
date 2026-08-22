@@ -70,6 +70,7 @@ def build_project(root: Path, profile) -> dict[str, str]:
         profile.mvp_status_enabled_line + "\n", encoding="utf-8"
     )
     (root / "AGENTS.md").write_text("# Agents\n", encoding="utf-8")
+    (root / "CLAUDE.md").write_text("@AGENTS.md\n", encoding="utf-8")
     return selected
 
 
@@ -323,7 +324,9 @@ class BilingualPipelineTests(TemporaryProject):
         self.assertIn("不得嵌套", result.stdout)
         self.assertEqual(agents_path.read_bytes(), before)
 
-    def test_agents_navigation_only_normalizes_visible_unowned_text(self) -> None:
+    def test_agents_navigation_only_normalizes_visible_unowned_link_targets(
+        self,
+    ) -> None:
         root = self.root / "protected-markdown"
         build_project(root, ENGLISH_PROFILE)
         agents_path = root / "AGENTS.md"
@@ -348,14 +351,22 @@ class BilingualPipelineTests(TemporaryProject):
         )
         agents_path.write_text(
             "# Agents\n\n"
-            "Visible docs/INDEX.md\n\n" + foreign + "\n" + fenced + "\n" + html,
+            "Visible docs/INDEX.md\n\n"
+            "[Index](docs/INDEX.md)\n\n"
+            + foreign
+            + "\n"
+            + fenced
+            + "\n"
+            + html,
             encoding="utf-8",
         )
 
         result = run_script("update_agents_navigation.py", root)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         updated = agents_path.read_text(encoding="utf-8")
-        self.assertIn("Visible docs/README.md", updated)
+        self.assertIn("Visible docs/INDEX.md", updated)
+        self.assertIn("[Index](docs/README.md)", updated)
+        self.assertIn("未自动修改", result.stdout)
         self.assertIn(foreign, updated)
         self.assertIn(fenced, updated)
         self.assertIn(html, updated)

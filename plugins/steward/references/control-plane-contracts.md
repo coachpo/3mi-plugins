@@ -40,9 +40,9 @@ for that loop when the coordinator resolves, freezes, and discloses their exact
 write set before the first write. It does not authorize source changes beyond
 the original engineering request, paths outside that set, external mutation,
 destructive or paid actions, credentials, or material scope expansion.
-Draft-only and standalone read-only skills do not write full-loop artifacts. The
-two Goal-authoring skills
-may additionally create one handoff file and its self-ignoring rule beneath
+Draft-only and standalone read-only skills do not write full-loop artifacts.
+The sole `draft-consensus-goal` authoring skill may additionally create one
+handoff file and its self-ignoring rule beneath
 `.steward/handoffs/`, as specified by [`handoff-file.md`](handoff-file.md);
 only that temporary subtree is ignored. It is not a full-loop handoff, carries
 no digest or authority, and stays out of the Git source inventory precisely because it is ignored,

@@ -1,51 +1,85 @@
 ---
 name: run-engineering-control-loop
-description: Coordinate an explicitly requested complete Steward engineering loop from a persistent Goal through profiles/invariants, semantic review, durable verification, final same-source regression, and audit. Use only for the full loop around an already-authorized engineering change, not for ordinary coding, a single test, standalone review, or one documentation task.
+description: Coordinate a requested full Steward loop from an explicit seven-line GOAL or converged engineering request through profiles, invariants, semantic review, durable verification, same-source regression, and audit. Use only around an authorized engineering change, not for ordinary coding, one test, standalone review, or documentation work.
 ---
 
 # Run Engineering Control Loop
 
-Coordinate the specialized Steward skills without copying their state machines.
-The outcome is a compatible persistent Goal whose required engineering change is
-implemented within scope and proven by `RequestedCoverageSatisfied ∧ audit.ok`.
+The outcome is an accepted seven-line GOAL bound to durable project-local
+evidence, with its required engineering change implemented within scope and
+proven by `RequestedCoverageSatisfied ∧ audit.ok`. Host conversation, task, or
+continuation state is never recovery or completion authority.
+
+This workflow requires an explicit user request for the complete loop; never
+infer it from ordinary implementation, review, or test work.
+
+Resolve this skill directory as `<skill-dir>` and the shared validator as
+`"<skill-dir>/../../scripts/goal_contract.py"`.
 
 ## Authority and write set
 
-An explicit request for this complete loop, together with the engineering change
-it places in scope, authorizes the loop's normal project-local control artifacts
-beneath `.steward/`: Goal handoff, profile selection when used, invariant map,
-frozen semantic request, canonical Review handoff, adapter, and campaign/evidence
-roots. Resolve, freeze, and disclose the exact write set before the first write.
-Do not request path-by-path confirmation again while artifacts stay in that set.
+An explicit full-loop request and its scoped engineering change authorize normal
+project-local controls beneath `.steward/`: canonical GOAL, selected profile,
+invariant map, frozen semantic request, Review handoff, adapter, and
+campaign/evidence roots. Resolve, freeze, and disclose the exact write set before
+writing; do not reconfirm individual paths while artifacts stay inside it.
 
 This authority does not add source changes beyond the original engineering
 request. Confirm before writing outside the frozen set, overwriting unrelated
 user content, external or remote mutation, deployment, credentials, destructive
-or paid actions, or material scope expansion. Existing artifacts and prior Goal
-state never expand authority.
+or paid actions, or material scope expansion. Existing artifacts and prior
+conversation or control state never expand authority.
 
 Read [the shared control-plane contracts](../../references/control-plane-contracts.md)
-before persisting cross-gate handoffs. Bind canonical artifacts by project-relative
-path and digest and carry stable IDs rather than copied contract text.
+before cross-gate persistence. Bind artifacts by project-relative path and
+digest, carrying stable IDs rather than copied contract text.
+
+## Bind the accepted GOAL
+
+Resolve the project root. Input is either explicit seven-line GOAL text or a
+user-identified path, or an accepted current request with materially complete
+result, scope, authority boundary, criteria, and blockers. Validate inline input
+through standard input with:
+
+```text
+python3 -B "<skill-dir>/../../scripts/goal_contract.py" view -
+```
+
+For a supplied path, quote it and replace `-` with that path. Never repair,
+reinterpret, or renumber explicit input. For a converged request, use
+[`draft-consensus-goal`](../draft-consensus-goal/SKILL.md) as the sole author and
+ask only when a material contract decision is missing.
+
+Freeze `.steward/goal.txt` in the disclosed write set, persist the canonical
+objective exactly, and bind its digest. Reuse an existing file only after
+validation and request-compatibility checks; presence alone grants no authority.
+An explicit resume request may identify this standard path by role. Revalidate
+and obtain its canonical digest with:
+
+```text
+python3 -B "<skill-dir>/../../scripts/goal_contract.py" view "<project-root>/.steward/goal.txt"
+python3 -B "<skill-dir>/../../scripts/goal_contract.py" digest "<project-root>/.steward/goal.txt"
+```
 
 ## Resume the first invalid gate
 
-On entry, resume, or context loss, call `get_goal`, inspect current campaign
-`status` when one exists, and validate only the existing handoffs needed to find
-the first incomplete or invalid gate. Do not recreate a compatible Goal, repeat
-a completed gate, or rebind drifted evidence.
+On entry, resume, or context loss, revalidate `.steward/goal.txt`, inspect the
+current campaign journal `status` when one exists, and validate only the existing
+`.steward/` handoffs needed to find the first incomplete or invalid gate. These
+validated project-local artifacts and the repository evidence they bind are the
+only durable recovery authority. Do not repeat a completed gate, infer progress
+from chat memory, or make drifted evidence current by rebinding it.
 
-Read and validate a managed Current Iteration Strategy only when it exists and
-affects the current gate. Re-derive architecture-profile evidence when entering
-a profile-dependent gate, when its source inputs changed, and immediately before
-final trace binding; do not recompute unrelated downstream artifacts on every
-resume. A changed input invalidates the dependent gates in order.
+Read a valid managed Current Iteration Strategy only when it affects the gate.
+Re-derive architecture-profile evidence on entry to a dependent gate, after its
+inputs change, and before final trace binding. Do not recompute unrelated
+artifacts; changed input invalidates dependent gates in order.
 
 ## Gate contract
 
 | Gate | Required observable outcome | Owner |
 | --- | --- | --- |
-| Goal | Compatible active v1 Goal with stable `C*` and canonical digest. | [`start-consensus-goal`](../start-consensus-goal/SKILL.md) |
+| GOAL contract | Accepted v1 GOAL persisted at `.steward/goal.txt` with stable `C*` and its canonical digest. | [`draft-consensus-goal`](../draft-consensus-goal/SKILL.md) for authoring; `goal_contract.py` for validation |
 | Profiles | Repository evidence deterministically selects and compiles only relevant versioned profiles. | `architecture_profiles.py validate`, `select`, and `compile` plus [selection evidence v1](../../references/architecture-profiles/selection-evidence.md) |
 | Invariants | Canonical docs own final anchors and `.steward/invariants.json` validly binds applicable hard invariants. | [`write-project-docs`](../write-project-docs/SKILL.md), only when those document/index writes are in scope |
 | Router | Root `AGENTS.md` exposes a short trigger/authority/INV/validation route when the invariant map requires it. | [`write-agent-guides`](../write-agent-guides/SKILL.md), only when that root write is in scope |
@@ -56,44 +90,31 @@ resume. A changed input invalidates the dependent gates in order.
 | Closed loop | Campaign completes initial coverage, bounded repair/recovery, fresh strict post-fix Reviews when needed, and readiness for final regression. | [`run-closed-loop-verification`](../run-closed-loop-verification/SKILL.md) |
 | Acceptance | One full regression covers the runnable catalog on one source fingerprint and the final audit succeeds. | `RequestedCoverageSatisfied ∧ audit.ok` |
 
-The Adapter and source gate intentionally precedes Semantic review. Its adapter
-has the final source policy but no Review binding. After the Reviewer returns,
-the Trace binding gate adds the canonical Review/request identities, revalidates
-the adapter, and only then initializes the campaign. This breaks the previous
-adapter↔Review dependency cycle.
-
 ## Cross-gate ownership
 
-The coordinator owns source policy, exact request/Review paths, the read-only
-`semantic_review.py request-view` call, and persistence of canonical validator
-stdout within the frozen write set. The Reviewer never selects paths, writes a
-handoff, runs tests, or fixes code. Closed-loop consumes the validated handoff;
-it does not discover or rewrite findings.
+The coordinator owns source policy, request/Review paths, the read-only
+`semantic_review.py request-view` call, and canonical validator stdout in the
+frozen write set. The Reviewer never selects paths, writes, tests, or fixes;
+closed-loop consumes the validated handoff without rewriting findings.
 
-For a supported required finding, return to Impact and implementation only while
-the task-wide repair budget in `run-closed-loop-verification` remains. Then use
-that skill's strict post-fix Review, supersession, retest, recovery, new-root, and
-audit contracts. Do not reproduce their commands or add an outer retry loop.
-
-Profile evidence, invariant/router bindings, source observation, request, Review,
-adapter, and campaign form one dependency chain. When one changes, return to the
-first affected gate; never make a stale downstream digest current by refreshing
-it in place.
+For a supported required finding, return to implementation only within the
+`run-closed-loop-verification` repair budget. Delegate its strict post-fix
+Review, supersession, retest, recovery, new-root, and audit contracts; add no
+outer retry loop.
 
 ## Complete or stop
 
-Do not complete the Goal from implementation, quick checks, targeted retest,
-semantic Review, regression alone, or aggregation alone. Immediately before
-completion, call `get_goal` and require its current objective/digest to match the
-Goal handoff and campaign trace input. Then require every current Goal criterion
-and `RequestedCoverageSatisfied ∧ audit.ok`.
+Do not report the engineering loop complete from implementation, quick checks,
+targeted retest, semantic Review, regression alone, or aggregation alone.
+Immediately before completion, revalidate `.steward/goal.txt` and require its
+canonical digest to match the adapter and campaign trace input. Then require
+every current `C*` and `RequestedCoverageSatisfied ∧ audit.ok`.
 
-Use the underlying Goal and campaign stopping rules. When evidence, a safe local
-substitute, compatible Goal, required platform, or authority is unavailable,
-preserve artifacts and report the failed gate, affected stable IDs, evidence
-obtained, and smallest next action.
+Use the accepted GOAL's legitimate blockers and the campaign stopping rules.
+When evidence, a safe local substitute, a valid accepted GOAL, required
+platform, or authority is unavailable, preserve artifacts and report the failed
+gate, affected stable IDs, evidence obtained, and smallest next action.
 
-Lead final delivery with the outcome and only the evidence needed to support it:
-actual changes, per-criterion proof, current contract/source/catalog identities,
-semantic result, repair attempts, final regression/audit, validation, unverified
-platforms, residual risks, and remaining gaps.
+Lead with the outcome and supporting evidence: changes, per-criterion proof,
+current contract/source/catalog identities, semantic result, repairs, final
+regression/audit, validation, unverified platforms, risks, and gaps.

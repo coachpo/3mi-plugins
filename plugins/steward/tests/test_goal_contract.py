@@ -19,12 +19,8 @@ SCHEMA = PLUGIN_ROOT / "references" / "goal-contract-v1.schema.json"
 TEMPLATE = PLUGIN_ROOT / "references" / "goal-template.txt"
 AUTHORING = PLUGIN_ROOT / "references" / "goal-authoring.md"
 DRAFT_SKILL = PLUGIN_ROOT / "skills" / "draft-consensus-goal" / "SKILL.md"
-START_SKILL = PLUGIN_ROOT / "skills" / "start-consensus-goal" / "SKILL.md"
 DRAFT_AGENT = (
     PLUGIN_ROOT / "skills" / "draft-consensus-goal" / "agents" / "openai.yaml"
-)
-START_AGENT = (
-    PLUGIN_ROOT / "skills" / "start-consensus-goal" / "agents" / "openai.yaml"
 )
 PLUGIN_README = PLUGIN_ROOT / "README.md"
 
@@ -510,80 +506,46 @@ class GoalContractTests(unittest.TestCase):
         self.assertEqual(2, missing.returncode)
         self.assertTrue(missing.stderr.startswith("ERROR GOAL_IO:"))
 
-    def test_both_skills_share_validator_contract_but_keep_tool_semantics(self) -> None:
+    def test_sole_authoring_skill_uses_the_shared_validator_contract(self) -> None:
         draft = DRAFT_SKILL.read_text(encoding="utf-8")
-        start = START_SKILL.read_text(encoding="utf-8")
         authoring = AUTHORING.read_text(encoding="utf-8")
 
-        for skill in (draft, start):
-            self.assertEqual(1, skill.count("../../references/goal-authoring.md"))
+        self.assertEqual(1, draft.count("../../references/goal-authoring.md"))
         self.assertEqual(1, authoring.count("](goal-template.txt)"))
         self.assertEqual(1, authoring.count("scripts/goal_contract.py"))
         self.assertIn("`(C1) ...；(C2) ...`", authoring)
         self.assertIn("4,000 Unicode code points", authoring)
         self.assertIn("same failure repeats", authoring)
         self.assertIn("only when the user accepted that item", authoring)
-
-        self.assertIn("never calls `get_goal`, `create_goal`, or `update_goal`", draft)
-        self.assertIn("call `get_goal` before", start)
-        self.assertIn("drafting or executing anything", start)
-        self.assertLess(start.index("call `get_goal`"), start.index("goal-authoring.md"))
-        self.assertIn("strict v1", start)
-        self.assertIn("carries stable `C*`", start)
-        self.assertIn("A classification failure is not permission to replace it", start)
-        self.assertIn("Create a new Goal with the validator's canonical `objective` exactly", start)
-        self.assertIn("compatible legacy Goal", start)
-        self.assertIn("original completion contract", start)
-
-    def test_start_skill_covers_steering_resume_and_current_evidence(self) -> None:
-        start = START_SKILL.read_text(encoding="utf-8")
-        self.assertIn("latest `status` and complete `objective`", start)
-        self.assertIn("only state authority", start)
-        self.assertIn("If the read fails, do not create, update, or execute a Goal", start)
-        self.assertIn("resume, finish, status, or explanation request does not authorize creation", start)
-        self.assertIn("A paused Goal or a blocked Goal not restored by the host is report-only", start)
-        self.assertIn("complete Goal is not repeated", start)
-        self.assertIn("Ask one necessary question", start)
-        self.assertIn("for a material conflict", start)
-        self.assertIn("Before each major phase", start)
-        self.assertIn("before any `update_goal`", start)
-        self.assertIn("`get_goal`", start)
-        self.assertIn("again. Stop", start)
-        self.assertIn("If the objective changed", start)
-        self.assertIn("never complete a changed Goal with stale evidence", start)
-        self.assertIn("evidence obtained after the latest relevant change", start)
-        self.assertIn("every `C*` and the current objective digest", start)
-        self.assertIn("Mark it complete only after every", start)
-        self.assertIn("criterion is verified", start)
-        self.assertIn("Mark blocked only when the current Goal", start)
-        self.assertIn("tool's blocking threshold", start)
+        self.assertIn("only Steward skill that authors a GOAL", draft)
+        self.assertIn("conditional-handoff branch", draft)
+        self.assertIn("does not create, inspect, mutate, or report any", draft)
+        self.assertIn("host execution state", draft)
+        for token in ("get_goal", "create_goal", "update_goal", "token_budget"):
+            self.assertNotIn(token, draft)
 
     def test_agent_metadata_advertises_machine_validation_and_stable_ids(self) -> None:
-        for path in (DRAFT_AGENT, START_AGENT):
-            text = path.read_text(encoding="utf-8")
-            self.assertIn("机器校验", text)
-            self.assertIn("C*", text)
-            self.assertIn("七行", text)
-            self.assertIn("allow_implicit_invocation: false", text)
+        text = DRAFT_AGENT.read_text(encoding="utf-8")
+        self.assertIn("机器校验", text)
+        self.assertIn("C*", text)
+        self.assertIn("七行", text)
+        self.assertIn("allow_implicit_invocation: false", text)
+        self.assertIn("不要开始执行", text)
 
-        start_agent = START_AGENT.read_text(encoding="utf-8")
-        self.assertIn("创建机器校验", start_agent)
-        self.assertIn("当前机器状态恢复兼容的活动 Goal", start_agent)
-        self.assertIn("验证完成或正当阻塞", start_agent)
-
-    def test_start_public_surfaces_advertise_restore_resume_and_state_gates(self) -> None:
-        start = START_SKILL.read_text(encoding="utf-8")
+    def test_public_surfaces_advertise_sole_authoring_and_durable_full_loop_state(
+        self,
+    ) -> None:
+        draft = DRAFT_SKILL.read_text(encoding="utf-8")
         readme = PLUGIN_README.read_text(encoding="utf-8")
-        self.assertIn("resume a compatible active Goal", start)
-        self.assertIn("strict v1", start)
-        self.assertIn("carries stable `C*`", start)
-        self.assertIn("compatible legacy Goal", start)
-        self.assertIn("恢复、续跑、完成兼容的现有 Goal", readme)
-        self.assertIn("paused 或未恢复的 blocked Goal 只报告状态", readme)
-        self.assertIn("最新 status 和 objective 都是恢复与续跑的事实源", readme)
-        self.assertIn("成功返回 null 也不会把仅恢复/续跑请求升级为创建授权", readme)
-        self.assertIn("新建或严格通过版本 1 合同的 Goal 按稳定 `C*`", readme)
-        self.assertIn("兼容的 legacy Goal 即使没有 `C*` 也只按其原合同", readme)
+        self.assertIn("only Steward skill that authors a GOAL", draft)
+        self.assertIn("return exactly the validator `view` field", draft)
+        self.assertIn("`draft-consensus-goal` 是唯一 GOAL 作者", readme)
+        self.assertIn("不持久化 `.steward/goal.txt`", readme)
+        self.assertIn("不开始执行", readme)
+        self.assertIn(
+            "`run-engineering-control-loop` 以 `.steward/goal.txt` 与有效 handoff/campaign journal 恢复",
+            readme,
+        )
 
 
 if __name__ == "__main__":

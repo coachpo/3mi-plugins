@@ -1,7 +1,0 @@
-interface:
-  display_name: "Start Consensus Goal"
-  short_description: "创建或续跑持久 Goal，超限时生成本地交接文件"
-  default_prompt: "使用 $steward:start-consensus-goal 创建机器校验、带稳定 C* 的七行持久 Goal，或从当前机器状态恢复兼容的活动 Goal，并执行到验证完成或正当阻塞。"
-
-policy:
-  allow_implicit_invocation: false

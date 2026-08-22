@@ -323,6 +323,12 @@ def visible_markdown_line_spans(text: str) -> tuple[BlockSpan, ...]:
     )
 
 
+def markdown_line_spans(text: str) -> list[tuple[int, int, bool]]:
+    """Return every physical Markdown line with its visibility state."""
+
+    return [(line.start, line.end, line.visible) for line in _markdown_lines(text)]
+
+
 def visible_exact_line_spans(
     text: str, candidates: frozenset[str]
 ) -> tuple[BlockSpan, ...]:

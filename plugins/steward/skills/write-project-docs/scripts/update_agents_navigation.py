@@ -27,9 +27,9 @@ from managed_blocks import (
     ManagedBlockError,
     locate_all_managed_blocks,
     locate_managed_block,
-    visible_markdown_line_spans,
     visible_section_titles,
 )
+from markdown_links import replace_visible_link_targets, visible_path_mentions
 from safe_write import AtomicWriteCommittedError, read_snapshot, write_atomically
 
 START_MARKER = "<!-- write-project-docs:document-navigation:start -->"
@@ -122,7 +122,7 @@ def validate_navigation_asset(asset: str) -> None:
 def normalize_legacy_paths(
     text: str, path_mappings: tuple[tuple[str, str], ...]
 ) -> tuple[str, list[str]]:
-    """Normalize visible unowned text while preserving every managed block."""
+    """Rewrite visible link targets while preserving every managed block."""
 
     try:
         managed_blocks = locate_all_managed_blocks(text)
@@ -152,31 +152,24 @@ def normalize_legacy_paths(
         if not separated:
             raise ValueError("根 AGENTS.md 的工程路由与文档导航区块不得嵌套")
 
-    replacement_counts = {mapping: 0 for mapping in path_mappings}
-    protected_spans = tuple(span for _name, span in managed_blocks)
+    protected_spans = sorted(
+        (span for _name, span in managed_blocks), key=lambda span: span.start
+    )
     pieces: list[str] = []
+    replacements: list[str] = []
     cursor = 0
-    for span in visible_markdown_line_spans(text):
-        if any(
-            protected.start <= span.start < protected.end
-            for protected in protected_spans
-        ):
-            continue
-        pieces.append(text[cursor : span.start])
-        normalized = text[span.start : span.end]
-        for old_path, new_path in path_mappings:
-            count = normalized.count(old_path)
-            if count:
-                normalized = normalized.replace(old_path, new_path)
-                replacement_counts[(old_path, new_path)] += count
-        pieces.append(normalized)
+    for span in protected_spans:
+        rewritten, segment_replacements = replace_visible_link_targets(
+            text[cursor : span.start], path_mappings
+        )
+        pieces.extend((rewritten, text[span.start : span.end]))
+        replacements.extend(segment_replacements)
         cursor = span.end
-    pieces.append(text[cursor:])
-    replacements = [
-        f"{old_path} → {new_path}（{replacement_counts[(old_path, new_path)]} 处）"
-        for old_path, new_path in path_mappings
-        if replacement_counts[(old_path, new_path)]
-    ]
+    rewritten, segment_replacements = replace_visible_link_targets(
+        text[cursor:], path_mappings
+    )
+    pieces.append(rewritten)
+    replacements.extend(segment_replacements)
     return "".join(pieces), replacements
 
 
@@ -253,6 +246,10 @@ def main() -> int:
         print(f"错误：{error}；未修改")
         return 1
 
+    mentions = visible_path_mentions(
+        normalized_original, tuple(old for old, _ in path_mappings)
+    )
+
     try:
         updated, block_action = insert_or_replace_block(
             normalized_original, asset, profile
@@ -294,6 +291,13 @@ def main() -> int:
         if current_updated != updated or current_action != block_action:
             raise ValueError("写入前 AGENTS.md 导航投影发生变化")
 
+    def report_mentions() -> None:
+        for line_number, path in mentions:
+            print(
+                f"提示：AGENTS.md:{line_number} 在正文中提到 {path}；"
+                "不是链接目标，未自动修改"
+            )
+
     if updated == original:
         try:
             precommit_validate()
@@ -306,6 +310,7 @@ def main() -> int:
             print(f"错误：{error}；未修改")
             return 1
         print("根 AGENTS.md 已符合文档区块规范；未修改")
+        report_mentions()
         return 0
 
     try:
@@ -328,7 +333,8 @@ def main() -> int:
         f"文档语言：{profile.language.label}。"
     )
     for replacement in replacements:
-        print(f"已修正：{replacement}")
+        print(f"已修正链接：{replacement}")
+    report_mentions()
     return 0
 
 

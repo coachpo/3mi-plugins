@@ -28,9 +28,12 @@ ROUTER_VALIDATE = ROUTER_UPDATE.with_name("validate_engineering_router.py")
 CLOSED_LOOP_CLI = (
     PLUGIN_ROOT / "skills" / "run-closed-loop-verification" / "scripts" / "campaign.py"
 )
+DOCS_SCRIPTS = PLUGIN_ROOT / "skills" / "write-project-docs" / "scripts"
 
 if str(SHARED_SCRIPTS) not in sys.path:
     sys.path.insert(0, str(SHARED_SCRIPTS))
+if str(DOCS_SCRIPTS) not in sys.path:
+    sys.path.insert(0, str(DOCS_SCRIPTS))
 
 from goal_contract import goal_contract_sha256, load_goal_contract
 from invariant_contract import (
@@ -42,6 +45,7 @@ from semantic_review import (
     load_review_manifest,
     review_manifest_sha256,
 )
+from validate_project_docs import claude_pointer_warnings
 
 
 def write_json(path: Path, value: Any) -> Path:
@@ -639,6 +643,9 @@ class ControlSkillLifecycleContractTests(unittest.TestCase):
         skill = (
             PLUGIN_ROOT / "skills" / "run-engineering-control-loop" / "SKILL.md"
         ).read_text(encoding="utf-8")
+        closed_skill = (
+            PLUGIN_ROOT / "skills" / "run-closed-loop-verification" / "SKILL.md"
+        ).read_text(encoding="utf-8")
         state = (
             PLUGIN_ROOT
             / "skills"
@@ -656,15 +663,33 @@ class ControlSkillLifecycleContractTests(unittest.TestCase):
         self.assertIn("initial PASS to `regression`", state)
         self.assertNotIn("retest → remaining ordinary full initial coverage", skill)
 
-    def test_configure_contract_binds_goal_and_safe_read_only_candidates(self) -> None:
+        self.assertIn("`.steward/goal.txt`", skill)
+        self.assertIn("campaign journal `status`", skill)
+        self.assertIn("only durable recovery authority", skill)
+        self.assertIn("Host conversation, task, or", skill)
+        self.assertIn("continuation state is never recovery or completion authority", skill)
+        self.assertIn('"<project-root>/.steward/goal.txt"', skill)
+        self.assertIn(
+            "current-gate request from an explicitly requested full-loop coordinator",
+            closed_skill,
+        )
+        for token in ("get_goal", "create_goal", "update_goal", "token_budget"):
+            self.assertNotIn(token, skill)
+
+    def test_configure_contract_accepts_only_explicit_goal_input(self) -> None:
         directory = PLUGIN_ROOT / "skills" / "configure-project-verification"
         skill = (directory / "SKILL.md").read_text(encoding="utf-8")
         contract = (directory / "references" / "configuration-contract.md").read_text(
             encoding="utf-8"
         )
         agent = (directory / "agents" / "openai.yaml").read_text(encoding="utf-8")
-        self.assertIn("Call `get_goal` only when", skill)
-        self.assertIn("this skill never creates or updates it", skill)
+        self.assertIn("Consume a GOAL only when", skill)
+        self.assertIn("user explicitly supplies its seven-line text or path", skill)
+        self.assertIn("use only its canonical objective and `C*`", skill)
+        self.assertIn("never discover, query, create", skill)
+        self.assertIn("update, or report host Goal state", skill)
+        for token in ("get_goal", "create_goal", "update_goal", "token_budget"):
+            self.assertNotIn(token, skill)
         self.assertIn("renderer `--check`/`--expected`", skill)
         self.assertIn("configuration-contract.md", skill)
         self.assertNotIn("case/Unicode-equivalent portable collisions", skill)
@@ -673,6 +698,34 @@ class ControlSkillLifecycleContractTests(unittest.TestCase):
         self.assertIn("other hosts remain review-only", contract)
         self.assertIn("configure-project-verification", agent)
         self.assertIn("不要运行 campaign", agent)
+
+    def test_claude_bridge_preserves_agents_as_the_single_authority(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            (root / "AGENTS.md").write_text("# Instructions\n", encoding="utf-8")
+
+            warnings = claude_pointer_warnings(root)
+            self.assertEqual(1, len(warnings))
+            self.assertIn("CLAUDE.md 缺失", warnings[0])
+
+            pointer = root / "CLAUDE.md"
+            pointer.write_text("@AGENTS.md\n", encoding="utf-8")
+            self.assertEqual([], claude_pointer_warnings(root))
+
+            pointer.write_text(
+                "@AGENTS.md\n\n# Claude-only rules\n",
+                encoding="utf-8",
+            )
+            warnings = claude_pointer_warnings(root)
+            self.assertEqual(1, len(warnings))
+            self.assertIn("引用行以外的内容", warnings[0])
+
+            pointer.unlink()
+            try:
+                pointer.symlink_to("AGENTS.md")
+            except (NotImplementedError, OSError) as error:  # pragma: no cover
+                self.skipTest("symlink creation is unavailable: " + str(error))
+            self.assertEqual([], claude_pointer_warnings(root))
 
 
 if __name__ == "__main__":

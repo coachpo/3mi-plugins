@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
+  "name": "steward",
+  "displayName": "Steward",
+  "version": "0.0.3",
+  "description": "面向 Codex 与 Claude Code 的共享工程控制面，以七个宿主无关技能连接项目指引、文档、GOAL、语义风险、验证流水线和可恢复工程闭环。",
+  "author": {
+    "name": "coachpo",
+    "url": "https://github.com/coachpo"
+  },
+  "homepage": "https://github.com/coachpo/plugins-codex/tree/main/plugins/steward#readme",
+  "repository": "https://github.com/coachpo/plugins-codex",
+  "license": "MIT",
+  "keywords": [
+    "agents-md",
+    "claude-code",
+    "codex",
+    "documentation",
+    "goals",
+    "verification",
+    "invariants",
+    "semantic-review",
+    "architecture-profiles",
+    "control-plane",
+    "ci",
+    "testing",
+    "regression",
+    "steward"
+  ],
+  "skills": "./skills/"
+}

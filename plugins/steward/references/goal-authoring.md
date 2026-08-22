@@ -1,7 +1,9 @@
 # Consensus GOAL authoring
 
-Use this contract only when a caller must draft a new seven-line GOAL. Restoring
-or executing an existing Goal does not load this reference.
+This is the single authoring contract for a new seven-line GOAL, and
+`draft-consensus-goal` is its sole skill owner. Other skills consume an explicit
+validated GOAL or delegate an already-converged request to that skill; they do
+not independently draft, compress, or externalize one.
 
 ## Establish the source facts
 
@@ -72,9 +74,10 @@ boundary, evidence needed for completion, `C*`, legitimate blockers, and final
 delivery.
 
 Only when the compressed contract still exceeds the limit, or the user asks for
-a context file, read and apply [`handoff-file.md`](handoff-file.md). The calling
-skill may create only the disclosed handoff and its self-ignoring rule beneath
-`.steward/handoffs/`, after the GOAL validates and before a Goal that references
-it is created. A failed placement check removes the reference sentence and
-requires revalidation. If the remaining contract still cannot validate, ask the
-user to narrow the outcome; do not create a placeholder handoff or Goal.
+a context file, read and apply [`handoff-file.md`](handoff-file.md). The
+authoring skill may create only the disclosed handoff and its self-ignoring rule
+beneath `.steward/handoffs/`, after the GOAL validates and before the canonical
+objective that references it is returned. A failed placement check removes the
+reference sentence and requires revalidation. If the remaining contract still
+cannot validate, ask the user to narrow the outcome; do not create a placeholder
+handoff or emit an invalid objective.

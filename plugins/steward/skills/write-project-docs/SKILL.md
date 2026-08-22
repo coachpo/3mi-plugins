@@ -10,6 +10,9 @@ from other surfaces. A focused request changes only the affected documents; the
 complete canonical set is created only for an explicit initialization or
 migration request.
 
+This workflow requires an explicit documentation request; do not expand an
+ordinary engineering task into documentation maintenance.
+
 Resolve this skill directory as `<skill-dir>`; bundled resources and scripts are
 relative to it.
 
@@ -29,7 +32,8 @@ relative to it.
 Root `AGENTS.md` is a navigation/agent-behavior surface, not a ninth canonical
 document. `.steward/invariants.json` is a machine map, not documentation; create
 or maintain it only when it already exists or the user explicitly requests
-profile/invariant work.
+profile/invariant work. `CLAUDE.md` is only a host bridge to the same-directory
+`AGENTS.md`; instruction content remains in `AGENTS.md`.
 
 ## Mode and authority
 
@@ -43,7 +47,8 @@ Deletion, moves, archive/cleanup, external writes, source/configuration/CI edits
 or material scope expansion require explicit authority. Preserve generated and
 other-skill managed regions. The only root `AGENTS.md` write owned here is an
 existing eligible document-navigation block through its updater; engineering
-routing belongs to `write-agent-guides`.
+routing and creation or repair of `CLAUDE.md` bridges belong to
+`write-agent-guides`. Do not put independent project rules in `CLAUDE.md`.
 
 ## Preserve language intent
 
@@ -102,9 +107,12 @@ python3 -B "<skill-dir>/scripts/validate_project_docs.py" "<project-root>"
 
 Also run relevant repository documentation checks. Use strict diagnostics for an
 authorized migration or cleanup. A validator proves structure, source digests,
-and managed-block consistency; it does not replace semantic review of the prose.
+managed-block consistency, and reports a missing or non-canonical root
+`CLAUDE.md` bridge; it does not replace semantic review of the prose.
 If an invariant map changed, hand engineering-router synchronization explicitly
-to `write-agent-guides` before claiming the whole route is current.
+to `write-agent-guides` before claiming the whole route is current. Hand bridge
+warnings to that skill as well; this skill does not rewrite user instruction
+files outside its existing root navigation block.
 
 On resume, re-resolve the project, language, canonical paths, write set, managed
 boundaries, and affected source digests. Preserve non-overlapping user changes;
@@ -119,5 +127,6 @@ must pass or the remaining unauthorized cleanup must be reported exactly.
 
 Lead with the outcome, then list changed and deliberately preserved files,
 canonical evidence, language decision, validation results, cleanup candidates,
-unverified items, router follow-up, and the smallest remaining action. Omit
+unverified items, router or `CLAUDE.md` bridge follow-up, and the smallest
+remaining action. Omit
 routine process narration.

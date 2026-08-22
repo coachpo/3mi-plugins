@@ -67,8 +67,8 @@ fixtures, capabilities, or success artifacts.
 
 ## Validate against the frozen request
 
-Set `<validator>` to `plugins/steward/scripts/semantic_review.py` as installed
-relative to the skill, and validate the final JSON through standard input:
+Set `<validator>` to `"<skill-dir>/../../scripts/semantic_review.py"` and
+validate the final JSON through standard input:
 
 ```text
 python3 -B "<validator>" check - --project-root "<project-root>" --expected-review-request "<expected-request>"

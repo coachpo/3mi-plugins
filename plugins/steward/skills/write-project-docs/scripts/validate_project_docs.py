@@ -24,6 +24,7 @@ from canonical_paths import (
     resolve_project_docs,
 )
 from contributing_blocks import (
+    ContributingBlockError,
     MvpMode,
     compose_contributing_block,
     mvp_heading_positions,
@@ -36,6 +37,11 @@ from managed_blocks import (
     ManagedBlockError,
     locate_managed_block,
     markdown_h1_lines,
+)
+from markdown_links import (
+    extract_link_targets,
+    replace_visible_link_targets,
+    visible_path_mentions,
 )
 from validate_engineering_router import validate_engineering_router  # noqa: E402
 
@@ -76,12 +82,6 @@ LEGACY_DOC_PATHS = (
     "docs/INDEX.md",
 )
 
-INLINE_LINK_RE = re.compile(
-    r"!?\[[^\]]*\]\((?P<target><[^>]+>|[^)\s]+)(?:\s+['\"][^)]*)?\)"
-)
-REFERENCE_LINK_RE = re.compile(
-    r"^\s*\[[^\]]+\]:\s*(?P<target><[^>]+>|\S+)", re.MULTILINE
-)
 _THRESHOLD_VALUE = r"(?<!\d)`?(?:240|300|50)`?(?!\d)"
 _THRESHOLD_UNIT = r"(?:行|lines?)"
 _THRESHOLD_COMPARATOR = (
@@ -103,7 +103,8 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
             "验证固定项目文档的中英文 canonical 路径、共享内容、"
-            "开发规范专项引用、根 AGENTS.md 文档区块和本地 Markdown 链接。"
+            "开发规范专项引用、根 AGENTS.md 文档区块、根 CLAUDE.md 引用行"
+            "和本地 Markdown 链接。"
         )
     )
     parser.add_argument(
@@ -116,7 +117,8 @@ def parse_args() -> argparse.Namespace:
         "--strict",
         action="store_true",
         help=(
-            "把旧 canonical 路径、嵌套 AGENTS.md 引用、可能重复规则等迁移警告"
+            "把旧 canonical 路径、嵌套 AGENTS.md 引用、CLAUDE.md 引用行问题、"
+            "可能重复规则等迁移警告"
             "视为失败；共享内容缺失、漂移或区块边界错误在普通模式也会失败。"
         ),
     )
@@ -146,28 +148,35 @@ def display_path(path: Path, root: Path) -> str:
         return str(path)
 
 
-def extract_link_targets(text: str) -> list[str]:
-    targets = [match.group("target") for match in INLINE_LINK_RE.finditer(text)]
-    targets.extend(match.group("target") for match in REFERENCE_LINK_RE.finditer(text))
-    return targets
+def legacy_path_mappings(
+    selected: dict[str, str] | None,
+) -> tuple[tuple[str, str], ...]:
+    """Every stale path plus the selected path a rewrite would send it to."""
+
+    mappings = () if selected is None else canonical_path_mappings(selected)
+    return mappings + tuple(
+        (legacy, "docs/README.md") for legacy in LEGACY_DOC_PATHS
+    )
 
 
-def legacy_path_references(
+def legacy_link_references(
+    text: str, selected: dict[str, str] | None
+) -> list[str]:
+    """Stale paths sitting in link targets, which the updater can fix."""
+
+    _, replacements = replace_visible_link_targets(
+        text, legacy_path_mappings(selected)
+    )
+    return replacements
+
+
+def legacy_prose_references(
     text: str, selected: dict[str, str] | None
 ) -> list[tuple[int, str]]:
-    """Report stale paths; without a resolved language only fixed ones qualify."""
+    """Stale paths outside links, which need a human decision."""
 
-    references: list[tuple[int, str]] = []
-    stale_paths = LEGACY_DOC_PATHS
-    if selected is not None:
-        stale_paths += tuple(
-            old_path for old_path, _ in canonical_path_mappings(selected)
-        )
-    for line_number, line in enumerate(text.splitlines(), start=1):
-        for legacy_path in stale_paths:
-            if legacy_path in line:
-                references.append((line_number, legacy_path))
-    return references
+    stale_paths = tuple(old for old, _ in legacy_path_mappings(selected))
+    return visible_path_mentions(text, stale_paths)
 
 
 def complete_managed_asset_issue(
@@ -190,6 +199,38 @@ def complete_managed_asset_issue(
     if span.start != 0 or span.end != len(data):
         return f"{label} 的 marker 必须包围整个 asset"
     return None
+
+
+def claude_pointer_warnings(root: Path) -> list[str]:
+    """Check that root CLAUDE.md is a bare pointer to AGENTS.md."""
+
+    pointer = root / "CLAUDE.md"
+    if not pointer.exists() and not pointer.is_symlink():
+        return [
+            "根 CLAUDE.md 缺失：应创建完整内容为 @AGENTS.md 的引用文件，"
+            "让 Claude Code 读取同一份指引"
+        ]
+    if pointer.is_symlink():
+        try:
+            target = pointer.resolve(strict=True)
+        except OSError:
+            return ["根 CLAUDE.md 是失效的符号链接"]
+        if target != (root / "AGENTS.md").resolve():
+            return ["根 CLAUDE.md 是符号链接，但未指向同目录 AGENTS.md"]
+        return []
+    if not pointer.is_file():
+        return ["根 CLAUDE.md 不是普通文件"]
+    try:
+        text = pointer.read_text(encoding="utf-8")
+    except UnicodeDecodeError:
+        return ["根 CLAUDE.md 不是有效 UTF-8"]
+    body = [line.strip() for line in text.splitlines() if line.strip()]
+    if body != ["@AGENTS.md"]:
+        return [
+            "根 CLAUDE.md 含有 @AGENTS.md 引用行以外的内容："
+            "指引内容应并入 AGENTS.md，由 write-agent-guides 处理"
+        ]
+    return []
 
 
 def validate_link(source: Path, raw_target: str, root: Path) -> str | None:
@@ -238,7 +279,7 @@ def check_language_anchors(
         else:
             try:
                 mvp_mode = parse_mvp_mode(status_text, context.language)
-            except ValueError as error:
+            except (ValueError, ContributingBlockError) as error:
                 errors.append(str(error))
 
     for relative in selected.values():
@@ -285,7 +326,7 @@ def check_language_anchors(
                 selected,
                 "开发规范规模规则 asset",
             )
-        except ValueError as error:
+        except (ValueError, ContributingBlockError) as error:
             errors.append(f"skill 共享资源无效：{error}")
             expected_development_block = b""
         development_asset_issue = complete_managed_asset_issue(
@@ -414,7 +455,7 @@ def check_language_anchors(
                 mvp_mode=mvp_mode,
                 language=context.language,
             )
-        except (UnicodeDecodeError, ValueError) as error:
+        except (UnicodeDecodeError, ValueError, ContributingBlockError) as error:
             asset_issue = str(error)
             errors.append(f"skill 共享资源无效：{error}")
         else:
@@ -575,11 +616,16 @@ def check_language_anchors(
                             "根 AGENTS.md 的文档区块已漂移，"
                             "必须用 asset 完整替换"
                         )
-            for line_number, legacy_path in legacy_path_references(
+            for replacement in legacy_link_references(agents_text, selected):
+                errors.append(
+                    f"AGENTS.md: 链接仍指向旧 canonical 路径：{replacement}"
+                )
+            for line_number, legacy_path in legacy_prose_references(
                 agents_text, selected
             ):
-                errors.append(
-                    f"AGENTS.md:{line_number}: 仍引用旧 canonical 路径：{legacy_path}"
+                warnings.append(
+                    f"AGENTS.md:{line_number}: 正文提到旧 canonical 路径："
+                    f"{legacy_path}；不是链接目标，需人工确认是否为外部引用"
                 )
 
     return errors, warnings
@@ -648,6 +694,9 @@ def main() -> int:
         development_rules_path = None
 
     root_agents = root / "AGENTS.md"
+    if root_agents.is_file() and not root_agents.is_symlink():
+        warnings.extend(claude_pointer_warnings(root))
+
     docs = markdown_files(root)
     for path in docs:
         try:
@@ -695,10 +744,17 @@ def main() -> int:
             agents_text = agents_path.read_text(encoding="utf-8")
         except UnicodeDecodeError:
             continue
-        for line_number, legacy_path in legacy_path_references(agents_text, selected):
+        for replacement in legacy_link_references(agents_text, selected):
             warnings.append(
-                f"{relative}:{line_number}: 嵌套 AGENTS.md 仍引用旧 canonical 路径："
-                f"{legacy_path}"
+                f"{relative}: 嵌套 AGENTS.md 的链接仍指向旧 canonical 路径："
+                f"{replacement}"
+            )
+        for line_number, legacy_path in legacy_prose_references(
+            agents_text, selected
+        ):
+            warnings.append(
+                f"{relative}:{line_number}: 嵌套 AGENTS.md 的正文提到旧 canonical "
+                f"路径：{legacy_path}"
             )
 
     if errors:

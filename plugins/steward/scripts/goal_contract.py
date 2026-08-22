@@ -172,7 +172,7 @@ def _canonical_objective(value: str | bytes) -> str:
             "GOAL 不得包含 C0/C1 控制字符或 Unicode 双向文本控制符",
         )
 
-    # A single final LF is transport framing, not part of create_goal.objective.
+    # A single final LF is transport framing, not part of the canonical objective.
     objective = text[:-1] if text.endswith("\n") else text
     if len(objective) > MAX_OBJECTIVE_CHARACTERS:
         raise GoalContractError(

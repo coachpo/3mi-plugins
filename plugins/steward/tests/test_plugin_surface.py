@@ -13,14 +13,18 @@ REPO_ROOT = PLUGIN_ROOT.parents[1]
 EXPECTED_SKILLS = {
     "configure-project-verification",
     "draft-consensus-goal",
-    "import-claude-code-sessions",
     "review-semantic-risks",
     "run-closed-loop-verification",
     "run-engineering-control-loop",
-    "start-consensus-goal",
     "write-agent-guides",
     "write-project-docs",
 }
+FORBIDDEN_HOST_GOAL_TOKENS = (
+    "get_goal",
+    "create_goal",
+    "update_goal",
+    "token_budget",
+)
 
 
 class PluginSurfaceTests(unittest.TestCase):
@@ -34,12 +38,14 @@ class PluginSurfaceTests(unittest.TestCase):
         self.assertEqual(EXPECTED_SKILLS, actual)
 
         readme = (PLUGIN_ROOT / "README.md").read_text(encoding="utf-8")
-        self.assertIn("插件包含九个技能", readme)
+        self.assertIn("插件包含七个共享技能", readme)
         self.assertIn("codex plugin marketplace add coachpo/plugins-codex --ref main", readme)
         self.assertIn("codex plugin add steward@coachpo", readme)
+        self.assertIn("claude plugin marketplace add coachpo/plugins-codex@main", readme)
+        self.assertIn("claude plugin install steward@coachpo", readme)
         self.assertIn("| 技能 | 使用时机 | 读写模式 | 主要结果 |", readme)
         self.assertIn(
-            "除 `write-agent-guides` 保留默认的隐式路由能力外，其余八个技能",
+            "除 `write-agent-guides` 保留默认的隐式路由能力外，其余六个技能",
             readme,
         )
         self.assertIn(
@@ -67,18 +73,25 @@ class PluginSurfaceTests(unittest.TestCase):
             else:
                 self.assertIn("allow_implicit_invocation: false", agent_text)
 
-        manifest = json.loads(
+        codex_manifest = json.loads(
             (PLUGIN_ROOT / ".codex-plugin" / "plugin.json").read_text(
                 encoding="utf-8"
             )
         )
+        claude_manifest = json.loads(
+            (PLUGIN_ROOT / ".claude-plugin" / "plugin.json").read_text(
+                encoding="utf-8"
+            )
+        )
         self.assertEqual("steward", PLUGIN_ROOT.name)
-        self.assertEqual("steward", manifest["name"])
-        self.assertEqual("Steward", manifest["interface"]["displayName"])
-        self.assertEqual("./skills/", manifest["skills"])
-        self.assertEqual("0.0.2", manifest["version"])
-        self.assertIn("九技能", manifest["interface"]["longDescription"])
-        prompts = manifest["interface"]["defaultPrompt"]
+        for manifest in (codex_manifest, claude_manifest):
+            self.assertEqual("steward", manifest["name"])
+            self.assertEqual("0.0.3", manifest["version"])
+            self.assertEqual("./skills/", manifest["skills"])
+        self.assertEqual("Steward", codex_manifest["interface"]["displayName"])
+        self.assertEqual("Steward", claude_manifest["displayName"])
+        self.assertIn("七技能", codex_manifest["interface"]["longDescription"])
+        prompts = codex_manifest["interface"]["defaultPrompt"]
         self.assertGreaterEqual(len(prompts), 1)
         self.assertLessEqual(len(prompts), 3)
         for prompt in prompts:
@@ -87,11 +100,11 @@ class PluginSurfaceTests(unittest.TestCase):
         referenced = set(re.findall(r"\$steward:([a-z0-9-]+)", prompt_text))
         self.assertTrue(referenced)
         self.assertLessEqual(referenced, actual)
-        self.assertIn("start-consensus-goal", referenced)
+        self.assertIn("draft-consensus-goal", referenced)
         self.assertIn("configure-project-verification", referenced)
-        self.assertNotIn("run-engineering-control-loop", referenced)
-        self.assertIn("保留当前任务授权边界", prompts[0])
-        self.assertIn("恢复、续跑兼容的活动 Goal", prompts[0])
+        self.assertIn("run-engineering-control-loop", referenced)
+        self.assertIn("已验证的七行 GOAL", prompts[0])
+        self.assertIn("仅在超长或明确要求时创建交接文档", prompts[0])
 
     def test_contract_index_and_packaged_license_are_resolvable(self) -> None:
         readme = (PLUGIN_ROOT / "README.md").read_text(encoding="utf-8")
@@ -145,6 +158,14 @@ class PluginSurfaceTests(unittest.TestCase):
             descriptions.add(description)
             for token in forbidden_global_policy:
                 self.assertNotIn(token, text, msg=f"global policy leaked into {skill}")
+            for token in FORBIDDEN_HOST_GOAL_TOKENS:
+                self.assertNotIn(token, text, msg=f"host Goal API leaked into {skill}")
+            if skill != "write-agent-guides":
+                self.assertIn(
+                    "This workflow requires an explicit",
+                    text,
+                    msg=f"explicit invocation guard missing from {skill}",
+                )
 
         orchestrator = (
             PLUGIN_ROOT / "skills" / "run-engineering-control-loop" / "SKILL.md"
@@ -264,22 +285,50 @@ class PluginSurfaceTests(unittest.TestCase):
                     msg=str(path.relative_to(PLUGIN_ROOT)),
                 )
 
-    def test_root_readme_describes_the_current_control_plane(self) -> None:
+    def test_root_readme_and_marketplaces_publish_the_same_plugin(self) -> None:
         root_readme = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
         self.assertIn("[`steward`](plugins/steward/README.md)", root_readme)
+        self.assertIn(
+            "codex plugin marketplace add coachpo/plugins-codex --ref main",
+            root_readme,
+        )
         self.assertIn("codex plugin add steward@coachpo", root_readme)
-        self.assertIn("薄编排器和稳定机器契约", root_readme)
-        self.assertIn("local quick/CI full", root_readme)
-        self.assertIn("语义风险审查", root_readme)
+        self.assertIn(
+            "claude plugin marketplace add coachpo/plugins-codex@main",
+            root_readme,
+        )
+        self.assertIn("claude plugin install steward@coachpo", root_readme)
+        self.assertIn("$steward:<skill-name>", root_readme)
+        self.assertIn("/steward:<skill-name>", root_readme)
 
-        marketplace = json.loads(
+        codex_marketplace = json.loads(
             (REPO_ROOT / ".agents" / "plugins" / "marketplace.json").read_text(
                 encoding="utf-8"
             )
         )
-        entries = {entry["name"]: entry for entry in marketplace["plugins"]}
-        self.assertIn("steward", entries)
-        self.assertEqual("./plugins/steward", entries["steward"]["source"]["path"])
+        claude_marketplace = json.loads(
+            (REPO_ROOT / ".claude-plugin" / "marketplace.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        self.assertEqual("coachpo", codex_marketplace["name"])
+        self.assertEqual("coachpo", claude_marketplace["name"])
+        codex_entries = {
+            entry["name"]: entry for entry in codex_marketplace["plugins"]
+        }
+        claude_entries = {
+            entry["name"]: entry for entry in claude_marketplace["plugins"]
+        }
+        self.assertEqual({"steward"}, set(codex_entries))
+        self.assertEqual({"steward"}, set(claude_entries))
+        self.assertEqual(
+            "./plugins/steward",
+            codex_entries["steward"]["source"]["path"],
+        )
+        self.assertEqual(
+            codex_entries["steward"]["source"]["path"],
+            claude_entries["steward"]["source"],
+        )
 
     def test_orchestrator_exposes_profiles_and_canonical_handoffs(self) -> None:
         skill = (
@@ -287,14 +336,14 @@ class PluginSurfaceTests(unittest.TestCase):
         ).read_text(encoding="utf-8")
         self.assertIn("architecture_profiles.py validate", skill)
         self.assertIn("`select`, and `compile`", skill)
-        self.assertIn("normal project-local control artifacts", skill)
-        self.assertIn("freeze, and disclose the exact write set", skill)
+        self.assertIn("project-local controls beneath `.steward/`", skill)
+        self.assertIn("Resolve, freeze, and disclose the exact write set", skill)
         self.assertIn("| Adapter and source |", skill)
         self.assertIn("| Semantic review |", skill)
         self.assertIn("| Trace binding |", skill)
         self.assertLess(skill.index("| Adapter and source |"), skill.index("| Semantic review |"))
         self.assertLess(skill.index("| Semantic review |"), skill.index("| Trace binding |"))
-        self.assertIn("The coordinator owns source policy, exact request/Review paths", skill)
+        self.assertIn("The coordinator owns source policy, request/Review paths", skill)
         self.assertIn("The Reviewer never selects paths", skill)
         self.assertNotIn("request-view --target-kind", skill)
 
@@ -324,7 +373,11 @@ class PluginSurfaceTests(unittest.TestCase):
         self.assertIn("任何 regression source drift 都只保存一次 `INVALIDATED`", readme)
         self.assertIn("`quick` 或 `RETEST_PASSED` 均不能替代最终完整回归", readme)
         self.assertIn("same-source full regression", readme)
-        self.assertIn("任何 `update_goal` 前都要重新取得并核对当前 Goal", readme)
+        self.assertIn("完成前必须重新校验 `.steward/goal.txt`", readme)
+        self.assertIn(
+            "canonical digest 与 adapter、campaign trace input 一致",
+            readme,
+        )
         self.assertIn("post-fix Review 还必须保留初始化时的 `RF-*` ID", readme)
         self.assertIn("diff-target 允许新的 head identity", readme)
         self.assertIn(
@@ -341,7 +394,6 @@ class PluginSurfaceTests(unittest.TestCase):
         self.assertIn("standalone 模式交付有证据的 prose findings/gaps", readme)
         self.assertIn("`legacy` 不只表示 unattested", readme)
         self.assertIn("binding 完整时输出 machine-attested canonical view", readme)
-        self.assertIn("`imported` 或 `already present` 目标", readme)
         self.assertIn("RequestedCoverageSatisfied<br/>∧ audit.ok", readme)
         self.assertIn("当前没有一个跨合同 verifier 自动合并这两条证据腿", readme)
         self.assertIn("schema 1 standalone journal 不受支持", readme)
@@ -361,10 +413,16 @@ class PluginSurfaceTests(unittest.TestCase):
             "新的 strict Review 由 coordinator 调用只读 `request-view` 冻结 canonical expected request",
             readme,
         )
-        self.assertIn("新建或严格通过版本 1 合同的 Goal 按稳定 `C*` 验证", readme)
-        self.assertIn("paused、未恢复的 blocked 或已 complete Goal 不会被静默执行", readme)
+        self.assertIn("`draft-consensus-goal` 是唯一 GOAL 作者", readme)
+        self.assertIn(
+            "`run-engineering-control-loop` 以 `.steward/goal.txt` 与有效 handoff/campaign journal 恢复",
+            readme,
+        )
+        self.assertIn(
+            "宿主对话、任务或 continuation state 不作为恢复或完成权威",
+            readme,
+        )
         self.assertIn("冻结的写集内保存 profile selection", readme)
-        self.assertIn("明确的 import、migrate 或 continue 请求", readme)
         self.assertIn("原工程请求已经明确授权的初始源码改动", readme)
 
     def test_project_verification_surface_matches_runtime_contracts(self) -> None:
@@ -534,12 +592,6 @@ class PluginSurfaceTests(unittest.TestCase):
         draft_goal = (
             skills / "draft-consensus-goal" / "SKILL.md"
         ).read_text(encoding="utf-8")
-        start_goal = (
-            skills / "start-consensus-goal" / "SKILL.md"
-        ).read_text(encoding="utf-8")
-        importer = (
-            skills / "import-claude-code-sessions" / "SKILL.md"
-        ).read_text(encoding="utf-8")
 
         agent_guides += "\n" + (
             skills / "write-agent-guides" / "scripts" / "validate_engineering_router.py"
@@ -583,24 +635,29 @@ class PluginSurfaceTests(unittest.TestCase):
         semantic += "\n" + (
             skills / "review-semantic-risks" / "references" / "strict-handoff.md"
         ).read_text(encoding="utf-8")
-        importer += "\n" + (
-            skills
-            / "import-claude-code-sessions"
-            / "references"
-            / "continue-imported-work.md"
-        ).read_text(encoding="utf-8")
 
         self.assertIn("Review, explanation, diagnosis, report, and planning requests are read-only", agent_guides)
         self.assertIn("Root write permission is required only when the root file itself must change", agent_guides)
         self.assertIn("validate_engineering_router.py", agent_guides)
         self.assertIn("python3 -B", agent_guides)
         self.assertIn("Never infer Simplified Chinese from a CJK percentage", agent_guides)
+        self.assertIn("`AGENTS.md` is the only instruction authority", agent_guides)
+        self.assertIn("same-directory `CLAUDE.md`", agent_guides)
+        self.assertIn("@AGENTS.md", agent_guides)
+        self.assertIn("a symlink\nto that same-directory `AGENTS.md`", agent_guides)
+        self.assertIn("Treat substantive content in an existing `CLAUDE.md`", agent_guides)
+        self.assertIn("merge still-valid rules", agent_guides)
         self.assertIn("A focused request changes only the affected documents", project_docs)
         self.assertIn("do not hand-edit those regions or copy their implementation", project_docs)
         self.assertIn("iteration-strategy.md", project_docs)
         self.assertIn("MVP", project_docs)
         self.assertIn("update_iteration_strategy.py", project_docs)
         self.assertIn("unsupported language", project_docs)
+        self.assertIn("validate_project_docs.py", project_docs)
+        self.assertIn("`--strict` 下升级为失败", project_docs)
+        self.assertIn("规范桥接是完整内容仅含 `@AGENTS.md`", project_docs)
+        self.assertIn("指向同目录 `AGENTS.md` 的符号链接", project_docs)
+        self.assertIn("本技能不自动覆盖 `CLAUDE.md`", project_docs)
 
         self.assertIn("project_verification.py", configure)
         self.assertIn("`validate-ci-plan`", configure)
@@ -611,9 +668,14 @@ class PluginSurfaceTests(unittest.TestCase):
         self.assertIn("The base adapter is the sole case catalog", configure)
         self.assertIn("Aggregation proves the declared", configure)
         self.assertIn("entry/case/platform", configure)
+        self.assertIn("Consume a GOAL only when", configure)
+        self.assertIn("user explicitly supplies its seven-line text or path", configure)
+        self.assertIn("never discover, query, create", configure)
+        self.assertIn("update, or report host Goal state", configure)
 
-        for goal_skill in (draft_goal, start_goal):
-            self.assertIn("goal-authoring.md", goal_skill)
+        self.assertIn("goal-authoring.md", draft_goal)
+        self.assertIn("only Steward skill that authors a GOAL", draft_goal)
+        self.assertIn("`draft-consensus-goal` is its sole skill owner", goal_authoring)
         self.assertIn("The strategy is an execution default, not user consensus", goal_authoring)
         self.assertIn("only when the user accepted that item", goal_authoring)
         self.assertIn("Never derive the strategy from the MVP switch", goal_authoring)
@@ -627,6 +689,10 @@ class PluginSurfaceTests(unittest.TestCase):
         self.assertIn("| Trace binding |", orchestrator)
         self.assertIn("The coordinator owns source policy", orchestrator)
         self.assertIn("The Reviewer never selects paths", orchestrator)
+        self.assertIn("persist the canonical\nobjective exactly", orchestrator)
+        self.assertIn("`.steward/goal.txt`", orchestrator)
+        self.assertIn("campaign journal `status`", orchestrator)
+        self.assertIn("only durable recovery authority", orchestrator)
         orchestrator_entry = (
             skills / "run-engineering-control-loop" / "SKILL.md"
         ).read_text(encoding="utf-8")
@@ -650,62 +716,8 @@ class PluginSurfaceTests(unittest.TestCase):
         self.assertIn("bindingsVerified=true", semantic)
         self.assertIn("Post-fix review", semantic)
 
-        self.assertIn("current official import documentation", importer)
-        self.assertIn("independent local", importer)
-        self.assertIn("Codex", importer)
-        self.assertIn("CLI importer", importer)
-        self.assertIn("import history", importer)
-        self.assertIn("Imported history is context", importer)
-
         readme = (PLUGIN_ROOT / "README.md").read_text(encoding="utf-8")
-        self.assertNotIn("原生导入的聊天范围是最近 30 天", readme)
-        self.assertNotIn("CLI 另外限制最多 50 个", readme)
-        self.assertIn("不在插件合同中固定易漂移的 UI 路径或数字", readme)
-        self.assertIn("不启用桌面端自动更新", readme)
         self.assertIn("PATH 中可用的 `python3`", readme)
-
-    def test_importer_long_running_handoff_contract(self) -> None:
-        importer = (
-            PLUGIN_ROOT / "skills" / "import-claude-code-sessions" / "SKILL.md"
-        ).read_text(encoding="utf-8")
-        continuation = (
-            PLUGIN_ROOT
-            / "skills"
-            / "import-claude-code-sessions"
-            / "references"
-            / "continue-imported-work.md"
-        ).read_text(encoding="utf-8")
-
-        for required in (
-            "exact selected chats",
-            "native import history",
-            "before creating a possible duplicate",
-            "current official import documentation",
-            "hard-coded UI names",
-            "numeric limits",
-            "`imported`: the native importer reports success",
-            "`already present`: an existing target's exact",
-            "An importer completion message alone",
-            "does not prove `imported`",
-            "continue-imported-work.md",
-        ):
-            self.assertIn(required, importer)
-        self.assertNotIn("last 30 days", importer)
-        self.assertNotIn("up to 50", importer)
-
-        for required in (
-            "current Goal state",
-            "Continue Goal-scoped work only",
-            "while it is active",
-            "skill does not edit, clear",
-            "complete, or block a Goal",
-            "first incomplete step",
-            "may modify overlapping paths",
-            "Read-only continuation and proven disjoint write",
-            "sets do not block each other",
-            "Do not create a Goal, campaign, verification pipeline",
-        ):
-            self.assertIn(required, continuation)
 
     def test_semantic_review_attestation_surface_matches_runtime(self) -> None:
         schema = json.loads(
@@ -890,14 +902,14 @@ class PluginSurfaceTests(unittest.TestCase):
 class HandoffFileChannelTests(unittest.TestCase):
     """The shared authoring contract owns the only GOAL handoff channel."""
 
-    AUTHORED = ("draft-consensus-goal", "start-consensus-goal")
+    AUTHORED = ("draft-consensus-goal",)
 
     def _skill(self, name: str) -> str:
         return (PLUGIN_ROOT / "skills" / name / "SKILL.md").read_text(
             encoding="utf-8"
         )
 
-    def test_channel_is_limited_to_the_two_goal_authoring_skills(self) -> None:
+    def test_channel_is_limited_to_the_sole_goal_authoring_skill(self) -> None:
         for skill in EXPECTED_SKILLS:
             text = self._skill(skill)
             if skill in self.AUTHORED:
@@ -916,8 +928,8 @@ class HandoffFileChannelTests(unittest.TestCase):
             encoding="utf-8"
         )
         self.assertIn("after the GOAL validates", authoring)
-        self.assertIn("before a Goal that", authoring)
-        self.assertIn("it is created", authoring)
+        self.assertIn("before the canonical", authoring)
+        self.assertIn("objective that references it is returned", authoring)
 
         contract = (PLUGIN_ROOT / "references" / "handoff-file.md").read_text(
             encoding="utf-8"
@@ -929,9 +941,13 @@ class HandoffFileChannelTests(unittest.TestCase):
         authoring = (PLUGIN_ROOT / "references" / "goal-authoring.md").read_text(
             encoding="utf-8"
         )
-        self.assertIn("failed placement check removes the reference sentence", authoring)
+        self.assertIn(
+            "A failed placement check removes the\nreference sentence",
+            authoring,
+        )
         self.assertIn("requires revalidation", authoring)
-        self.assertIn("do not create a placeholder handoff or Goal", authoring)
+        self.assertIn("do not create a placeholder", authoring)
+        self.assertIn("handoff or emit an invalid objective", authoring)
         self.assertIn("required handoff blocks", self._skill("draft-consensus-goal"))
 
     def test_draft_keeps_the_canonical_seven_line_output(self) -> None:
@@ -1087,8 +1103,12 @@ class HandoffFileChannelTests(unittest.TestCase):
 
         self.assertIn("](references/handoff-file.md)", readme)
         self.assertIn(".steward/handoffs/", readme)
-        self.assertIn("两个 GOAL 起草技能均禁止隐式调用", readme)
+        self.assertIn("`draft-consensus-goal` 是唯一 GOAL 作者且禁止隐式调用", readme)
         self.assertIn("](handoff-file.md)", contract_index)
+        self.assertIn(
+            "The sole `draft-consensus-goal` authoring skill",
+            contract_index,
+        )
         self.assertIn("not a full-loop handoff", contract_index)
         self.assertIn(
             "out of the Git source inventory precisely because it is ignored",
