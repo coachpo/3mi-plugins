@@ -38,7 +38,7 @@ claude plugin install steward@coachpo
 
 | 你的目标 | 使用的技能 | 默认效果 |
 | --- | --- | --- |
-| 检查或维护 `AGENTS.md` 层级及 Claude bridge | `write-agent-guides` | 审查默认只读；明确要求更新时才修改授权的 `AGENTS.md` 与对应 `CLAUDE.md` bridge |
+| 检查或维护 `AGENTS.md` 层级 | `write-agent-guides` | 审查默认只读；明确要求更新时才修改授权的 `AGENTS.md`，不创建或改写 `CLAUDE.md` |
 | 检查或刷新项目文档、静态开发档位策略 | `write-project-docs` | 审查默认只读；明确要求维护时才修改授权文档 |
 | 得到一份可评审或可执行的 GOAL 合同 | `draft-consensus-goal` | 返回机器校验的七行 GOAL；不开始执行，仅在超限或明确要求时创建条件式 handoff |
 | 只做行为级、对抗式代码审查 | `review-semantic-risks` | 严格只读，不运行测试、不修复代码 |
@@ -55,7 +55,7 @@ claude plugin install steward@coachpo
 只读检查仓库指引：
 
 ```text
-使用 $steward:write-agent-guides 只读审查当前仓库的 AGENTS.md 层级和同目录 CLAUDE.md bridge，报告重复、缺失和作用域错误，不修改文件。
+使用 $steward:write-agent-guides 只读审查当前仓库的 AGENTS.md 层级，报告重复、缺失和作用域错误，不修改文件。
 ```
 
 刷新项目文档：
@@ -108,7 +108,7 @@ claude plugin install steward@coachpo
 | 请求类型 | 可能产生的项目内容 |
 | --- | --- |
 | 只读审查、状态、设计或 audit | 不修改项目文件 |
-| 文档或 AGENTS 维护 | 仅修改请求授权的规范文档、`AGENTS.md` 或对应 `CLAUDE.md` bridge；不会为完整性创建无证据内容 |
+| 文档或 AGENTS 维护 | 仅修改请求授权的规范文档或 `AGENTS.md`；不会创建或改写 `CLAUDE.md`，也不会为完整性创建无证据内容 |
 | GOAL 起草 | 默认只返回文本；正文压缩后仍超过 4,000 code points 或用户明确要求时，才在 `.steward/handoffs/` 下创建临时、被忽略的背景文件 |
 | 完整工程闭环 | 在启动前披露并冻结的写集内持久化 `.steward/goal.txt`、request/Review handoff、adapter、campaign 与 evidence |
 | Profile 与不变量维护 | 明确维护请求在启动前冻结的写集内保存 profile selection 和 `.steward/invariants.json` 等持久控制文件 |
@@ -184,7 +184,7 @@ Codex 直接调用形式是 `$steward:<skill-name>`，Claude Code 是 `/steward:
 
 | 技能 | 使用时机 | 读写模式 | 主要结果 |
 | --- | --- | --- | --- |
-| [`write-agent-guides`](skills/write-agent-guides/SKILL.md) | 只读审查，或创建、修复、刷新分层 `AGENTS.md` 与同目录 Claude bridge；已有不变量索引时校验或同步短工程路由 | 审查、解释和诊断只读；明确更新时仅写授权的 `AGENTS.md` 及对应 `CLAUDE.md` bridge | 根级共同规则、必要的子树增量、`@AGENTS.md` bridge，以及 `trigger → authority → INV → validation` 路由 |
+| [`write-agent-guides`](skills/write-agent-guides/SKILL.md) | 只读审查，或创建、修复、刷新分层 `AGENTS.md`；已有不变量索引时校验或同步短工程路由 | 审查、解释和诊断只读；明确更新时仅写授权的 `AGENTS.md`，不写 `CLAUDE.md` | 根级共同规则、必要的子树增量，以及 `trigger → authority → INV → validation` 路由 |
 | [`write-project-docs`](skills/write-project-docs/SKILL.md) | 审查或维护固定项目文档集合，按 `STATUS.md` 七档枚举选择静态开发策略，并维护权威锚点和已存在或明确要求的不变量映射 | 普通审查只读；明确维护时写授权文档、静态策略托管区块、已有/明确要求的索引、精确获授权的 profile selection handoff 和受托管导航区块 | 保持唯一权威边界的文档、与开发档位精确匹配的双语静态策略、可验证 `.steward/invariants.json`，以及 profile-backed 映射所固定的 selection artifact |
 | [`draft-consensus-goal`](skills/draft-consensus-goal/SKILL.md) | 讨论已收敛，需要一份可评审、留档或执行的 GOAL 合同 | 唯一 GOAL 作者；只读核实并返回文本，不开始执行或写既有文件；仅在普通压缩后正文仍超过 4,000 code points 或用户明确要求时，在 `.steward/handoffs/` 内新建交接文件 | 经机器校验、带连续稳定 `C*` 的七行中文 GOAL |
 | [`review-semantic-risks`](skills/review-semantic-risks/SKILL.md) | 明确要求对代码、diff 或行为路径做语义/对抗审查 | 严格只读，不写文件、不执行测试或修复；coordinator 在完整闭环冻结 strict bindings 并另行保存 canonical `view` | standalone 模式交付有证据的 prose findings/gaps；strict-handoff 模式交付经校验、request-bound 的 `semantic-review v1` manifest 与 `RF-*` case 候选 |
@@ -197,7 +197,7 @@ Codex 直接调用形式是 `$steward:<skill-name>`，Claude Code 是 `/steward:
 | 层 | 负责 | 不负责 |
 | --- | --- | --- |
 | Prompt 与 GOAL | 表达获授权的结果、范围、约束、阻塞项和稳定 `C*` 完成标准 | 复制项目规则、指定不必要的内部实现或扩大授权 |
-| `AGENTS.md` | 把任务触发条件路由到权威来源、`INV-*` 和验证入口；由同目录 `CLAUDE.md` 的 `@AGENTS.md` bridge 暴露给 Claude Code | 成为架构或开发规则的第二份正文，或与 `CLAUDE.md` 维护两套规则 |
+| `AGENTS.md` | 把任务触发条件路由到权威来源、`INV-*` 和验证入口 | 成为架构或开发规则的第二份正文；插件不创建或维护 `CLAUDE.md` |
 | 项目权威文档 | 定义项目事实、架构边界和技术规则，并承载不变量锚点 | 记录 campaign 运行状态 |
 | 技术栈 profiles | 提供由插件维护、版本化、可选择、可验证的工程结果、等价控制、检查和场景 | 替代项目事实，或默认加载全部 profiles |
 | 不变量映射 | 把适用 profile 或项目来源绑定到项目 scope、权威锚点、证据、适用性与执行方式 | 创造授权或复制权威规则正文 |
@@ -300,7 +300,7 @@ adapter 的 `coverageMode` 默认为 `narrow`，并明确导出未覆盖 tier；
 
 插件只打包技能、本地资源和 Python 标准库脚本，不安装 MCP server，也不管理凭据。运行捆绑合同、文档和验证脚本需要 PATH 中可用的 `python3`；使用 Git 变更观测、merge-base 或 portable commit identity 的验证操作还需要 Git。
 
-- `write-agent-guides` 依据清单、配置、脚本、CI、代码入口和文件搜索核对仓库事实；只有子树确有局部差异时才写嵌套指导。项目没有不变量索引时保持原有行为，不创建空索引或路由。每个受影响的 `AGENTS.md` 通过同目录、仅含 `@AGENTS.md` 的 `CLAUDE.md` bridge 暴露给 Claude Code；已有实质 Claude 指引必须先核实并合并，不能直接覆盖。
+- `write-agent-guides` 依据清单、配置、脚本、CI、代码入口和文件搜索核对仓库事实；只有子树确有局部差异时才写嵌套指导。项目没有不变量索引时保持原有行为，不创建空索引或路由。`CLAUDE.md` 不在该技能或文档技能的写集内；现有文件保持不变，缺失也不会触发创建或校验警告。
 - `write-project-docs` 继续维护既有八份规范文档边界；`STATUS.md` 必须用 `YOLO_LOCAL`、`EXPERIMENT`、`MVP`、`PILOT`、`PRODUCTION`、`MAINTENANCE` 或 `RETIRED` 精确选择静态开发策略，`CONTRIBUTING.md` 由双语捆绑 asset 确定性渲染。档位不是新的事实权威或授权来源；`.steward/invariants.json` 仍只是可选机器索引。
 - architecture selection 只面向 schema-shaped 的正常深度 JSON；当前 canonical digest 路径没有独立深度上限，极深但仍可解析的输入可能触发未捕获的递归错误。不要把不可信或任意嵌套 JSON 直接当作 selection handoff。
 - `configure-project-verification` 需要 Python 标准库、Git，以及仓库事实支持的 profile/adapter；review 不写入，turnkey configure 固定生成 GitHub Actions workflow 并只写冻结 allowlist。其下层 profile、impact plan、CI plan、derived adapter 和 evidence 合同不依赖 GitHub，但当前没有其他 provider renderer。

@@ -104,8 +104,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
             "验证固定项目文档的中英文 canonical 路径、共享内容、"
-            "开发规范专项引用、根 AGENTS.md 文档区块、根 CLAUDE.md 引用行"
-            "和本地 Markdown 链接。"
+            "开发规范专项引用、根 AGENTS.md 文档区块和本地 Markdown 链接。"
         )
     )
     parser.add_argument(
@@ -118,8 +117,7 @@ def parse_args() -> argparse.Namespace:
         "--strict",
         action="store_true",
         help=(
-            "把旧 canonical 路径、嵌套 AGENTS.md 引用、CLAUDE.md 引用行问题、"
-            "可能重复规则等迁移警告"
+            "把旧 canonical 路径、嵌套 AGENTS.md 引用、可能重复规则等迁移警告"
             "视为失败；共享内容缺失、漂移或区块边界错误在普通模式也会失败。"
         ),
     )
@@ -200,38 +198,6 @@ def complete_managed_asset_issue(
     if span.start != 0 or span.end != len(data):
         return f"{label} 的 marker 必须包围整个 asset"
     return None
-
-
-def claude_pointer_warnings(root: Path) -> list[str]:
-    """Check that root CLAUDE.md is a bare pointer to AGENTS.md."""
-
-    pointer = root / "CLAUDE.md"
-    if not pointer.exists() and not pointer.is_symlink():
-        return [
-            "根 CLAUDE.md 缺失：应创建完整内容为 @AGENTS.md 的引用文件，"
-            "让 Claude Code 读取同一份指引"
-        ]
-    if pointer.is_symlink():
-        try:
-            target = pointer.resolve(strict=True)
-        except OSError:
-            return ["根 CLAUDE.md 是失效的符号链接"]
-        if target != (root / "AGENTS.md").resolve():
-            return ["根 CLAUDE.md 是符号链接，但未指向同目录 AGENTS.md"]
-        return []
-    if not pointer.is_file():
-        return ["根 CLAUDE.md 不是普通文件"]
-    try:
-        text = pointer.read_text(encoding="utf-8")
-    except UnicodeDecodeError:
-        return ["根 CLAUDE.md 不是有效 UTF-8"]
-    body = [line.strip() for line in text.splitlines() if line.strip()]
-    if body != ["@AGENTS.md"]:
-        return [
-            "根 CLAUDE.md 含有 @AGENTS.md 引用行以外的内容："
-            "指引内容应并入 AGENTS.md，由 write-agent-guides 处理"
-        ]
-    return []
 
 
 def validate_link(source: Path, raw_target: str, root: Path) -> str | None:
@@ -714,8 +680,6 @@ def main() -> int:
         development_rules_path = None
 
     root_agents = root / "AGENTS.md"
-    if root_agents.is_file() and not root_agents.is_symlink():
-        warnings.extend(claude_pointer_warnings(root))
 
     docs = markdown_files(root)
     for path in docs:

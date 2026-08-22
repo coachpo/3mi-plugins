@@ -28,6 +28,11 @@ Create, repair, refresh, or update requests authorize the affected local
 destructive replacement, unusually expensive actions, or material scope
 expansion.
 
+`CLAUDE.md` is outside this skill's write set. Do not create, repair, rewrite,
+or delete it. Existing host-specific instruction files may be read when needed
+to resolve applicable guidance, but this skill maintains only the `AGENTS.md`
+hierarchy.
+
 Root write permission is required only when the root file itself must change. If
 an existing effective parent is valid and the user requests a proven subtree-only
 delta, the authorized nested file may be updated without rewriting root. Stop
