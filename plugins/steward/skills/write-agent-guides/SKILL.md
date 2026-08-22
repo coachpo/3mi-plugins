@@ -115,6 +115,6 @@ revalidate after relevant drift and preserve non-overlapping user changes.
 
 Complete only when the intended root or subtree result exists, hierarchy choices
 are evidence-backed, changed files are rechecked, and relevant validation passed
-or is precisely blocked. Lead with the outcome, then changed paths, evidence,
-language decision, validation, changed `AGENTS.md` paths,
+or is precisely blocked. Lead with the outcome, then only applicable material
+details: changed `AGENTS.md` paths, evidence, language decision, validation,
 meaningful omissions, removal candidates, risks, and the smallest next action.

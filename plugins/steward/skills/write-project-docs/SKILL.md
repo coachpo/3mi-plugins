@@ -33,7 +33,7 @@ Root `AGENTS.md` is a navigation/agent-behavior surface, not a ninth canonical
 document. `.steward/invariants.json` is a machine map, not documentation; create
 or maintain it only when it already exists or the user explicitly requests
 profile/invariant work. `CLAUDE.md` is not a canonical document and is outside
-this skill's write set.
+this skill's write and validation scope.
 
 ## Mode and authority
 
@@ -43,12 +43,12 @@ only to the documents and managed blocks affected by that request, plus relevant
 non-destructive validation. It does not authorize filling every missing canonical
 document.
 
-Deletion, moves, archive/cleanup, external writes, source/configuration/CI edits,
-or material scope expansion require explicit authority. Preserve generated and
+File deletion, moves, archival, cleanup outside the authorized document or
+managed-block write set, external writes, source/configuration/CI edits, or
+material scope expansion require explicit authority. Preserve generated and
 other-skill managed regions. The only root `AGENTS.md` write owned here is an
 existing eligible document-navigation block through its updater; engineering
-routing belongs to `write-agent-guides`. Neither documentation maintenance nor
-agent-guide maintenance creates or rewrites `CLAUDE.md`.
+routing belongs to `write-agent-guides`.
 
 ## Preserve language intent
 
@@ -108,14 +108,12 @@ python3 -B "<skill-dir>/scripts/validate_project_docs.py" "<project-root>"
 ```
 
 Also run relevant repository documentation checks. Use strict diagnostics for an
-authorized migration or cleanup. A validator proves structure, the complete
-static tier catalog, selected-strategy consistency, managed-block consistency,
-and local link validity; it does not inspect or require `CLAUDE.md`, and it does
-not replace semantic review of the prose.
+authorized migration, file removal, archival, or other destructive cleanup. A
+validator proves structure, the complete static tier catalog, selected-strategy
+consistency, managed-block consistency, and local link validity; it does not
+replace semantic review of the prose.
 If an invariant map changed, hand engineering-router synchronization explicitly
-to `write-agent-guides` before claiming the whole route is current. This skill
-does not rewrite user instruction files outside its existing root navigation
-block.
+to `write-agent-guides` before claiming the whole route is current.
 
 On resume, re-resolve the project, language, canonical paths, exact development
 tier, write set, managed boundaries, and affected asset snapshots. Preserve
@@ -126,8 +124,9 @@ change.
 
 Complete a write task only when every affected required document has substantive
 content, owned blocks and links validate, applicable repository checks pass, and
-the diff contains no out-of-set change. For migration/cleanup, strict diagnostics
-must pass or the remaining unauthorized cleanup must be reported exactly.
+the diff contains no out-of-set change. For migration or destructive cleanup,
+strict diagnostics must pass or the remaining unauthorized cleanup must be
+reported exactly.
 
 Lead with the outcome, then list changed and deliberately preserved files,
 canonical evidence, language and development-tier decisions, validation results,

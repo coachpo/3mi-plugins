@@ -19,10 +19,10 @@ Resolve this skill directory as `<skill-dir>` and the public CLI as
 
 ## Select one mode
 
-| Mode | Outcome | Effects |
-| --- | --- | --- |
-| `review` | Report validity, drift, reproducible candidate bytes, and gaps. | Strictly read-only: no temporary project files, rendering to files, case execution, or campaign initialization. |
-| `configure` | Create or maintain the requested static configuration and verify its exact diff. | Write only one frozen project-relative set: profile/base adapter edits plus profile-declared static projections. |
+| Mode | Outcome |
+| --- | --- |
+| `review` | Report validity, drift, reproducible candidate bytes, and gaps. |
+| `configure` | Create or maintain the requested static configuration and verify its exact diff. |
 
 An answer, explanation, diagnosis, comparison, or review request selects
 `review`. A create, configure, repair, maintain, or refresh request selects

@@ -5,12 +5,8 @@ description: Perform a read-only behavior-level risk review of code or diffs usi
 
 # Review Semantic Risks
 
-Find behavior-level risks in the exact requested source or diff without changing
-the project. A finding is evidence, not authorization to persist, execute, or
-repair anything.
-
-This workflow requires an explicit user or coordinator request; do not silently
-upgrade ordinary review or implementation work into strict semantic review.
+Use this workflow only for an explicit user or coordinator semantic-review
+request.
 
 Resolve this skill directory as `<skill-dir>`; bundled validators and references
 are relative to it.
@@ -19,7 +15,7 @@ are relative to it.
 
 | Mode | Required input | Result |
 | --- | --- | --- |
-| `standalone` | Exact requested paths or diff and applicable authority. | Concise prose findings and gaps for the requested scope. No canonical `RF-*` manifest claim. |
+| `standalone` | Exact requested paths or diff and applicable authority. | Evidence-backed prose findings and gaps for the requested scope. No canonical `RF-*` manifest claim. |
 | `strict-handoff` | Coordinator-frozen request, validated source observation, and canonical GOAL/invariant bindings. | Request-bound canonical `semantic-review v1` manifest suitable for strict campaign consumption. |
 
 Choose `strict-handoff` only when all frozen inputs are supplied. Otherwise use
@@ -80,5 +76,5 @@ order, then gaps and unreviewed scope. Say “no supported semantic findings in 
 reviewed scope” when appropriate.
 
 For strict mode, report target kind, requested paths, `scopeVerified`, and
-`bindingsVerified`, followed by the canonical validator `view`. Do not write the
-manifest; an authorized coordinator may persist those canonical bytes separately.
+`bindingsVerified`, followed by the canonical validator `view` for separately
+authorized coordinator persistence.

@@ -37,9 +37,15 @@ directories, platform evidence bundles, and an aggregation report at the nine
 distinct project-relative output paths declared by that profile. An explicit
 full-loop request authorizes the standard project-local control artifacts needed
 for that loop when the coordinator resolves, freezes, and discloses their exact
-write set before the first write. It does not authorize source changes beyond
-the original engineering request, paths outside that set, external mutation,
+control-artifact write set before the first write. Source paths already authorized
+by the original engineering request may be identified later and need not be
+pre-enumerated in that set. The loop does not authorize control-artifact paths
+outside the set, source changes beyond the original request, external mutation,
 destructive or paid actions, credentials, or material scope expansion.
+A validator-required replacement campaign root inside a disclosed project-local
+campaign namespace remains within the operation authority; resolve, freeze, and
+disclose its exact path before creation without requesting path confirmation
+again.
 Draft-only and standalone read-only skills do not write full-loop artifacts.
 The sole `draft-consensus-goal` authoring skill may additionally create one
 handoff file and its self-ignoring rule beneath

@@ -21,11 +21,14 @@ Resolve this skill directory as `<skill-dir>` and the shared validator as
 An explicit full-loop request and its scoped engineering change authorize normal
 project-local controls beneath `.steward/`: canonical GOAL, selected profile,
 invariant map, frozen semantic request, Review handoff, adapter, and
-campaign/evidence roots. Resolve, freeze, and disclose the exact write set before
-writing; do not reconfirm individual paths while artifacts stay inside it.
+campaign/evidence roots. Resolve, freeze, and disclose their exact paths before
+writing; do not reconfirm them while they stay inside that control-artifact set.
 
-This authority does not add source changes beyond the original engineering
-request. Confirm before writing outside the frozen set, overwriting unrelated
+The original engineering request authorizes source changes within its semantic
+scope. Freeze and disclose that source boundary before implementation, then
+record exact paths as impact evidence identifies them without reconfirmation.
+Confirm before writing a control artifact outside the frozen control-artifact
+set, editing source outside the frozen source boundary, overwriting unrelated
 user content, external or remote mutation, deployment, credentials, destructive
 or paid actions, or material scope expansion. Existing artifacts and prior
 conversation or control state never expand authority.
@@ -95,8 +98,8 @@ artifacts; changed input invalidates dependent gates in order.
 
 The coordinator owns source policy, request/Review paths, the read-only
 `semantic_review.py request-view` call, and canonical validator stdout in the
-frozen write set. The Reviewer never selects paths, writes, tests, or fixes;
-closed-loop consumes the validated handoff without rewriting findings.
+frozen control-artifact set. The Reviewer never selects paths, writes, tests, or
+fixes; closed-loop consumes the validated handoff without rewriting findings.
 
 For a supported required finding, return to implementation only within the
 `run-closed-loop-verification` repair budget. Delegate its strict post-fix
