@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "projectId": "replace-with-project-id",
+  "projectRoot": ".",
+  "campaignRoot": ".closed-loop-verification",
+  "coverageMode": "narrow",
+  "source": {
+    "provider": "manifest",
+    "manifest": "verification-source.json",
+    "excludes": [
+      ".closed-loop-verification"
+    ]
+  },
+  "localOnly": {
+    "enabled": true,
+    "allowedExternalCapabilities": []
+  },
+  "traceability": {
+    "goalContract": {
+      "path": ".steward/goal.txt",
+      "contractVersion": 1,
+      "sha256": "sha256:replace-with-canonical-goal-contract-digest"
+    },
+    "invariants": {
+      "path": ".steward/invariants.json",
+      "sha256": "sha256:replace-with-invariant-contract-digest"
+    },
+    "reviewFindings": {
+      "path": ".steward/semantic-review.json",
+      "sha256": "sha256:replace-with-review-contract-digest",
+      "reviewRequestSha256": "sha256:replace-with-request-binding-digest"
+    },
+    "requiredScenarios": ["failure"]
+  },
+  "cases": [
+    {
+      "id": "smoke-entry",
+      "category": "smoke",
+      "required": true,
+      "quick": true,
+      "platform": "any",
+      "dependsOn": [],
+      "coversCriteria": ["C1"],
+      "coversInvariants": ["INV-CORE-0123456789AB"],
+      "reviewFindingIds": ["RF-EXAMPLE-001"],
+      "scenarioTags": ["failure"],
+      "argv": ["python3", "-c", "import os; open(os.path.join(os.environ['CLOSED_LOOP_EVIDENCE_DIR'], 'proof.json'), 'w').write('{\"ok\": true}')"],
+      "cwd": ".",
+      "timeoutSeconds": 30,
+      "fixture": null,
+      "externalCapabilities": [],
+      "evidence": {
+        "requiredFiles": ["proof.json"],
+        "nonEmptyFiles": ["proof.json"]
+      }
+    }
+  ]
+}

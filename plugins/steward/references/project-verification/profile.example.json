@@ -1,0 +1,116 @@
+{
+  "schemaId": "steward.verification-profile",
+  "schemaVersion": 1,
+  "projectId": "steward-example",
+  "projectRoot": "../..",
+  "adapter": {
+    "path": "references/project-verification/adapter.example.json"
+  },
+  "runtime": {
+    "pluginRoot": ".",
+    "pythonExecutables": {
+      "posix": "python3",
+      "windows": "py"
+    }
+  },
+  "changeDetection": {
+    "provider": "git",
+    "baseRef": null,
+    "sources": [
+      "committed",
+      "staged",
+      "unstaged",
+      "untracked"
+    ],
+    "highImpactPaths": [
+      ".codex-plugin/plugin.json",
+      "scripts/verification_pipeline.py",
+      "skills/run-closed-loop-verification/scripts/**"
+    ],
+    "unknownPath": "full"
+  },
+  "packages": [
+    {
+      "id": "control-plane",
+      "paths": [
+        "scripts/**",
+        "references/**"
+      ],
+      "dependsOn": [],
+      "quickCaseIds": [
+        "core-typecheck"
+      ],
+      "typecheckCaseIds": [
+        "core-typecheck"
+      ]
+    },
+    {
+      "id": "closed-loop",
+      "paths": [
+        "skills/run-closed-loop-verification/**"
+      ],
+      "dependsOn": [
+        "control-plane"
+      ],
+      "quickCaseIds": [
+        "closed-loop-typecheck"
+      ],
+      "typecheckCaseIds": [
+        "closed-loop-typecheck"
+      ]
+    }
+  ],
+  "guards": [
+    {
+      "id": "verification-contract",
+      "paths": [
+        "references/project-verification/**"
+      ],
+      "caseIds": [
+        "selector-contract"
+      ],
+      "alwaysRun": true
+    }
+  ],
+  "tiers": {
+    "quick": {
+      "selection": "impact-plan"
+    },
+    "full": {
+      "selection": "all",
+      "ignoreSelector": true
+    }
+  },
+  "ci": {
+    "platforms": [
+      {
+        "id": "linux",
+        "required": true,
+        "shards": 2
+      },
+      {
+        "id": "windows",
+        "required": true,
+        "shards": 1
+      }
+    ],
+    "portablePlatform": "linux",
+    "posixPlatform": "linux",
+    "selectorPlatform": "linux",
+    "selectorCaseIds": [
+      "selector-contract"
+    ]
+  },
+  "outputs": {
+    "profile": "references/project-verification/profile.example.json",
+    "impactPlan": ".steward/verification/impact-plan.json",
+    "ciPlan": ".steward/verification/ci-plan.json",
+    "localEntry": ".steward/verify-project.py",
+    "workflow": ".github/workflows/project-verification.yml",
+    "derivedAdapters": ".steward/verification/derived-adapters",
+    "campaigns": ".steward/verification/campaigns",
+    "evidenceBundles": ".steward/verification/evidence",
+    "aggregation": ".steward/verification/aggregation.json"
+  },
+  "contentDigest": "sha256:80cc90512e852ab319d46c2bc09026673e688416c9df5706477223c0274f7c6e"
+}

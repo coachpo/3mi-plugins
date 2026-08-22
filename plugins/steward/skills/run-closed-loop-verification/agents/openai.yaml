@@ -1,0 +1,6 @@
+interface:
+  display_name: "Closed-loop Verification"
+  short_description: "Validate adapters and run traceable verification campaigns"
+  default_prompt: "使用 $steward:run-closed-loop-verification 校验现有 adapter，或按 journal resumeMode 执行、恢复并审计 campaign，直到同源完整回归与 audit 完成。"
+policy:
+  allow_implicit_invocation: false

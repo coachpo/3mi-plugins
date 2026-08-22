@@ -1,0 +1,7 @@
+interface:
+  display_name: "Semantic Risk Review"
+  short_description: "只读生成有证据的语义风险与可证伪 campaign case 候选"
+  default_prompt: "使用 $steward:review-semantic-risks 只读审查当前 diff 的行为风险；普通请求用 standalone 模式，只有 coordinator 已提供冻结 bindings 时才用 strict-handoff。"
+
+policy:
+  allow_implicit_invocation: false

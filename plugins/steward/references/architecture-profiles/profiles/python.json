@@ -1,0 +1,417 @@
+{
+  "schemaVersion": 1,
+  "id": "python",
+  "profileVersion": "1.0.0",
+  "kind": "base",
+  "invariantPrefix": "PYTHON",
+  "extends": [],
+  "baseline": {
+    "authored": "2026-08",
+    "technologies": [
+      "CPython 3.12-3.14",
+      "PyPA pyproject.toml, Dependency Groups, and pylock.toml specifications"
+    ],
+    "versionPolicy": "Stable outcomes apply across versions; recheck mechanisms and defaults against the supported interpreter and packaging tools."
+  },
+  "selection": {
+    "scope": "component",
+    "activation": [
+      {
+        "allOf": [
+          "manifest:python",
+          "source:python"
+        ],
+        "anyOf": [],
+        "noneOf": []
+      }
+    ],
+    "supportingSignals": [
+      "entry:python-cli",
+      "entry:python-service",
+      "entry:python-worker",
+      "package:python-library"
+    ]
+  },
+  "capabilities": [
+    "python.entry.cli",
+    "python.entry.library",
+    "python.entry.service",
+    "python.entry.worker",
+    "python.multiprocessing",
+    "python.persistence",
+    "python.public-distribution"
+  ],
+  "layering": {
+    "referenceOnly": true,
+    "nodes": [
+      {
+        "id": "entry",
+        "owns": [
+          "configuration selection",
+          "dependency assembly",
+          "process lifecycle"
+        ]
+      },
+      {
+        "id": "inbound",
+        "owns": [
+          "protocol mapping",
+          "runtime input validation"
+        ]
+      },
+      {
+        "id": "application",
+        "owns": [
+          "authorization",
+          "transaction and workflow orchestration",
+          "use cases"
+        ]
+      },
+      {
+        "id": "domain",
+        "owns": [
+          "optional pure business invariants"
+        ]
+      },
+      {
+        "id": "outbound",
+        "owns": [
+          "external protocol and storage adaptation"
+        ]
+      }
+    ],
+    "edges": [
+      {
+        "from": "entry",
+        "to": "inbound"
+      },
+      {
+        "from": "inbound",
+        "to": "application"
+      },
+      {
+        "from": "application",
+        "to": "domain"
+      },
+      {
+        "from": "outbound",
+        "to": "application"
+      }
+    ],
+    "hardOutcomes": [
+      "Declared pure cores do not reverse-depend on framework or vendor runtime types.",
+      "Imports are acyclic and do not depend on partial initialization order.",
+      "State, side effects, and lifecycle-bearing resources have explicit owners."
+    ]
+  },
+  "invariants": [
+    {
+      "id": "INV-PYTHON-179162261E90",
+      "level": "must",
+      "when": {
+        "allOf": [],
+        "anyOf": [],
+        "noneOf": []
+      },
+      "outcome": "Import dependencies are acyclic, declared pure cores do not depend on framework or vendor runtime types, adopted protocol, storage, and vendor types are translated or proven stable and non-leaking at their declared boundaries, and every authoritative fact, shared mutable state, and long-lived task has an explicit owner or conflict protocol.",
+      "equivalenceCriteria": "Flat modules, framework-shaped applications, and layered packages all qualify when repeatable dependency evidence, boundary translations, and ownership paths prove the same result without requiring an unused Domain layer.",
+      "evidenceKinds": [
+        "code",
+        "documentation",
+        "test"
+      ],
+      "checkRefs": [
+        "python.tests"
+      ],
+      "scenarioRefs": []
+    },
+    {
+      "id": "INV-PYTHON-55E6205E82FC",
+      "level": "must",
+      "when": {
+        "allOf": [],
+        "anyOf": [],
+        "noneOf": []
+      },
+      "outcome": "Configuration, connections, transactions, files, tasks, threads, processes, and workers have bounded startup, cancellation, shutdown, and cleanup semantics.",
+      "equivalenceCriteria": "Framework hooks, context managers, explicit composition roots, or other mechanisms qualify when ownership and every failure path are observable and bounded.",
+      "evidenceKinds": [
+        "code",
+        "runtime",
+        "test"
+      ],
+      "checkRefs": [
+        "python.tests"
+      ],
+      "scenarioRefs": [
+        "python.process-model"
+      ]
+    },
+    {
+      "id": "INV-PYTHON-42D40B6B4A44",
+      "level": "must",
+      "when": {
+        "allOf": [],
+        "anyOf": [],
+        "noneOf": []
+      },
+      "outcome": "Untrusted inputs receive runtime validation and protected resources receive actor, tenant, scope, and ownership authorization without leaking secrets through artifacts or observability.",
+      "equivalenceCriteria": "Different validation, authorization, and secret-injection tools comply when negative tests and artifact inspection protect the same boundaries.",
+      "evidenceKinds": [
+        "code",
+        "config",
+        "test"
+      ],
+      "checkRefs": [
+        "python.tests"
+      ],
+      "scenarioRefs": []
+    },
+    {
+      "id": "INV-PYTHON-CAA3036E5C21",
+      "level": "must",
+      "when": {
+        "allOf": [],
+        "anyOf": [],
+        "noneOf": []
+      },
+      "outcome": "Timeout, cancellation, retry, duplicate delivery, transaction, migration, cache, and external-side-effect behavior follows the real failure semantics of each adopted capability.",
+      "equivalenceCriteria": "An alternative control is valid when it bounds work, preserves required consistency, and proves safe duplicate and partial-failure behavior.",
+      "evidenceKinds": [
+        "code",
+        "runtime",
+        "test"
+      ],
+      "checkRefs": [
+        "python.tests"
+      ],
+      "scenarioRefs": []
+    },
+    {
+      "id": "INV-PYTHON-1BD598FC52DA",
+      "level": "must",
+      "when": {
+        "allOf": [],
+        "anyOf": [],
+        "noneOf": []
+      },
+      "outcome": "Every declared Library, CLI, Service, and Worker entry and deliverable is identifiable and reproducibly validated from a clean checkout with consistent distribution, import package, public API, requires-python, dependency, tool, generated-input, Python-version, and platform contracts.",
+      "equivalenceCriteria": "A non-distributed source application complies when clean source-entry evidence exercises its actual runtime contract; a distributed project additionally requires clean installed-artifact evidence that binds metadata, public API, entry points, package data, and the declared Python and platform matrix.",
+      "evidenceKinds": [
+        "build",
+        "config",
+        "test"
+      ],
+      "checkRefs": [
+        "python.compile",
+        "python.tests",
+        "python.wheel"
+      ],
+      "scenarioRefs": [
+        "python.entry-contracts",
+        "python.installed-artifact",
+        "python.support-matrix"
+      ]
+    },
+    {
+      "id": "INV-PYTHON-E053913BD3A5",
+      "level": "must",
+      "when": {
+        "allOf": [
+          "python.multiprocessing"
+        ],
+        "anyOf": [],
+        "noneOf": []
+      },
+      "outcome": "Process creation and worker sizing match the supported platform start method and do not inherit unsafe pools, sockets, locks, threads, or random state.",
+      "equivalenceCriteria": "Spawn, forkserver, safe post-fork recreation, or another verified process model qualifies when platform tests prove resource isolation and bounded capacity.",
+      "evidenceKinds": [
+        "code",
+        "runtime",
+        "test"
+      ],
+      "checkRefs": [
+        "python.tests"
+      ],
+      "scenarioRefs": [
+        "python.process-model"
+      ]
+    }
+  ],
+  "checks": [
+    {
+      "id": "python.compile",
+      "when": {
+        "allOf": [],
+        "anyOf": [],
+        "noneOf": []
+      },
+      "platforms": [
+        "any"
+      ],
+      "argvTemplate": [
+        "{{python}}",
+        "-m",
+        "compileall",
+        "-q",
+        "{{sourceRoot}}"
+      ],
+      "parameters": [
+        "python",
+        "sourceRoot"
+      ],
+      "sideEffect": "local-artifacts",
+      "proves": [
+        "Selected source files compile as Python syntax."
+      ],
+      "doesNotProve": [
+        "Imports are side-effect safe or delivered package contents are complete."
+      ],
+      "invariantRefs": [
+        "INV-PYTHON-1BD598FC52DA"
+      ]
+    },
+    {
+      "id": "python.tests",
+      "when": {
+        "allOf": [],
+        "anyOf": [],
+        "noneOf": []
+      },
+      "platforms": [
+        "any"
+      ],
+      "argvTemplate": [
+        "{{python}}",
+        "-m",
+        "{{testRunner}}"
+      ],
+      "parameters": [
+        "python",
+        "testRunner"
+      ],
+      "sideEffect": "local-artifacts",
+      "proves": [
+        "The repository-selected test runner passes the exercised behaviors."
+      ],
+      "doesNotProve": [
+        "Untested platforms, entry points, and failure paths are correct."
+      ],
+      "invariantRefs": [
+        "INV-PYTHON-179162261E90",
+        "INV-PYTHON-1BD598FC52DA",
+        "INV-PYTHON-42D40B6B4A44",
+        "INV-PYTHON-55E6205E82FC",
+        "INV-PYTHON-CAA3036E5C21",
+        "INV-PYTHON-E053913BD3A5"
+      ]
+    },
+    {
+      "id": "python.wheel",
+      "when": {
+        "allOf": [
+          "python.public-distribution"
+        ],
+        "anyOf": [],
+        "noneOf": []
+      },
+      "platforms": [
+        "any"
+      ],
+      "argvTemplate": [
+        "{{python}}",
+        "-m",
+        "build"
+      ],
+      "parameters": [
+        "python"
+      ],
+      "sideEffect": "local-artifacts",
+      "proves": [
+        "The declared build backend can create distribution artifacts."
+      ],
+      "doesNotProve": [
+        "A clean installation contains every required module and data file."
+      ],
+      "invariantRefs": [
+        "INV-PYTHON-1BD598FC52DA"
+      ]
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "python.entry-contracts",
+      "when": {
+        "allOf": [],
+        "anyOf": [
+          "python.entry.cli",
+          "python.entry.library",
+          "python.entry.service",
+          "python.entry.worker"
+        ],
+        "noneOf": []
+      },
+      "platforms": [
+        "any"
+      ],
+      "failure": "Source-level tests pass while an actual Library import, CLI exit path, Service lifecycle, or Worker retry and drain contract is missing or points at different code.",
+      "requiredOutcome": "Exercise every declared entry through its real public or process boundary, including applicable startup, input, output, readiness, interruption, retry, drain, and shutdown behavior.",
+      "invariantRefs": [
+        "INV-PYTHON-1BD598FC52DA"
+      ]
+    },
+    {
+      "id": "python.installed-artifact",
+      "when": {
+        "allOf": [
+          "python.public-distribution"
+        ],
+        "anyOf": [],
+        "noneOf": []
+      },
+      "platforms": [
+        "any"
+      ],
+      "failure": "Editable or source-root tests pass while the built wheel omits modules, data, typing markers, or entry points.",
+      "requiredOutcome": "Install and smoke-test the normal artifact in a clean environment; also test the sdist-to-wheel route when an sdist is shipped.",
+      "invariantRefs": [
+        "INV-PYTHON-1BD598FC52DA"
+      ]
+    },
+    {
+      "id": "python.process-model",
+      "when": {
+        "allOf": [
+          "python.multiprocessing"
+        ],
+        "anyOf": [],
+        "noneOf": []
+      },
+      "platforms": [
+        "any"
+      ],
+      "failure": "A platform start-method change or fork after threads duplicates unsafe resources and corrupts lifecycle assumptions.",
+      "requiredOutcome": "Pin or discover the real start method, recreate unsafe resources after process creation, and validate declared platform and worker combinations.",
+      "invariantRefs": [
+        "INV-PYTHON-55E6205E82FC",
+        "INV-PYTHON-E053913BD3A5"
+      ]
+    },
+    {
+      "id": "python.support-matrix",
+      "when": {
+        "allOf": [],
+        "anyOf": [],
+        "noneOf": []
+      },
+      "platforms": [
+        "any"
+      ],
+      "failure": "Metadata or documentation claims a Python version or platform that cannot import, run the declared entry, or pass the risk-relevant tests.",
+      "requiredOutcome": "Run the actual entry and risk-relevant tests on every declared stable Python and critical platform combination, including the minimum version, and keep requires-python and artifact tags consistent with the evidence.",
+      "invariantRefs": [
+        "INV-PYTHON-1BD598FC52DA"
+      ]
+    }
+  ]
+}

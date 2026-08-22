@@ -1,0 +1,190 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "steward.impact-plan.v1",
+  "title": "Steward Impact Plan v1",
+  "description": "Canonical output of verification_pipeline.plan_impact. The shared validator additionally re-observes Git state, checks profile/catalog bindings, dependency closure, complete full fallback, and the content digest.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaId",
+    "schemaVersion",
+    "projectId",
+    "bindings",
+    "repository",
+    "changes",
+    "impact",
+    "contentDigest"
+  ],
+  "properties": {
+    "schemaId": {"const": "steward.impact-plan"},
+    "schemaVersion": {"const": 1},
+    "projectId": {"$ref": "#/$defs/id"},
+    "bindings": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "profileFingerprint",
+        "verificationCatalogFingerprint",
+        "portableSourceFingerprint"
+      ],
+      "properties": {
+        "profileFingerprint": {"$ref": "#/$defs/hash"},
+        "verificationCatalogFingerprint": {"$ref": "#/$defs/hash"},
+        "portableSourceFingerprint": {
+          "oneOf": [
+            {"type": "null"},
+            {"$ref": "#/$defs/hash"}
+          ]
+        }
+      }
+    },
+    "repository": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "provider",
+        "headCommit",
+        "headTree",
+        "baseInput",
+        "mergeBaseCommit",
+        "changeSnapshotFingerprint"
+      ],
+      "properties": {
+        "provider": {"const": "git"},
+        "headCommit": {"$ref": "#/$defs/nullableObjectId"},
+        "headTree": {"$ref": "#/$defs/nullableObjectId"},
+        "baseInput": {
+          "oneOf": [
+            {"type": "null"},
+            {"$ref": "#/$defs/nonEmptyString"}
+          ]
+        },
+        "mergeBaseCommit": {"$ref": "#/$defs/nullableObjectId"},
+        "changeSnapshotFingerprint": {
+          "oneOf": [
+            {"type": "null"},
+            {"$ref": "#/$defs/hash"}
+          ]
+        }
+      }
+    },
+    "changes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["committed", "staged", "unstaged", "untracked"],
+      "properties": {
+        "committed": {"$ref": "#/$defs/changeArray"},
+        "staged": {"$ref": "#/$defs/changeArray"},
+        "unstaged": {"$ref": "#/$defs/changeArray"},
+        "untracked": {"$ref": "#/$defs/changeArray"}
+      }
+    },
+    "impact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mode",
+        "reasonCodes",
+        "highImpactRules",
+        "directPackageIds",
+        "affectedPackageIds",
+        "guardIds",
+        "typecheckCaseIds",
+        "selectedCaseIds",
+        "fullCaseIds"
+      ],
+      "properties": {
+        "mode": {"enum": ["quick", "full"]},
+        "reasonCodes": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "AMBIGUOUS_PACKAGE_OWNER",
+              "CHANGE_SNAPSHOT_UNSTABLE",
+              "CHANGE_SNAPSHOT_UNTRUSTED",
+              "HIGH_IMPACT_PATH",
+              "MERGE_BASE_UNAVAILABLE",
+              "UNMERGED_INDEX",
+              "UNOWNED_PATH"
+            ]
+          },
+          "uniqueItems": true
+        },
+        "highImpactRules": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/pathPattern"},
+          "uniqueItems": true
+        },
+        "directPackageIds": {"$ref": "#/$defs/packageIdArray"},
+        "affectedPackageIds": {"$ref": "#/$defs/packageIdArray"},
+        "guardIds": {"$ref": "#/$defs/idArray"},
+        "typecheckCaseIds": {"$ref": "#/$defs/idArray"},
+        "selectedCaseIds": {
+          "allOf": [
+            {"$ref": "#/$defs/idArray"},
+            {"minItems": 1}
+          ]
+        },
+        "fullCaseIds": {
+          "allOf": [
+            {"$ref": "#/$defs/idArray"},
+            {"minItems": 1}
+          ]
+        }
+      }
+    },
+    "contentDigest": {"$ref": "#/$defs/hash"}
+  },
+  "$defs": {
+    "nonEmptyString": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?!\\s)(?![\\s\\S]*[\\u0000\\u000A\\u000D])(?:[\\s\\S]*\\S)?$"
+    },
+    "hash": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "nullableObjectId": {
+      "oneOf": [
+        {"type": "null"},
+        {"type": "string", "pattern": "^[0-9a-f]{40}(?:[0-9a-f]{24})?$"}
+      ]
+    },
+    "relativePath": {
+      "type": "string",
+      "pattern": "^(?![A-Za-z]:)(?!/)(?!.*\\\\)(?!.*(?:^|/)\\.\\.?(?:/|$))[^/\\u0000-\\u001F]+(?:/[^/\\u0000-\\u001F]+)*$"
+    },
+    "pathPattern": {
+      "type": "string",
+      "pattern": "^(?![A-Za-z]:)(?!/)(?!.*\\\\)(?!.*(?:^|/)\\.\\.?(?:/|$))(?!.*[?\\[\\]])[^*/\\u0000-\\u001F]+(?:/[^*/\\u0000-\\u001F]+)*(?:/\\*\\*)?$"
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$"
+    },
+    "idArray": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/id"},
+      "uniqueItems": true
+    },
+    "packageIdArray": {
+      "type": "array",
+      "items": {"type": "string", "pattern": "^[a-z][a-z0-9-]*$"},
+      "uniqueItems": true
+    },
+    "change": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "path"],
+      "properties": {
+        "status": {"enum": ["?", "A", "B", "C", "D", "M", "R", "T", "U", "X"]},
+        "path": {"$ref": "#/$defs/relativePath"}
+      }
+    },
+    "changeArray": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/change"}
+    }
+  }
+}

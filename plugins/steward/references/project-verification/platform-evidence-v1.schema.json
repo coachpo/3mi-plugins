@@ -1,0 +1,188 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "steward.platform-evidence.v1",
+  "title": "Steward Platform Evidence Bundle v1",
+  "description": "Canonical final-regression projection emitted by the closed-loop platform evidence exporter. The bundled validator additionally checks entry/case order, same-source bindings, fingerprint integrity, safe persistence, and final PASS semantics.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "kind",
+    "binding",
+    "entry",
+    "campaign",
+    "cases",
+    "bundleFingerprint"
+  ],
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "kind": {"const": "steward.platform-evidence"},
+    "binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "commit",
+        "sourceFingerprint",
+        "verificationCatalogFingerprint",
+        "profileFingerprint",
+        "ciPlanFingerprint",
+        "campaignCatalogFingerprint",
+        "executionSourceFingerprint"
+      ],
+      "properties": {
+        "commit": {"$ref": "#/$defs/objectId"},
+        "sourceFingerprint": {"$ref": "#/$defs/hash"},
+        "verificationCatalogFingerprint": {"$ref": "#/$defs/hash"},
+        "profileFingerprint": {"$ref": "#/$defs/hash"},
+        "ciPlanFingerprint": {"$ref": "#/$defs/hash"},
+        "campaignCatalogFingerprint": {"$ref": "#/$defs/hash"},
+        "executionSourceFingerprint": {"$ref": "#/$defs/hash"}
+      }
+    },
+    "entry": {"$ref": "#/$defs/entry"},
+    "campaign": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "runtimePlatform", "finalRegressionAttemptId"],
+      "properties": {
+        "id": {"$ref": "#/$defs/nonEmptyString"},
+        "runtimePlatform": {"$ref": "#/$defs/platform"},
+        "finalRegressionAttemptId": {"$ref": "#/$defs/nonEmptyString"}
+      }
+    },
+    "cases": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/case"}
+    },
+    "bundleFingerprint": {"$ref": "#/$defs/hash"}
+  },
+  "$defs": {
+    "nonEmptyString": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?!\\s)(?![\\s\\S]*[\\u0000\\u000A\\u000D])(?:[\\s\\S]*\\S)?$"
+    },
+    "hash": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "objectId": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}(?:[0-9a-f]{24})?$"
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$"
+    },
+    "platform": {
+      "enum": ["darwin", "linux", "windows"]
+    },
+    "relativePath": {
+      "type": "string",
+      "pattern": "^(?![A-Za-z]:)(?!/)(?!.*\\\\)(?!.*(?:^|/)\\.\\.?(?:/|$))[^/\\u0000-\\u001F]+(?:/[^/\\u0000-\\u001F]+)*$"
+    },
+    "entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "platform", "shardIndex", "shardCount", "caseIds"],
+      "properties": {
+        "id": {"$ref": "#/$defs/id"},
+        "kind": {"enum": ["selector", "platform"]},
+        "platform": {"$ref": "#/$defs/platform"},
+        "shardIndex": {"type": "integer", "minimum": 1},
+        "shardCount": {"type": "integer", "minimum": 1},
+        "caseIds": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "#/$defs/id"},
+          "uniqueItems": true
+        }
+      }
+    },
+    "artifactManifest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["relativePath", "size", "sha256"],
+      "properties": {
+        "relativePath": {"$ref": "#/$defs/relativePath"},
+        "size": {"type": "integer", "minimum": 0},
+        "sha256": {"$ref": "#/$defs/hash"}
+      }
+    },
+    "evidenceFile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "size", "sha256"],
+      "properties": {
+        "path": {"$ref": "#/$defs/relativePath"},
+        "size": {"type": "integer", "minimum": 0},
+        "sha256": {"$ref": "#/$defs/hash"}
+      }
+    },
+    "pathArray": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/relativePath"},
+      "uniqueItems": true
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "requiredFiles",
+        "nonEmptyFiles",
+        "missingFiles",
+        "emptyFiles",
+        "files",
+        "secretLikeContent"
+      ],
+      "properties": {
+        "requiredFiles": {"$ref": "#/$defs/pathArray"},
+        "nonEmptyFiles": {"$ref": "#/$defs/pathArray"},
+        "missingFiles": {
+          "allOf": [
+            {"$ref": "#/$defs/pathArray"},
+            {"maxItems": 0}
+          ]
+        },
+        "emptyFiles": {
+          "allOf": [
+            {"$ref": "#/$defs/pathArray"},
+            {"maxItems": 0}
+          ]
+        },
+        "files": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/evidenceFile"}
+        },
+        "secretLikeContent": {"const": false}
+      }
+    },
+    "case": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "round",
+        "status",
+        "runId",
+        "sourceFingerprintBefore",
+        "sourceFingerprintAfter",
+        "artifactDir",
+        "artifactManifest",
+        "evidence"
+      ],
+      "properties": {
+        "id": {"$ref": "#/$defs/id"},
+        "round": {"const": "regression"},
+        "status": {"const": "PASS"},
+        "runId": {"$ref": "#/$defs/nonEmptyString"},
+        "sourceFingerprintBefore": {"$ref": "#/$defs/hash"},
+        "sourceFingerprintAfter": {"$ref": "#/$defs/hash"},
+        "artifactDir": {"$ref": "#/$defs/relativePath"},
+        "artifactManifest": {"$ref": "#/$defs/artifactManifest"},
+        "evidence": {"$ref": "#/$defs/evidence"}
+      }
+    }
+  }
+}

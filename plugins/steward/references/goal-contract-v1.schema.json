@@ -1,0 +1,122 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "steward.goal-contract.v1",
+  "title": "Steward GOAL Contract View v1",
+  "description": "Machine view emitted by scripts/goal_contract.py. The shared validator additionally enforces field/view equality and contiguous C1..Cn IDs.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaId",
+    "schemaVersion",
+    "objective",
+    "fields",
+    "completionCriteria"
+  ],
+  "properties": {
+    "schemaId": {
+      "const": "steward.goal-contract"
+    },
+    "schemaVersion": {
+      "const": 1
+    },
+    "objective": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4000,
+      "pattern": "^结果：[^\\u0000-\\u001F\\u007F-\\u009F\\u061C\\u200E\\u200F\\u2028-\\u202E\\u2066-\\u2069]+\\n证据与上下文：[^\\u0000-\\u001F\\u007F-\\u009F\\u061C\\u200E\\u200F\\u2028-\\u202E\\u2066-\\u2069]+\\n范围：[^\\u0000-\\u001F\\u007F-\\u009F\\u061C\\u200E\\u200F\\u2028-\\u202E\\u2066-\\u2069]+\\n约束与授权：[^\\u0000-\\u001F\\u007F-\\u009F\\u061C\\u200E\\u200F\\u2028-\\u202E\\u2066-\\u2069]+\\n完成标准：[^\\u0000-\\u001F\\u007F-\\u009F\\u061C\\u200E\\u200F\\u2028-\\u202E\\u2066-\\u2069]+\\n正当阻塞项：[^\\u0000-\\u001F\\u007F-\\u009F\\u061C\\u200E\\u200F\\u2028-\\u202E\\u2066-\\u2069]+\\n最终交付：[^\\u0000-\\u001F\\u007F-\\u009F\\u061C\\u200E\\u200F\\u2028-\\u202E\\u2066-\\u2069]+(?![\\s\\S])"
+    },
+    "fields": {
+      "type": "array",
+      "minItems": 7,
+      "maxItems": 7,
+      "prefixItems": [
+        { "$ref": "#/$defs/resultField" },
+        { "$ref": "#/$defs/evidenceAndContextField" },
+        { "$ref": "#/$defs/scopeField" },
+        { "$ref": "#/$defs/constraintsAndAuthorizationField" },
+        { "$ref": "#/$defs/completionCriteriaField" },
+        { "$ref": "#/$defs/legitimateBlockersField" },
+        { "$ref": "#/$defs/finalDeliveryField" }
+      ],
+      "items": false
+    },
+    "completionCriteria": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "text"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^C[1-9][0-9]*(?![\\s\\S])"
+          },
+          "text": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[^\\u0000-\\u001F\\u007F-\\u009F\\u061C\\u200E\\u200F\\u2028-\\u202E\\u2066-\\u2069]+(?![\\s\\S])"
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "fieldBase": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["key", "label", "value"],
+      "properties": {
+        "key": { "type": "string" },
+        "label": { "type": "string" },
+        "value": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[^\\u0000-\\u001F\\u007F-\\u009F\\u061C\\u200E\\u200F\\u2028-\\u202E\\u2066-\\u2069]+(?![\\s\\S])"
+        }
+      }
+    },
+    "resultField": {
+      "allOf": [
+        { "$ref": "#/$defs/fieldBase" },
+        { "properties": { "key": { "const": "result" }, "label": { "const": "结果" }, "value": { "not": { "const": "无" } } } }
+      ]
+    },
+    "evidenceAndContextField": {
+      "allOf": [
+        { "$ref": "#/$defs/fieldBase" },
+        { "properties": { "key": { "const": "evidenceAndContext" }, "label": { "const": "证据与上下文" } } }
+      ]
+    },
+    "scopeField": {
+      "allOf": [
+        { "$ref": "#/$defs/fieldBase" },
+        { "properties": { "key": { "const": "scope" }, "label": { "const": "范围" }, "value": { "not": { "const": "无" } } } }
+      ]
+    },
+    "constraintsAndAuthorizationField": {
+      "allOf": [
+        { "$ref": "#/$defs/fieldBase" },
+        { "properties": { "key": { "const": "constraintsAndAuthorization" }, "label": { "const": "约束与授权" } } }
+      ]
+    },
+    "completionCriteriaField": {
+      "allOf": [
+        { "$ref": "#/$defs/fieldBase" },
+        { "properties": { "key": { "const": "completionCriteria" }, "label": { "const": "完成标准" } } }
+      ]
+    },
+    "legitimateBlockersField": {
+      "allOf": [
+        { "$ref": "#/$defs/fieldBase" },
+        { "properties": { "key": { "const": "legitimateBlockers" }, "label": { "const": "正当阻塞项" } } }
+      ]
+    },
+    "finalDeliveryField": {
+      "allOf": [
+        { "$ref": "#/$defs/fieldBase" },
+        { "properties": { "key": { "const": "finalDelivery" }, "label": { "const": "最终交付" }, "value": { "not": { "const": "无" } } } }
+      ]
+    }
+  }
+}

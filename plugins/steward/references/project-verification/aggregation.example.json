@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "kind": "steward.platform-evidence-aggregation",
+  "ok": true,
+  "binding": {
+    "commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "sourceFingerprint": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+    "profileFingerprint": "sha256:80cc90512e852ab319d46c2bc09026673e688416c9df5706477223c0274f7c6e",
+    "verificationCatalogFingerprint": "sha256:48268b9e7b9aa7c6e7e47d17ae1bf0ecd1cb9235826cabc7e299e8531494fd5c",
+    "ciPlanFingerprint": "sha256:9fc39447b52a0b9e85baca6383e93ec3dae28b6dfc28e9fd9c4f25b471bc648d"
+  },
+  "requiredPlatforms": [
+    "linux",
+    "windows"
+  ],
+  "coveredPlatforms": [
+    "linux",
+    "windows"
+  ],
+  "expectedEntries": [
+    "linux-01-of-02",
+    "linux-02-of-02",
+    "selector-contract",
+    "windows-01-of-01"
+  ],
+  "coveredEntries": [
+    "linux-01-of-02",
+    "linux-02-of-02",
+    "selector-contract",
+    "windows-01-of-01"
+  ],
+  "expectedCaseIds": [
+    "selector-contract",
+    "core-typecheck",
+    "linux-integration",
+    "closed-loop-typecheck",
+    "windows-integration"
+  ],
+  "coveredCaseIds": [
+    "core-typecheck",
+    "linux-integration",
+    "closed-loop-typecheck",
+    "selector-contract",
+    "windows-integration"
+  ],
+  "bundleFingerprints": [
+    "sha256:34db02e91e5371179bebc0515bee40199dbe4c11dd3ac811d840b823d1347d73",
+    "sha256:41bb5c396875a9f9ba504616fb4f7340532c35c444465db27de15c50de76ca2a",
+    "sha256:54174a6579d2bfaa9ec1fadde15f56b89c5ee86c5a7dc6cda450470798a96a3d",
+    "sha256:0c0150ac4f79e346dbe133c343886b3958f6277a6e1fec66e72979af1d19e19e"
+  ],
+  "rejectionCodes": [],
+  "errors": [],
+  "aggregationFingerprint": "sha256:0ac8149517978e58a527800db1dfde74497904541f052c597d9c60f4e6f9e3c7"
+}

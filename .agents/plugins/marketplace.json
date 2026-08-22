@@ -1,0 +1,20 @@
+{
+  "name": "coachpo",
+  "interface": {
+    "displayName": "CoachPo"
+  },
+  "plugins": [
+    {
+      "name": "steward",
+      "source": {
+        "source": "local",
+        "path": "./plugins/steward"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

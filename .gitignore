@@ -1,0 +1,28 @@
+# macOS
+.DS_Store
+._*
+.Spotlight-V100
+.Trashes
+
+# Python（skills 脚本与 pytest）
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+
+# 编辑器与 IDE
+.idea/
+*.swp
+*.swo
+
+# 本地日志与临时文件
+*.log
+*.tmp
+
+# Codex 生成的本地项目文档
+/STATUS.md
+/CONTRIBUTING.md
+/docs/

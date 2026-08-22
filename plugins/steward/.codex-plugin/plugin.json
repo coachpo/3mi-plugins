@@ -1,0 +1,48 @@
+{
+  "name": "steward",
+  "version": "0.0.2",
+  "description": "\u4ece\u81ea\u7136\u8bed\u8a00\u9879\u76ee\u72b6\u6001\u548c\u4ea4\u4ed8\u76ee\u7684\u6d3e\u751f\u5f53\u524d\u8fed\u4ee3\u7b56\u7565\uff0c\u5e76\u4ee5\u8584\u7f16\u6392\u5668\u548c\u7a33\u5b9a\u673a\u5668\u5951\u7ea6\u8fde\u63a5 GOAL\u3001\u6280\u672f\u6808 profiles\u3001\u9879\u76ee\u4e0d\u53d8\u91cf\u3001\u8bed\u4e49\u98ce\u9669\u3001\u6c38\u4e45\u62a4\u680f\u548c\u53ef\u6062\u590d\u56de\u5f52\u5ba1\u8ba1\u3002",
+  "author": {
+    "name": "coachpo",
+    "url": "https://github.com/coachpo"
+  },
+  "homepage": "https://github.com/coachpo/plugins-codex/tree/main/plugins/steward#readme",
+  "repository": "https://github.com/coachpo/plugins-codex",
+  "license": "MIT",
+  "keywords": [
+    "agents-md",
+    "documentation",
+    "goals",
+    "claude-code",
+    "session-import",
+    "verification",
+    "invariants",
+    "semantic-review",
+    "architecture-profiles",
+    "control-plane",
+    "ci",
+    "testing",
+    "regression",
+    "steward",
+    "codex"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Steward",
+    "shortDescription": "GOAL \u5230\u6c38\u4e45\u6280\u672f\u62a4\u680f\u7684\u53ef\u8ffd\u8e2a\u5de5\u7a0b\u63a7\u5236\u9762",
+    "longDescription": "\u9762\u5411 Coding Agent \u7684\u4e5d\u6280\u80fd\u5de5\u7a0b\u63a7\u5236\u9762\uff1a\u4ece\u81ea\u7136\u8bed\u8a00\u9879\u76ee\u72b6\u6001\u548c\u4ea4\u4ed8\u76ee\u7684\u6d3e\u751f\u4e0e MVP \u5f00\u5173\u6b63\u4ea4\u7684\u5f53\u524d\u8fed\u4ee3\u7b56\u7565\uff0c\u5e76\u7528\u7a33\u5b9a\u673a\u5668\u5951\u7ea6\u628a\u53ef\u9a8c\u8bc1 GOAL\u3001\u5206\u5c42 AGENTS \u8def\u7531\u3001\u7248\u672c\u5316\u6280\u672f\u6808 profiles\u3001\u9879\u76ee\u4e0d\u53d8\u91cf\u3001\u9879\u76ee\u4e8b\u5b9e\u9a71\u52a8\u7684 local quick \u4e0e CI full\u3001\u53ea\u8bfb\u8bed\u4e49\u5bf9\u6297\u5ba1\u67e5\u3001\u53ef\u6062\u590d\u4fee\u590d\u590d\u6d4b\u3001\u6c38\u4e45\u62a4\u680f\u3001\u540c\u6e90\u5b8c\u6574\u56de\u5f52\u4e0e audit \u8fde\u6210\u8bc1\u636e\u95ed\u73af\uff1b\u6bcf\u4e2a\u6280\u80fd\u4ecd\u53ef\u72ec\u7acb\u8c03\u7528\uff0cClaude Code \u4f1a\u8bdd\u5bfc\u5165\u4f5c\u4e3a\u4fa7\u8def\u3002",
+    "developerName": "CoachPo",
+    "category": "Productivity",
+    "capabilities": [
+      "Interactive",
+      "Write"
+    ],
+    "defaultPrompt": [
+      "\u4f7f\u7528 $steward:start-consensus-goal \u5c06\u5f53\u524d\u5df2\u6536\u655b\u8bf7\u6c42\u521b\u5efa\u4e3a\u6301\u4e45 Goal\uff0c\u6216\u6062\u590d\u3001\u7eed\u8dd1\u517c\u5bb9\u7684\u6d3b\u52a8 Goal\uff1b\u4fdd\u7559\u5f53\u524d\u4efb\u52a1\u6388\u6743\u8fb9\u754c\u5e76\u9a8c\u8bc1\u5230\u7a33\u5b9a\u5b8c\u6210\u3002",
+      "\u4f7f\u7528 $steward:configure-project-verification \u5ba1\u67e5\u6216\u914d\u7f6e\u5f53\u524d\u9879\u76ee\u7684 local quick \u4e0e CI full \u9a8c\u8bc1\u6d41\u6c34\u7ebf\u3002",
+      "\u4f7f\u7528 $steward:import-claude-code-sessions \u901a\u8fc7\u5b98\u65b9\u539f\u751f\u6d41\u7a0b\u5bfc\u5165\u6211\u9009\u5b9a\u7684 Claude Code \u4f1a\u8bdd\u5e76\u9a8c\u8bc1\u76ee\u6807\u3002"
+    ],
+    "brandColor": "#1A73E8",
+    "websiteURL": "https://github.com/coachpo/plugins-codex/tree/main/plugins/steward"
+  }
+}

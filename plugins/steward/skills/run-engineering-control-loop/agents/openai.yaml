@@ -1,0 +1,7 @@
+interface:
+  display_name: "Engineering Control Loop"
+  short_description: "运行从 GOAL、profiles 到同源回归审计的工程闭环"
+  default_prompt: "使用 $steward:run-engineering-control-loop 把这个已授权工程改动放入完整持久闭环，从兼容 Goal 运行到 request-bound Review、同源完整回归和 audit。"
+
+policy:
+  allow_implicit_invocation: false

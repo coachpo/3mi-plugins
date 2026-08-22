@@ -1,0 +1,30 @@
+{
+  "failedCaseId": "smoke-entry",
+  "failedRound": "initial",
+  "failedAttemptId": "attempt-0001-initial-00000000",
+  "failedSourceFingerprint": "sha256:replace-with-failure-fingerprint",
+  "fixedSourceFingerprint": "sha256:replace-with-current-fingerprint",
+  "rootCause": "Describe the proven root cause, not only the symptom.",
+  "violatedInvariant": "INV-CORE-0123456789AB",
+  "rootCauseSource": {
+    "path": "relative/path/to/root-cause-source",
+    "lineStart": 1,
+    "lineEnd": 1,
+    "symbol": "optional_symbol_name"
+  },
+  "resolvedFindingIds": ["RF-EXAMPLE-001"],
+  "changedFiles": ["relative/path/to/changed-file"],
+  "fixSummary": "Describe the smallest authorized repair and its scope.",
+  "externalCondition": false,
+  "permanentGuardrail": {
+    "kind": "test",
+    "sourcePath": "relative/path/to/permanent-guardrail",
+    "caseId": "smoke-entry",
+    "evidenceFile": "proof.json"
+  },
+  "minimalRegression": {
+    "evidence": [
+      "Name the focused local proof to be rerun by retest."
+    ]
+  }
+}

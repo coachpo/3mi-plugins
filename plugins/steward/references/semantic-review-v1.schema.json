@@ -1,0 +1,458 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "steward.semantic-review.v1",
+  "title": "Steward Semantic Review v1",
+  "description": "Canonical read-only RF findings and optional legacy baseline attestation emitted and validated by scripts/semantic_review.py. A reviewRequest always requires an attestation.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaId", "schemaVersion", "findings"],
+  "allOf": [
+    {
+      "if": {"required": ["reviewRequest"]},
+      "then": {
+        "required": ["attestation"],
+        "properties": {
+          "attestation": {
+            "properties": {
+              "gaps": {
+                "items": {
+                  "if": {
+                    "required": ["kind"],
+                    "properties": {
+                      "kind": {"const": "unreviewed-scope"}
+                    }
+                  },
+                  "then": {"required": ["paths"]}
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "required": ["attestation"],
+        "properties": {
+          "attestation": {
+            "properties": {"outcome": {"const": "findings"}},
+            "required": ["outcome"]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "findings": {"minItems": 1},
+          "attestation": {"properties": {"gaps": {"maxItems": 0}}}
+        }
+      }
+    },
+    {
+      "if": {
+        "required": ["attestation"],
+        "properties": {
+          "attestation": {
+            "properties": {"outcome": {"const": "no-findings"}},
+            "required": ["outcome"]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "findings": {"maxItems": 0},
+          "attestation": {"properties": {"gaps": {"maxItems": 0}}}
+        }
+      }
+    },
+    {
+      "if": {
+        "required": ["attestation"],
+        "properties": {
+          "attestation": {
+            "properties": {"outcome": {"const": "incomplete"}},
+            "required": ["outcome"]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "attestation": {"properties": {"gaps": {"minItems": 1}}}
+        }
+      }
+    }
+  ],
+  "properties": {
+    "schemaId": {"const": "steward.semantic-review"},
+    "schemaVersion": {"const": 1},
+    "attestation": {"$ref": "#/$defs/attestation"},
+    "reviewRequest": {"$ref": "#/$defs/reviewRequest"},
+    "findings": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/finding"}
+    }
+  },
+  "$defs": {
+    "nonEmptyString": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?![\\s\\S]*[\\u0000\\u000A-\\u000D\\u001C-\\u001E\\u0085\\u2028\\u2029])\\S(?:.*\\S)?$"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "relativePath": {
+      "allOf": [
+        {"$ref": "#/$defs/nonEmptyString"},
+        {"pattern": "^(?![A-Za-z]:)(?!\\.\\.?$)(?!\\.\\.?/)[^/\\\\]+(?:/(?!\\.\\.?$)(?!\\.\\.?/)[^/\\\\]+)*$"}
+      ]
+    },
+    "cwdPath": {
+      "oneOf": [
+        {"const": "."},
+        {"$ref": "#/$defs/relativePath"}
+      ]
+    },
+    "stringArray": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/nonEmptyString"},
+      "uniqueItems": true
+    },
+    "criterionIds": {
+      "type": "array",
+      "items": {"type": "string", "pattern": "^C[1-9][0-9]*$"},
+      "uniqueItems": true
+    },
+    "invariantIds": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^INV-[A-Z][A-Z0-9]*-[0-9A-F]{12}$"
+      },
+      "uniqueItems": true
+    },
+    "findingIds": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "pattern": "^RF-[A-Z0-9][A-Z0-9-]*$"},
+      "uniqueItems": true
+    },
+    "scopeFile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": {"$ref": "#/$defs/relativePath"},
+        "sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "sourceReviewTarget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "sourceFingerprint"],
+      "properties": {
+        "kind": {"const": "source"},
+        "sourceFingerprint": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "diffReviewTarget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "sourceFingerprint",
+        "baseIdentity",
+        "headIdentity"
+      ],
+      "properties": {
+        "kind": {"const": "diff"},
+        "sourceFingerprint": {"$ref": "#/$defs/sha256"},
+        "baseIdentity": {"$ref": "#/$defs/nonEmptyString"},
+        "headIdentity": {"$ref": "#/$defs/nonEmptyString"}
+      }
+    },
+    "reviewRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["target", "requestedPaths", "requestSha256"],
+      "properties": {
+        "target": {
+          "oneOf": [
+            {"$ref": "#/$defs/sourceReviewTarget"},
+            {"$ref": "#/$defs/diffReviewTarget"}
+          ]
+        },
+        "requestedPaths": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "#/$defs/relativePath"},
+          "uniqueItems": true
+        },
+        "requestSha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "reviewGap": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "detail", "neededEvidence"],
+      "allOf": [
+        {
+          "if": {
+            "required": ["kind"],
+            "properties": {"kind": {"const": "unreviewed-scope"}}
+          },
+          "else": {"properties": {"paths": false}}
+        }
+      ],
+      "properties": {
+        "id": {"type": "string", "pattern": "^RG-[A-Z0-9][A-Z0-9-]*$"},
+        "kind": {
+          "enum": [
+            "insufficient-evidence",
+            "unreviewed-scope",
+            "unavailable-context"
+          ]
+        },
+        "detail": {"$ref": "#/$defs/nonEmptyString"},
+        "neededEvidence": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "#/$defs/nonEmptyString"},
+          "uniqueItems": true
+        },
+        "paths": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "#/$defs/relativePath"},
+          "uniqueItems": true
+        }
+      }
+    },
+    "attestation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sourceFingerprint",
+        "goalContractSha256",
+        "invariantsSha256",
+        "outcome",
+        "scope",
+        "gaps"
+      ],
+      "properties": {
+        "sourceFingerprint": {"$ref": "#/$defs/sha256"},
+        "goalContractSha256": {"$ref": "#/$defs/sha256"},
+        "invariantsSha256": {"$ref": "#/$defs/sha256"},
+        "outcome": {"enum": ["findings", "no-findings", "incomplete"]},
+        "scope": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "#/$defs/scopeFile"},
+          "uniqueItems": true
+        },
+        "gaps": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/reviewGap"},
+          "uniqueItems": true
+        }
+      }
+    },
+    "location": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "lineStart", "lineEnd"],
+      "properties": {
+        "path": {"$ref": "#/$defs/relativePath"},
+        "lineStart": {"type": "integer", "minimum": 1},
+        "lineEnd": {"type": "integer", "minimum": 1},
+        "symbol": {"$ref": "#/$defs/nonEmptyString"}
+      }
+    },
+    "evidenceItem": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["location", "fact"],
+      "properties": {
+        "location": {"$ref": "#/$defs/location"},
+        "fact": {"$ref": "#/$defs/nonEmptyString"}
+      }
+    },
+    "triggerStep": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["step", "location", "condition", "transition"],
+      "properties": {
+        "step": {"type": "integer", "minimum": 1},
+        "location": {"$ref": "#/$defs/location"},
+        "condition": {"$ref": "#/$defs/nonEmptyString"},
+        "transition": {"$ref": "#/$defs/nonEmptyString"}
+      }
+    },
+    "counterexample": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "preconditions",
+        "steps",
+        "expectedOutcome",
+        "riskOutcome",
+        "falsifiedWhen"
+      ],
+      "properties": {
+        "preconditions": {
+          "allOf": [{"$ref": "#/$defs/stringArray"}, {"minItems": 1}]
+        },
+        "steps": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "#/$defs/nonEmptyString"}
+        },
+        "expectedOutcome": {"$ref": "#/$defs/nonEmptyString"},
+        "riskOutcome": {"$ref": "#/$defs/nonEmptyString"},
+        "falsifiedWhen": {"$ref": "#/$defs/nonEmptyString"}
+      }
+    },
+    "evidenceContract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["requiredFiles", "nonEmptyFiles"],
+      "properties": {
+        "requiredFiles": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "#/$defs/relativePath"},
+          "uniqueItems": true
+        },
+        "nonEmptyFiles": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "#/$defs/relativePath"},
+          "uniqueItems": true
+        }
+      }
+    },
+    "runner": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "required": [
+        "argv",
+        "cwd",
+        "timeoutSeconds",
+        "fixture",
+        "externalCapabilities",
+        "evidence",
+        "sourceEvidence"
+      ],
+      "properties": {
+        "argv": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "#/$defs/nonEmptyString"}
+        },
+        "cwd": {"$ref": "#/$defs/cwdPath"},
+        "timeoutSeconds": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 604800
+        },
+        "fixture": {
+          "oneOf": [{"type": "null"}, {"$ref": "#/$defs/relativePath"}]
+        },
+        "externalCapabilities": {
+          "type": "array",
+          "items": {"type": "string", "pattern": "^[A-Za-z][A-Za-z0-9._:-]*$"},
+          "uniqueItems": true
+        },
+        "evidence": {"$ref": "#/$defs/evidenceContract"},
+        "sourceEvidence": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "#/$defs/evidenceItem"}
+        }
+      }
+    },
+    "caseCandidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "category",
+        "required",
+        "platform",
+        "dependsOn",
+        "coversCriteria",
+        "coversInvariants",
+        "reviewFindingIds",
+        "scenarioTags",
+        "quick",
+        "runner",
+        "conversionBlockers"
+      ],
+      "properties": {
+        "id": {"type": "string", "pattern": "^[A-Za-z0-9._-]+$"},
+        "category": {
+          "enum": ["smoke", "functional", "integration", "workflow", "role-play"]
+        },
+        "required": {"type": "boolean"},
+        "platform": {"enum": ["any", "darwin", "linux", "windows", "posix"]},
+        "dependsOn": {
+          "type": "array",
+          "items": {"type": "string", "pattern": "^[A-Za-z0-9._-]+$"},
+          "uniqueItems": true
+        },
+        "coversCriteria": {"$ref": "#/$defs/criterionIds"},
+        "coversInvariants": {"$ref": "#/$defs/invariantIds"},
+        "reviewFindingIds": {"$ref": "#/$defs/findingIds"},
+        "scenarioTags": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"enum": ["failure", "compatibility", "platform"]},
+          "uniqueItems": true
+        },
+        "quick": {"type": "boolean"},
+        "runner": {"$ref": "#/$defs/runner"},
+        "conversionBlockers": {"$ref": "#/$defs/stringArray"}
+      }
+    },
+    "finding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "title",
+        "required",
+        "resolutionState",
+        "support",
+        "criteriaIds",
+        "invariantIds",
+        "evidence",
+        "triggerPath",
+        "observableConsequence",
+        "counterexample",
+        "caseCandidate"
+      ],
+      "properties": {
+        "id": {"type": "string", "pattern": "^RF-[A-Z0-9][A-Z0-9-]*$"},
+        "title": {"$ref": "#/$defs/nonEmptyString"},
+        "required": {"type": "boolean"},
+        "resolutionState": {"enum": ["open", "resolved", "invalidated"]},
+        "support": {"enum": ["code-supported", "observed"]},
+        "criteriaIds": {"$ref": "#/$defs/criterionIds"},
+        "invariantIds": {"$ref": "#/$defs/invariantIds"},
+        "evidence": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "#/$defs/evidenceItem"}
+        },
+        "triggerPath": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "#/$defs/triggerStep"}
+        },
+        "observableConsequence": {"$ref": "#/$defs/nonEmptyString"},
+        "counterexample": {"$ref": "#/$defs/counterexample"},
+        "caseCandidate": {"$ref": "#/$defs/caseCandidate"}
+      }
+    }
+  }
+}

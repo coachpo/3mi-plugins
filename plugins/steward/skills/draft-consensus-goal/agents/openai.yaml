@@ -1,0 +1,7 @@
+interface:
+  display_name: "Draft Consensus Goal"
+  short_description: "起草七行中文 GOAL，超限时生成本地交接文件"
+  default_prompt: "使用 $steward:draft-consensus-goal 把当前已接受的决定整理为机器校验、带稳定 C* 的七行中文 GOAL 文本；不要创建或执行持久 Goal。"
+
+policy:
+  allow_implicit_invocation: false

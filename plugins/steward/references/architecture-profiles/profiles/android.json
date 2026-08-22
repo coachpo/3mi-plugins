@@ -1,0 +1,162 @@
+{
+  "schemaVersion": 1,
+  "id": "android",
+  "profileVersion": "1.0.0",
+  "kind": "standalone",
+  "invariantPrefix": "ANDROID",
+  "extends": [],
+  "baseline": {
+    "authored": "2026-08",
+    "technologies": ["Android Gradle Plugin 8", "AndroidX stable", "Jetpack Compose stable", "Kotlin and Gradle"],
+    "versionPolicy": "Stable outcomes apply across supported Android releases; verify lifecycle, permission, storage, build, and Jetpack mechanisms against the repository-pinned toolchain."
+  },
+  "selection": {
+    "scope": "component",
+    "activation": [
+      {"allOf": ["manifest:android", "source:android"], "anyOf": [], "noneOf": []}
+    ],
+    "supportingSignals": ["build:android-gradle", "source:android-compose"]
+  },
+  "capabilities": [
+    "android.background-work",
+    "android.deep-link",
+    "android.local-database",
+    "android.multivariant",
+    "android.persisted-input",
+    "android.webview"
+  ],
+  "layering": {
+    "referenceOnly": true,
+    "nodes": [
+      {"id": "app", "owns": ["application assembly", "navigation root", "variant configuration"]},
+      {"id": "ui", "owns": ["screen state projection", "user interaction"]},
+      {"id": "domain", "owns": ["optional business use cases and invariants"]},
+      {"id": "data", "owns": ["authoritative data coordination", "repository behavior"]},
+      {"id": "infrastructure", "owns": ["Android APIs", "database, network, and SDK adaptation"]}
+    ],
+    "edges": [
+      {"from": "app", "to": "ui"},
+      {"from": "ui", "to": "domain"},
+      {"from": "domain", "to": "data"},
+      {"from": "data", "to": "infrastructure"}
+    ],
+    "hardOutcomes": [
+      "Durable facts and state transitions have explicit owners and conflict rules.",
+      "Gradle and source dependencies are acyclic.",
+      "Longer-lived objects never retain shorter-lived UI owners unsafely."
+    ]
+  },
+  "invariants": [
+    {
+      "id": "INV-ANDROID-949B72EAA401",
+      "level": "must",
+      "when": {"allOf": [], "anyOf": [], "noneOf": []},
+      "outcome": "Gradle and source dependencies are acyclic, and durable facts, shared state, navigation effects, and asynchronous work have explicit owners.",
+      "equivalenceCriteria": "Single- or multi-module layouts qualify when dependency evidence and mutation paths prove the same ownership, direction, and absence of cycles.",
+      "evidenceKinds": ["code", "documentation", "test"],
+      "checkRefs": ["android.tests"],
+      "scenarioRefs": []
+    },
+    {
+      "id": "INV-ANDROID-698BEB983E6A",
+      "level": "must",
+      "when": {"allOf": [], "anyOf": [], "noneOf": []},
+      "outcome": "Every adopted exported component, deep link, WebView, file, network, credential, and external-input boundary enforces least privilege, authorization, ownership, and platform security controls.",
+      "equivalenceCriteria": "Different navigation and security mechanisms comply when manifest inspection and negative tests prove equivalent validation, isolation, secure transport, and non-disclosure.",
+      "evidenceKinds": ["code", "config", "test"],
+      "checkRefs": ["android.lint", "android.tests"],
+      "scenarioRefs": ["android.external-entry"]
+    },
+    {
+      "id": "INV-ANDROID-5767B4C972C3",
+      "level": "must",
+      "when": {"allOf": [], "anyOf": [], "noneOf": []},
+      "outcome": "Actual UI state, critical input, asynchronous work, and resources obey their declared lifecycle and process-death boundary without loss, duplicate effects, leaked owners, or main-thread blocking.",
+      "equivalenceCriteria": "Saved state, persistent storage, WorkManager, or another mechanism qualifies when recreation and cancellation tests prove the required durability and at-least-once behavior.",
+      "evidenceKinds": ["code", "runtime", "test"],
+      "checkRefs": ["android.tests"],
+      "scenarioRefs": ["android.process-death"]
+    },
+    {
+      "id": "INV-ANDROID-C24FB7717891",
+      "level": "must",
+      "when": {"allOf": ["android.local-database"], "anyOf": [], "noneOf": []},
+      "outcome": "Persistent data has a unique owner, an explicit conflict policy, and a tested non-destructive migration path across every supported upgrade window.",
+      "equivalenceCriteria": "Room or another storage layer complies when schema history and upgrade tests protect the same data and compatibility guarantees without production destructive fallback.",
+      "evidenceKinds": ["code", "config", "test"],
+      "checkRefs": ["android.tests"],
+      "scenarioRefs": ["android.database-upgrade"]
+    },
+    {
+      "id": "INV-ANDROID-525F3F3B758E",
+      "level": "must",
+      "when": {"allOf": [], "anyOf": [], "noneOf": []},
+      "outcome": "Every supported build variant, including the production artifact, resolves declared inputs and repeatably passes compilation, shrinking, signing preparation, lint, and risk-relevant tests from a clean checkout.",
+      "equivalenceCriteria": "Any Gradle topology qualifies when clean builds bind the actual variant, dependencies, resources, generated inputs, shrinker rules, and artifact without personal-machine state.",
+      "evidenceKinds": ["build", "config", "test"],
+      "checkRefs": ["android.assemble", "android.lint", "android.tests"],
+      "scenarioRefs": []
+    }
+  ],
+  "checks": [
+    {
+      "id": "android.assemble",
+      "when": {"allOf": [], "anyOf": [], "noneOf": []},
+      "platforms": ["any"],
+      "argvTemplate": ["{{gradleWrapper}}", "{{productionAssembleTask}}", "--no-daemon"],
+      "parameters": ["gradleWrapper", "productionAssembleTask"],
+      "sideEffect": "local-artifacts",
+      "proves": ["The declared production assembly task creates its artifact with the active pinned toolchain."],
+      "doesNotProve": ["Signing custody, runtime behavior, or every reflection path survives shrinking."],
+      "invariantRefs": ["INV-ANDROID-525F3F3B758E"]
+    },
+    {
+      "id": "android.lint",
+      "when": {"allOf": [], "anyOf": [], "noneOf": []},
+      "platforms": ["any"],
+      "argvTemplate": ["{{gradleWrapper}}", "{{lintTask}}", "--no-daemon"],
+      "parameters": ["gradleWrapper", "lintTask"],
+      "sideEffect": "local-artifacts",
+      "proves": ["Configured Android lint checks pass for the selected variant set."],
+      "doesNotProve": ["Runtime authorization, tenant ownership, or process-death recovery is correct."],
+      "invariantRefs": ["INV-ANDROID-525F3F3B758E", "INV-ANDROID-698BEB983E6A"]
+    },
+    {
+      "id": "android.tests",
+      "when": {"allOf": [], "anyOf": [], "noneOf": []},
+      "platforms": ["any"],
+      "argvTemplate": ["{{gradleWrapper}}", "{{testTask}}", "--no-daemon"],
+      "parameters": ["gradleWrapper", "testTask"],
+      "sideEffect": "local-artifacts",
+      "proves": ["The repository-selected Android tests pass for exercised variants and behavior."],
+      "doesNotProve": ["Unselected devices, API levels, lifecycle races, and production-only paths are correct."],
+      "invariantRefs": ["INV-ANDROID-525F3F3B758E", "INV-ANDROID-5767B4C972C3", "INV-ANDROID-698BEB983E6A", "INV-ANDROID-949B72EAA401", "INV-ANDROID-C24FB7717891"]
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "android.database-upgrade",
+      "when": {"allOf": ["android.local-database"], "anyOf": [], "noneOf": []},
+      "platforms": ["android"],
+      "failure": "A user upgrades across a supported version gap and schema opening crashes or silently destroys authoritative local data.",
+      "requiredOutcome": "Run migration tests from every supported starting schema through the production path and verify preserved facts and constraints.",
+      "invariantRefs": ["INV-ANDROID-C24FB7717891"]
+    },
+    {
+      "id": "android.external-entry",
+      "when": {"allOf": [], "anyOf": [], "noneOf": []},
+      "platforms": ["android"],
+      "failure": "An exported entry or untrusted WebView value bypasses type, permission, path, URL, actor, or resource-ownership validation.",
+      "requiredOutcome": "Enumerate the effective exported and WebView attack surface and exercise malformed, unauthorized, cross-account, and hostile-origin inputs.",
+      "invariantRefs": ["INV-ANDROID-698BEB983E6A"]
+    },
+    {
+      "id": "android.process-death",
+      "when": {"allOf": [], "anyOf": ["android.background-work", "android.persisted-input"], "noneOf": []},
+      "platforms": ["android"],
+      "failure": "The system kills the process after critical user input or work scheduling, causing data loss, duplicate submission, or restoration from stale in-memory state.",
+      "requiredOutcome": "Recreate the process and relevant navigation state, then prove critical inputs restore and effects resume or deduplicate according to the declared delivery contract.",
+      "invariantRefs": ["INV-ANDROID-5767B4C972C3"]
+    }
+  ]
+}

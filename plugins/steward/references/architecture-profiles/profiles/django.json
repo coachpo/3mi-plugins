@@ -1,0 +1,356 @@
+{
+  "schemaVersion": 1,
+  "id": "django",
+  "profileVersion": "1.0.0",
+  "kind": "overlay",
+  "invariantPrefix": "DJANGO",
+  "extends": [
+    "python"
+  ],
+  "baseline": {
+    "authored": "2026-08",
+    "technologies": [
+      "Django 5.x-6.x feature series"
+    ],
+    "versionPolicy": "Apply Python base outcomes and gate Django features against the deployed feature series and database."
+  },
+  "selection": {
+    "scope": "component",
+    "activation": [
+      {
+        "allOf": [
+          "dependency:django",
+          "entry:django"
+        ],
+        "anyOf": [],
+        "noneOf": []
+      }
+    ],
+    "supportingSignals": [
+      "config:django-settings",
+      "entry:django-asgi",
+      "entry:django-wsgi"
+    ]
+  },
+  "capabilities": [
+    "django.api",
+    "django.async",
+    "django.cache",
+    "django.database",
+    "django.multi-database",
+    "django.staticfiles",
+    "django.tasks"
+  ],
+  "layering": {
+    "referenceOnly": true,
+    "nodes": [
+      {
+        "id": "project",
+        "owns": [
+          "configuration and deployment entry",
+          "installed app and URL composition",
+          "process assembly"
+        ]
+      },
+      {
+        "id": "entry",
+        "owns": [
+          "Admin, HTTP, command, and task adaptation",
+          "protocol validation and response mapping"
+        ]
+      },
+      {
+        "id": "application",
+        "owns": [
+          "cross-entry business workflows",
+          "transaction and authorization orchestration"
+        ]
+      },
+      {
+        "id": "app-model",
+        "owns": [
+          "app-owned data and invariants",
+          "public query and mutation APIs"
+        ]
+      },
+      {
+        "id": "infrastructure",
+        "owns": [
+          "external implementation details"
+        ]
+      }
+    ],
+    "edges": [
+      {
+        "from": "project",
+        "to": "entry"
+      },
+      {
+        "from": "entry",
+        "to": "application"
+      },
+      {
+        "from": "application",
+        "to": "app-model"
+      },
+      {
+        "from": "infrastructure",
+        "to": "application"
+      }
+    ],
+    "hardOutcomes": [
+      "Apps own coherent business facts and their migration graph.",
+      "Cross-app mutation does not bypass the owning app.",
+      "Project configuration remains an assembly boundary rather than a business layer."
+    ]
+  },
+  "invariants": [
+    {
+      "id": "INV-DJANGO-813D2F61A7CD",
+      "level": "must",
+      "when": {
+        "allOf": [],
+        "anyOf": [],
+        "noneOf": []
+      },
+      "outcome": "Django project, apps, authoritative data, shared resources, and background work have explicit owners, and cross-app writes cannot bypass the owning public boundary.",
+      "equivalenceCriteria": "Any app count and directory layout comply when dependency and write paths preserve the same ownership and remain acyclic.",
+      "evidenceKinds": [
+        "code",
+        "documentation",
+        "test"
+      ],
+      "checkRefs": [
+        "django.tests"
+      ],
+      "scenarioRefs": []
+    },
+    {
+      "id": "INV-DJANGO-B7DDEA25889D",
+      "level": "must",
+      "when": {
+        "allOf": [],
+        "anyOf": [],
+        "noneOf": []
+      },
+      "outcome": "HTTP, Admin, management commands, and tasks enforce consistent server-side validation, object and tenant authorization, transaction boundaries, and safe external-input handling.",
+      "equivalenceCriteria": "Forms, DRF, another schema library, or narrow manual adapters comply when runtime and negative-path evidence proves the same boundary behavior.",
+      "evidenceKinds": [
+        "code",
+        "config",
+        "test"
+      ],
+      "checkRefs": [
+        "django.system-check",
+        "django.tests"
+      ],
+      "scenarioRefs": []
+    },
+    {
+      "id": "INV-DJANGO-6C29730D20FF",
+      "level": "must",
+      "when": {
+        "allOf": [
+          "django.database"
+        ],
+        "anyOf": [],
+        "noneOf": []
+      },
+      "outcome": "Transactions, locks, on-commit effects, database routing, and migrations follow the real target-database semantics and preserve every supported upgrade path.",
+      "equivalenceCriteria": "On-commit hooks, durable outbox, compensation, or another protocol qualifies when it closes the relevant commit and external-side-effect failure window.",
+      "evidenceKinds": [
+        "build",
+        "code",
+        "test"
+      ],
+      "checkRefs": [
+        "django.migrations",
+        "django.tests"
+      ],
+      "scenarioRefs": [
+        "django.database-semantics"
+      ]
+    },
+    {
+      "id": "INV-DJANGO-F044310B3F08",
+      "level": "must",
+      "when": {
+        "allOf": [],
+        "anyOf": [],
+        "noneOf": []
+      },
+      "outcome": "Production settings, hosts, proxy trust, secrets, static and media behavior, deployment entry, and framework version are deterministic and production-safe.",
+      "equivalenceCriteria": "Different settings layouts and deployment platforms comply when the effective production configuration and artifact path are reproducible and verified.",
+      "evidenceKinds": [
+        "build",
+        "config",
+        "runtime"
+      ],
+      "checkRefs": [
+        "django.system-check"
+      ],
+      "scenarioRefs": []
+    },
+    {
+      "id": "INV-DJANGO-D2953C4529A2",
+      "level": "must",
+      "when": {
+        "allOf": [],
+        "anyOf": [],
+        "noneOf": []
+      },
+      "outcome": "Every actually adopted middleware, signal, connection, stream, async adapter, task, and worker has version-correct startup, failure, cancellation, drain, and shutdown ownership.",
+      "equivalenceCriteria": "Sync-only deployments, ASGI lifespan hooks, server hooks, Django Tasks, Celery, RQ, or another worker model qualify when exercised startup, request or job failure, and shutdown paths prove actual resources and work are bounded.",
+      "evidenceKinds": [
+        "code",
+        "runtime",
+        "test"
+      ],
+      "checkRefs": [
+        "django.tests"
+      ],
+      "scenarioRefs": [
+        "django.runtime-lifecycle"
+      ]
+    }
+  ],
+  "checks": [
+    {
+      "id": "django.migrations",
+      "when": {
+        "allOf": [
+          "django.database"
+        ],
+        "anyOf": [],
+        "noneOf": []
+      },
+      "platforms": [
+        "any"
+      ],
+      "argvTemplate": [
+        "{{python}}",
+        "{{manageEntry}}",
+        "makemigrations",
+        "--check",
+        "--dry-run"
+      ],
+      "parameters": [
+        "manageEntry",
+        "python"
+      ],
+      "sideEffect": "local-artifacts",
+      "proves": [
+        "Current model changes have a generated migration representation."
+      ],
+      "doesNotProve": [
+        "Existing production schemas upgrade safely on the target database."
+      ],
+      "invariantRefs": [
+        "INV-DJANGO-6C29730D20FF"
+      ]
+    },
+    {
+      "id": "django.system-check",
+      "when": {
+        "allOf": [],
+        "anyOf": [],
+        "noneOf": []
+      },
+      "platforms": [
+        "any"
+      ],
+      "argvTemplate": [
+        "{{python}}",
+        "{{manageEntry}}",
+        "check",
+        "--deploy",
+        "--settings={{productionSettings}}"
+      ],
+      "parameters": [
+        "manageEntry",
+        "productionSettings",
+        "python"
+      ],
+      "sideEffect": "local-artifacts",
+      "proves": [
+        "Django can load the selected production settings and report configured deployment checks."
+      ],
+      "doesNotProve": [
+        "Every warning is a defect or the real proxy and process topology is correct."
+      ],
+      "invariantRefs": [
+        "INV-DJANGO-B7DDEA25889D",
+        "INV-DJANGO-F044310B3F08"
+      ]
+    },
+    {
+      "id": "django.tests",
+      "when": {
+        "allOf": [],
+        "anyOf": [],
+        "noneOf": []
+      },
+      "platforms": [
+        "any"
+      ],
+      "argvTemplate": [
+        "{{python}}",
+        "{{manageEntry}}",
+        "test"
+      ],
+      "parameters": [
+        "manageEntry",
+        "python"
+      ],
+      "sideEffect": "local-artifacts",
+      "proves": [
+        "The repository Django test suite passes the exercised application behavior."
+      ],
+      "doesNotProve": [
+        "The test client reproduces CSRF, target-database, ASGI, proxy, or process behavior."
+      ],
+      "invariantRefs": [
+        "INV-DJANGO-6C29730D20FF",
+        "INV-DJANGO-813D2F61A7CD",
+        "INV-DJANGO-B7DDEA25889D",
+        "INV-DJANGO-D2953C4529A2"
+      ]
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "django.runtime-lifecycle",
+      "when": {
+        "allOf": [],
+        "anyOf": [],
+        "noneOf": []
+      },
+      "platforms": [
+        "any"
+      ],
+      "failure": "Middleware, signals, connections, streams, WSGI one-off loops, sync adaptation, async ORM access, or a development-only task backend is mistaken for production lifecycle support.",
+      "requiredOutcome": "Bind every adopted sync, async, streaming, signal, connection, task, and worker behavior to the fixed Django, server, and backend versions and test startup, failure, retry, drain, and shutdown on the real execution path.",
+      "invariantRefs": [
+        "INV-DJANGO-D2953C4529A2"
+      ]
+    },
+    {
+      "id": "django.database-semantics",
+      "when": {
+        "allOf": [
+          "django.database"
+        ],
+        "anyOf": [],
+        "noneOf": []
+      },
+      "platforms": [
+        "any"
+      ],
+      "failure": "SQLite or empty-database tests are used as proof for production locks, DDL rollback, routing, data upgrades, or cross-database atomicity.",
+      "requiredOutcome": "Exercise supported upgrade states and concurrency behavior on every declared production database and treat external effects as outside the database transaction.",
+      "invariantRefs": [
+        "INV-DJANGO-6C29730D20FF"
+      ]
+    }
+  ]
+}

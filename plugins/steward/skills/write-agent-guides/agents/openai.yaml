@@ -1,0 +1,4 @@
+interface:
+  display_name: "Write AGENTS.md Guides"
+  short_description: "编写分层 AGENTS.md，并按可用不变量索引维护短工程路由"
+  default_prompt: "使用 $steward:write-agent-guides 基于仓库证据审查或更新当前仓库的 AGENTS.md 层级；只有真实子树差异才增加嵌套指导。"
