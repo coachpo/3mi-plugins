@@ -13,7 +13,7 @@ GUIDE_SCRIPTS = Path(__file__).resolve().parents[2] / "write-agent-guides" / "sc
 if str(GUIDE_SCRIPTS) not in sys.path:
     sys.path.insert(0, str(GUIDE_SCRIPTS))
 
-from canonical_paths import (
+from canonical_paths import (  # noqa: E402
     ALWAYS_REQUIRED_PATHS,
     CANONICAL_DOCUMENTS,
     ProjectDocsContext,
@@ -23,28 +23,29 @@ from canonical_paths import (
     requested_language,
     resolve_project_docs,
 )
-from contributing_blocks import (
+from contributing_blocks import (  # noqa: E402
     ContributingBlockError,
-    MvpMode,
+    DevelopmentTier,
+    all_legacy_mvp_heading_positions,
+    all_strategy_heading_positions,
     compose_contributing_block,
-    mvp_heading_positions,
-    parse_mvp_mode,
+    locate_legacy_strategy_block,
+    parse_development_tier,
     render_contributing_assets,
+    strategy_heading_positions,
 )
-from doc_anchors import profile_for
-from iteration_strategy import validate_iteration_strategy_document  # noqa: E402
-from managed_blocks import (
+from doc_anchors import profile_for  # noqa: E402
+from managed_blocks import (  # noqa: E402
     ManagedBlockError,
     locate_managed_block,
     markdown_h1_lines,
 )
-from markdown_links import (
+from markdown_links import (  # noqa: E402
     extract_link_targets,
     replace_visible_link_targets,
     visible_path_mentions,
 )
 from validate_engineering_router import validate_engineering_router  # noqa: E402
-
 
 COMPETING_PATHS = (
     "docs/INDEX.md",
@@ -269,7 +270,7 @@ def check_language_anchors(
     selected = context.selected
     profile = profile_for(context.language)
 
-    mvp_mode: MvpMode | None = None
+    development_tier: DevelopmentTier | None = None
     status_path = root / "STATUS.md"
     if status_path.is_file() and not status_path.is_symlink():
         try:
@@ -278,7 +279,9 @@ def check_language_anchors(
             errors.append("STATUS.md 不是有效 UTF-8")
         else:
             try:
-                mvp_mode = parse_mvp_mode(status_text, context.language)
+                development_tier = parse_development_tier(
+                    status_text, context.language
+                )
             except (ValueError, ContributingBlockError) as error:
                 errors.append(str(error))
 
@@ -403,36 +406,43 @@ def check_language_anchors(
     contributing_asset = profile.asset_path(
         skill_root, profile.contributing_base_asset_name
     )
-    contributing_mvp_asset = profile.asset_path(
-        skill_root, profile.contributing_mvp_asset_name
-    )
+    tier_asset_paths = {
+        tier: profile.tier_asset_path(skill_root, tier.value)
+        for tier in DevelopmentTier
+    }
     contributing = root / "CONTRIBUTING.md"
     asset_issue: str | None = None
     expected_base_block = b""
-    expected_mvp_block = b""
+    expected_tier_blocks: dict[DevelopmentTier, bytes] = {}
     expected_contributing_block = b""
     base_asset_ready = (
         contributing_asset.is_file() and not contributing_asset.is_symlink()
     )
-    mvp_asset_ready = (
-        contributing_mvp_asset.is_file()
-        and not contributing_mvp_asset.is_symlink()
+    tier_assets_ready = all(
+        path.is_file() and not path.is_symlink()
+        for path in tier_asset_paths.values()
     )
     if not base_asset_ready:
         errors.append(
             "skill 缺少普通共享资源："
             + profile.asset_display(profile.contributing_base_asset_name)
         )
-    if not mvp_asset_ready:
-        errors.append(
-            "skill 缺少普通共享资源："
-            + profile.asset_display(profile.contributing_mvp_asset_name)
-        )
-    if base_asset_ready and mvp_asset_ready:
+    for tier, path in tier_asset_paths.items():
+        if path.is_symlink() or not path.is_file():
+            errors.append(
+                "skill 缺少普通共享资源："
+                + profile.asset_display(
+                    profile.contributing_tier_asset_name(tier.value)
+                )
+            )
+    if base_asset_ready and tier_assets_ready:
         try:
-            expected_base_text, expected_mvp_text = render_contributing_assets(
+            expected_base_text, expected_tier_texts = render_contributing_assets(
                 contributing_asset.read_bytes(),
-                contributing_mvp_asset.read_bytes(),
+                {
+                    tier: path.read_bytes()
+                    for tier, path in tier_asset_paths.items()
+                },
                 selected,
                 context.language,
             )
@@ -441,18 +451,21 @@ def check_language_anchors(
             errors.append(f"skill 共享资源无效：{error}")
         else:
             expected_base_block = expected_base_text.encode("utf-8")
-            expected_mvp_block = expected_mvp_text.encode("utf-8")
+            expected_tier_blocks = {
+                tier: text.encode("utf-8")
+                for tier, text in expected_tier_texts.items()
+            }
     if (
         not asset_issue
         and expected_base_block
-        and expected_mvp_block
-        and mvp_mode is not None
+        and expected_tier_blocks
+        and development_tier is not None
     ):
         try:
             expected_contributing_text = compose_contributing_block(
                 expected_base_block.decode("utf-8"),
-                expected_mvp_block.decode("utf-8"),
-                mvp_mode=mvp_mode,
+                expected_tier_blocks[development_tier].decode("utf-8"),
+                development_tier=development_tier,
                 language=context.language,
             )
         except (UnicodeDecodeError, ValueError, ContributingBlockError) as error:
@@ -483,6 +496,12 @@ def check_language_anchors(
             errors.append("CONTRIBUTING.md 不是有效 UTF-8")
         else:
             try:
+                legacy = locate_legacy_strategy_block(actual_contributing_text)
+                if legacy is not None:
+                    errors.append(
+                        "CONTRIBUTING.md 包含旧动态策略区块；"
+                        "必须运行 update_contributing.py 迁移"
+                    )
                 span = locate_managed_block(
                     actual_contributing_text,
                     CONTRIBUTING_START_MARKER,
@@ -491,37 +510,56 @@ def check_language_anchors(
                 )
             except ManagedBlockError as error:
                 errors.append(str(error))
+            except ContributingBlockError as error:
+                errors.append(str(error))
             else:
-                mvp_positions = mvp_heading_positions(
+                strategy_positions = strategy_heading_positions(
                     actual_contributing_text, profile
+                )
+                all_strategy_positions = all_strategy_heading_positions(
+                    actual_contributing_text
+                )
+                legacy_mvp_positions = all_legacy_mvp_heading_positions(
+                    actual_contributing_text
                 )
                 if span is None:
                     errors.append("CONTRIBUTING.md 缺少共享 contribution asset")
-                    if mvp_positions:
+                    if all_strategy_positions:
                         errors.append(
-                            "CONTRIBUTING.md 在托管区块外包含"
-                            f"“{profile.mvp_heading}”"
+                            "CONTRIBUTING.md 在托管区块外包含开发策略标题"
+                        )
+                    if legacy_mvp_positions:
+                        errors.append(
+                            "CONTRIBUTING.md 在托管区块外包含旧 MVP 策略标题"
                         )
                 else:
-                    outside_mvp = [
+                    outside_strategy = [
                         position
-                        for position in mvp_positions
+                        for position in all_strategy_positions
                         if not (span.start <= position < span.end)
                     ]
-                    inside_mvp = [
+                    inside_strategy = [
                         position
-                        for position in mvp_positions
+                        for position in strategy_positions
                         if span.start <= position < span.end
                     ]
-                    if outside_mvp:
+                    outside_legacy_mvp = [
+                        position
+                        for position in legacy_mvp_positions
+                        if not (span.start <= position < span.end)
+                    ]
+                    if outside_strategy:
                         errors.append(
-                            "CONTRIBUTING.md 在托管区块外包含"
-                            f"“{profile.mvp_heading}”"
+                            "CONTRIBUTING.md 在托管区块外包含开发策略标题"
                         )
-                    if len(inside_mvp) > 1:
+                    if outside_legacy_mvp:
                         errors.append(
-                            "CONTRIBUTING.md 的共享区块包含重复"
-                            f"“{profile.mvp_title}”标题"
+                            "CONTRIBUTING.md 在托管区块外包含旧 MVP 策略标题"
+                        )
+                    if len(inside_strategy) != 1:
+                        errors.append(
+                            "CONTRIBUTING.md 的共享区块必须且只能包含一个"
+                            f"“{profile.development_strategy_heading}”"
                         )
                     if (
                         actual_contributing_text[span.start : span.end]
@@ -533,24 +571,6 @@ def check_language_anchors(
                             "CONTRIBUTING.md 的共享区块已漂移，"
                             "必须用 asset 完整替换"
                         )
-
-    if contributing.is_file() and not contributing.is_symlink():
-        try:
-            iteration_contributing_text = contributing.read_bytes().decode("utf-8")
-        except UnicodeDecodeError:
-            message = "CONTRIBUTING.md 不是有效 UTF-8"
-            if message not in errors:
-                errors.append(message)
-        else:
-            try:
-                validate_iteration_strategy_document(
-                    iteration_contributing_text,
-                    root,
-                    selected,
-                    profile,
-                )
-            except (OSError, ValueError) as error:
-                errors.append(str(error))
 
     agents_asset = profile.asset_path(skill_root, profile.agents_asset_name)
     root_agents = root / "AGENTS.md"

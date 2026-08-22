@@ -1,0 +1,45 @@
+# 静态开发档位契约
+
+本契约把 `STATUS.md` 中一个必填、唯一、Markdown 可见的精确控制行映射为 `CONTRIBUTING.md` 的静态“当前开发策略”。脚本只解析枚举、选择捆绑 asset、完整替换托管区块并验证精确结果；不得根据自然语言项目事实生成、补写或改写档位策略。
+
+## 控制行与枚举
+
+简体中文项目使用 `开发档位：<TOKEN>`，英文项目使用 `Development Tier: <TOKEN>`。`<TOKEN>` 只允许：
+
+- `YOLO_LOCAL`
+- `EXPERIMENT`
+- `MVP`
+- `PILOT`
+- `PRODUCTION`
+- `MAINTENANCE`
+- `RETIRED`
+
+控制行缺失、重复、冲突、畸形、使用另一种文档语言或包含未知 token 都是错误。代码围栏和 HTML block 内的同文字面不生效。档位 token 在两种语言中都保持大写 ASCII；只本地化控制键、标题和策略正文。
+
+`MVP 快速验证模式：启用` / `MVP Fast Validation Mode: Enabled` 只能在明确获准维护 `STATUS.md` 的迁移中改写为对应语言的 `MVP` 档位。旧“未启用”、旧状态缺失或其他旧写法不能推断新档位，必须由用户显式选择。更新脚本不修改 `STATUS.md`，遇到旧状态时失败关闭并报告最小迁移动作。
+
+## 静态映射
+
+每个 token 在 `assets/<lang>/CONTRIBUTING-tier-<token-slug>.md` 中恰有一份静态策略，固定包含策略摘要、“本档位必须完成”“默认不投入”“不可越过的边界”和“切换条件”。`update_contributing.py` 把选中 asset 放在 `shared-contributing` 托管区块最前方；同一区块随后保留共享设计原则、实现原则和完成定义。
+
+- `YOLO_LOCAL`：仅适用于用户明确声明的可丢弃本地工作区、临时或合成数据、无外部用户/流量、无生产凭据且无外部副作用的最快验证。
+- `EXPERIMENT`：以最小可逆实验验证技术假设和退出条件。
+- `MVP`：以最小可观察端到端闭环验证核心产品价值。
+- `PILOT`：在受控范围支持有限真实用户、真实数据和可恢复运行。
+- `PRODUCTION`：以持续、安全、兼容、可观察和可恢复的生产运行作为完成标准。
+- `MAINTENANCE`：保持现有行为和兼容承诺，优先缺陷、安全和必要依赖修复。
+- `RETIRED`：停止功能开发并关闭入口、凭据、数据和支持责任。
+
+档位策略是执行默认值，不是新的事实权威、用户授权或审计豁免。当前用户要求、已接受 GOAL、硬项目规则/不变量、`STATUS.md` 明确禁止事项、真实或不可丢弃数据、现有用户和兼容承诺仍具有更高优先级。消费者只能把“默认不投入”用于没有更高优先级正向要求的可选工作；不得用任何档位删除现有合同、伪造验证或扩大外部权限。
+
+## 更新、迁移与消费
+
+只运行：
+
+```text
+python3 -B "<skill-dir>/scripts/update_contributing.py" "<project-root>"
+```
+
+脚本必须验证当前文档语言下的完整七档 catalog、固定路径、状态快照和目标快照，并原子写入。若 `CONTRIBUTING.md` 含结构合法的旧 `derived-iteration-strategy` marker，脚本在同一事务中移除该区块及其与共享区块之间的单个分隔换行；marker 歧义、旧标题出现在托管区块外、旧区块与共享区块重叠或顺序错误时停止写入。旧 MVP 共享 H3 只在现有 `shared-contributing` marker 内按已知标题结构迁移；托管区块外同名标题仍是错误。
+
+下游 Goal、验证配置、Review 和工程闭环在使用静态策略前先运行只读项目文档 validator，确认精确档位控制行、完整 catalog 和托管区块字节一致。档位变化只要求重新运行 `update_contributing.py`；不再存在 JSON handoff、来源摘要、独立策略 updater 或项目特定持久策略正文。

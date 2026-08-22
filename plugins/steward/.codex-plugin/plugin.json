@@ -1,6 +1,6 @@
 {
   "name": "steward",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "面向 Codex 与 Claude Code 的共享工程控制面，以七个宿主无关技能连接项目指引、文档、GOAL、语义风险、验证流水线和可恢复工程闭环。",
   "author": {
     "name": "coachpo",

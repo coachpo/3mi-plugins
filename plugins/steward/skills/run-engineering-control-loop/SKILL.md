@@ -70,7 +70,8 @@ validated project-local artifacts and the repository evidence they bind are the
 only durable recovery authority. Do not repeat a completed gate, infer progress
 from chat memory, or make drifted evidence current by rebinding it.
 
-Read a valid managed Current Iteration Strategy only when it affects the gate.
+Read a validator-confirmed managed Current Development Strategy only when its
+static tier affects the gate.
 Re-derive architecture-profile evidence on entry to a dependent gate, after its
 inputs change, and before final trace binding. Do not recompute unrelated
 artifacts; changed input invalidates dependent gates in order.

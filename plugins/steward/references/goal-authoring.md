@@ -21,20 +21,21 @@ and do not emit a GOAL.
 
 ## Use project strategy without expanding the contract
 
-For an engineering GOAL, inspect a managed Current Iteration Strategy only when
-it exists and intersects the request. Validate its block digest and the four
-bound source digests for `STATUS.md`, the selected product document,
-architecture document, and development rules before using it. Read the consumer
-rules in
-[`iteration-strategy.md`](../skills/write-project-docs/references/iteration-strategy.md)
+For an engineering GOAL, inspect the managed Current Development Strategy when
+it intersects the request. First validate the exact `STATUS.md` development-tier
+line, complete static asset catalog, and selected managed block through the
+read-only project-docs validator. Read the consumer rules in
+[`development-tiers.md`](../skills/write-project-docs/references/development-tiers.md)
 only in that case.
 
-The strategy is an execution default, not user consensus, authority, or a new
-fact source. It may choose among already-authorized approaches. Put an item from
-it into `结果`, `范围`, or a `C*` criterion only when the user accepted that item
-or a governing hard requirement independently requires it. If doing so would
-materially change the requested result, scope, or completion definition, ask the
-user instead. Never derive the strategy from the MVP switch.
+The static tier strategy is an execution default, not user consensus,
+authorization, exclusion proof, or a new fact source. It may choose among
+already-authorized approaches. Put an item from it into `结果`, `范围`, or a `C*`
+criterion only when the user accepted that item or a governing hard requirement
+independently requires it. If doing so would materially change the requested
+result, scope, or completion definition, ask the user instead. User requirements,
+hard invariants, real data, existing users, compatibility commitments, and
+reachable risks take precedence over tier defaults.
 
 ## Write and validate the contract
 

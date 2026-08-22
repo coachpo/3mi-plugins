@@ -1,7 +1,7 @@
 interface:
   display_name: "Write Project Documentation"
-  short_description: "维护 canonical 文档，并从项目状态与目的派生迭代策略"
-  default_prompt: "使用 $steward:write-project-docs 基于仓库事实审查或更新本次请求影响的 canonical 项目文档；不要把窄请求扩成整套初始化。"
+  short_description: "维护 canonical 文档，并按 STATUS 开发档位应用静态策略"
+  default_prompt: "使用 $steward:write-project-docs 基于仓库事实和 STATUS 开发档位审查或更新本次请求影响的 canonical 项目文档；不要把窄请求扩成整套初始化。"
 
 policy:
   allow_implicit_invocation: false

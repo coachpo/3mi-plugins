@@ -52,10 +52,11 @@ Fail closed to full when the change set, merge base, rename/generated relation,
 dependency closure, or selector completeness cannot be proved. Never execute a
 profile/adapter command merely to discover what it does.
 
-If a managed Current Iteration Strategy exists and is relevant to catalog
-design, validate its content and four source digests, then read its consumer
-contract. It may narrow discretionary catalog work within the authorized outcome
-but cannot remove required cases or expand authority. Consume a GOAL only when
+If a managed Current Development Strategy is relevant to catalog design,
+validate the exact `STATUS.md` tier and selected static managed block, then read
+its consumer contract. It may narrow discretionary catalog work within the
+authorized outcome but cannot remove required cases or expand authority.
+Consume a GOAL only when
 the user explicitly supplies its seven-line text or path as catalog/trace input.
 Validate it with `python3 -B "<skill-dir>/../../scripts/goal_contract.py" view`
 and use only its canonical objective and `C*`; never discover, query, create,

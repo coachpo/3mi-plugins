@@ -39,7 +39,7 @@ claude plugin install steward@coachpo
 | 你的目标 | 使用的技能 | 默认效果 |
 | --- | --- | --- |
 | 检查或维护 `AGENTS.md` 层级及 Claude bridge | `write-agent-guides` | 审查默认只读；明确要求更新时才修改授权的 `AGENTS.md` 与对应 `CLAUDE.md` bridge |
-| 检查或刷新项目文档、当前迭代策略 | `write-project-docs` | 审查默认只读；明确要求维护时才修改授权文档 |
+| 检查或刷新项目文档、静态开发档位策略 | `write-project-docs` | 审查默认只读；明确要求维护时才修改授权文档 |
 | 得到一份可评审或可执行的 GOAL 合同 | `draft-consensus-goal` | 返回机器校验的七行 GOAL；不开始执行，仅在超限或明确要求时创建条件式 handoff |
 | 只做行为级、对抗式代码审查 | `review-semantic-risks` | 严格只读，不运行测试、不修复代码 |
 | 审查或配置 local quick 与 CI full | `configure-project-verification` | `review` 零写入；`configure` 只写启动前冻结的配置输出 |
@@ -61,7 +61,7 @@ claude plugin install steward@coachpo
 刷新项目文档：
 
 ```text
-使用 $steward:write-project-docs 根据当前仓库事实刷新项目文档和当前迭代策略；保留已有用户内容，只修改明确授权的文档。
+使用 $steward:write-project-docs 根据当前仓库事实和 STATUS 开发档位刷新项目文档与静态开发策略；保留已有用户内容，只修改明确授权的文档。
 ```
 
 起草 GOAL：
@@ -185,7 +185,7 @@ Codex 直接调用形式是 `$steward:<skill-name>`，Claude Code 是 `/steward:
 | 技能 | 使用时机 | 读写模式 | 主要结果 |
 | --- | --- | --- | --- |
 | [`write-agent-guides`](skills/write-agent-guides/SKILL.md) | 只读审查，或创建、修复、刷新分层 `AGENTS.md` 与同目录 Claude bridge；已有不变量索引时校验或同步短工程路由 | 审查、解释和诊断只读；明确更新时仅写授权的 `AGENTS.md` 及对应 `CLAUDE.md` bridge | 根级共同规则、必要的子树增量、`@AGENTS.md` bridge，以及 `trigger → authority → INV → validation` 路由 |
-| [`write-project-docs`](skills/write-project-docs/SKILL.md) | 审查或维护固定项目文档集合，从自然语言项目状态和交付意图派生当前迭代策略，并维护权威锚点和已存在或明确要求的不变量映射 | 普通审查只读；明确维护时写授权文档、独立阶段策略区块、已有/明确要求的索引、精确获授权的 profile selection handoff 和受托管导航区块 | 保持唯一权威边界的文档、与 MVP 开关正交且来源绑定的当前迭代策略、可验证 `.steward/invariants.json`，以及 profile-backed 映射所固定的 selection artifact |
+| [`write-project-docs`](skills/write-project-docs/SKILL.md) | 审查或维护固定项目文档集合，按 `STATUS.md` 七档枚举选择静态开发策略，并维护权威锚点和已存在或明确要求的不变量映射 | 普通审查只读；明确维护时写授权文档、静态策略托管区块、已有/明确要求的索引、精确获授权的 profile selection handoff 和受托管导航区块 | 保持唯一权威边界的文档、与开发档位精确匹配的双语静态策略、可验证 `.steward/invariants.json`，以及 profile-backed 映射所固定的 selection artifact |
 | [`draft-consensus-goal`](skills/draft-consensus-goal/SKILL.md) | 讨论已收敛，需要一份可评审、留档或执行的 GOAL 合同 | 唯一 GOAL 作者；只读核实并返回文本，不开始执行或写既有文件；仅在普通压缩后正文仍超过 4,000 code points 或用户明确要求时，在 `.steward/handoffs/` 内新建交接文件 | 经机器校验、带连续稳定 `C*` 的七行中文 GOAL |
 | [`review-semantic-risks`](skills/review-semantic-risks/SKILL.md) | 明确要求对代码、diff 或行为路径做语义/对抗审查 | 严格只读，不写文件、不执行测试或修复；coordinator 在完整闭环冻结 strict bindings 并另行保存 canonical `view` | standalone 模式交付有证据的 prose findings/gaps；strict-handoff 模式交付经校验、request-bound 的 `semantic-review v1` manifest 与 `RF-*` case 候选 |
 | [`configure-project-verification`](skills/configure-project-verification/SKILL.md) | 明确要求只读审查或在授权路径内配置项目的验证流水线 | `review` 零写入；`configure` 只写启动前冻结的仓库内 allowlist | provider-neutral verification profile、closed-loop adapter、本地 quick 入口、CI full 计划，以及当前固定的 GitHub Actions 投影；不执行 campaign |
@@ -301,7 +301,7 @@ adapter 的 `coverageMode` 默认为 `narrow`，并明确导出未覆盖 tier；
 插件只打包技能、本地资源和 Python 标准库脚本，不安装 MCP server，也不管理凭据。运行捆绑合同、文档和验证脚本需要 PATH 中可用的 `python3`；使用 Git 变更观测、merge-base 或 portable commit identity 的验证操作还需要 Git。
 
 - `write-agent-guides` 依据清单、配置、脚本、CI、代码入口和文件搜索核对仓库事实；只有子树确有局部差异时才写嵌套指导。项目没有不变量索引时保持原有行为，不创建空索引或路由。每个受影响的 `AGENTS.md` 通过同目录、仅含 `@AGENTS.md` 的 `CLAUDE.md` bridge 暴露给 Claude Code；已有实质 Claude 指引必须先核实并合并，不能直接覆盖。
-- `write-project-docs` 继续维护既有八份规范文档边界；它把“开发中、为了演示”等自然语言事实分别保存到 `STATUS.md` 和产品文档，再在 `CONTRIBUTING.md` 派生来源绑定的当前迭代策略。策略与精确 MVP 三态开关正交，不是新的状态开关或第九份规范文档；`.steward/invariants.json` 仍只是可选机器索引。
+- `write-project-docs` 继续维护既有八份规范文档边界；`STATUS.md` 必须用 `YOLO_LOCAL`、`EXPERIMENT`、`MVP`、`PILOT`、`PRODUCTION`、`MAINTENANCE` 或 `RETIRED` 精确选择静态开发策略，`CONTRIBUTING.md` 由双语捆绑 asset 确定性渲染。档位不是新的事实权威或授权来源；`.steward/invariants.json` 仍只是可选机器索引。
 - architecture selection 只面向 schema-shaped 的正常深度 JSON；当前 canonical digest 路径没有独立深度上限，极深但仍可解析的输入可能触发未捕获的递归错误。不要把不可信或任意嵌套 JSON 直接当作 selection handoff。
 - `configure-project-verification` 需要 Python 标准库、Git，以及仓库事实支持的 profile/adapter；review 不写入，turnkey configure 固定生成 GitHub Actions workflow 并只写冻结 allowlist。其下层 profile、impact plan、CI plan、derived adapter 和 evidence 合同不依赖 GitHub，但当前没有其他 provider renderer。
 - `draft-consensus-goal` 是唯一 GOAL 作者；它只返回 canonical objective，或按 [交接文件契约](references/handoff-file.md) 创建条件式 handoff，不持久化 `.steward/goal.txt`、不开始执行，也不读取宿主会话状态。完整闭环的 coordinator 才会在冻结写集内保存并验证标准 GOAL 文件。

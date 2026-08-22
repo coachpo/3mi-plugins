@@ -1,6 +1,6 @@
 ---
 name: write-project-docs
-description: Review or maintain a repository's canonical product, status, architecture, development, contributing, and source-responsibility documentation from verified project facts. Use for focused document work, full documentation initialization/migration, managed iteration strategy, or an existing/requested invariant map; use write-agent-guides for AGENTS.md hierarchy and engineering routing.
+description: Review or maintain a repository's canonical product, status, architecture, development, contributing, and source-responsibility documentation from verified project facts. Use for focused document work, full documentation initialization/migration, STATUS-controlled static development-tier strategies, or an existing/requested invariant map; use write-agent-guides for AGENTS.md hierarchy and engineering routing.
 ---
 
 # Write Project Documentation
@@ -21,8 +21,8 @@ relative to it.
 | Path | Authority |
 | --- | --- |
 | `README.md` | Entry, installation, ordinary startup, derived status summary, and links. |
-| `STATUS.md` | Lifecycle, deployment, users, data, compatibility, and allowed/prohibited change facts. |
-| `CONTRIBUTING.md` | Development setup, commands, workflow, validated current iteration strategy, shared principles, and definition of done. |
+| `STATUS.md` | Required development tier plus lifecycle, deployment, users, data, compatibility, and allowed/prohibited change facts. |
+| `CONTRIBUTING.md` | Development setup, commands, workflow, the validated static current development strategy, shared principles, and definition of done. |
 | `docs/README.md` | Documentation index and authority map. |
 | `docs/产品说明.md` or `docs/product.md` | Product problem, users, goals, scope, flows, requirements, and acceptance. |
 | `docs/架构说明.md` or `docs/architecture.md` | Current architecture, component responsibility, boundaries, dependencies, risks, and exceptions. |
@@ -73,10 +73,10 @@ project between supported canonical language sets is an explicit migration.
 3. Read [`document-rules.md`](references/document-rules.md) completely only when
    detailed canonical content, managed-block, merge, or migration rules are
    needed. A narrow task that does not need those details does not load it.
-4. Read [`iteration-strategy.md`](references/iteration-strategy.md) only when the
-   request creates, updates, validates, or consumes the managed strategy. The
-   strategy remains a source-bound execution default, independent of the MVP
-   switch and never new authority.
+4. Read [`development-tiers.md`](references/development-tiers.md) completely
+   when the request creates, updates, validates, migrates, or consumes the
+   required development tier or managed strategy. The exact `STATUS.md` tier
+   selects one bundled static strategy and never creates new authority.
 5. Read the shared invariant and architecture-selection contracts only when the
    invariant map exists or profile/invariant maintenance was requested. Then run
    the deterministic `architecture_profiles.py validate → select → compile`
@@ -88,16 +88,18 @@ project between supported canonical language sets is an explicit migration.
 7. Validate, inspect the exact diff, and correct only in-scope errors.
 
 For a single-document request, steps concerning unrelated canonical documents,
-MVP/strategy, profile/invariants, language migration, and managed navigation are
-skipped. Full initialization/migration may traverse the whole route because that
-outcome was explicitly requested.
+development tier/strategy, profile/invariants, language migration, and managed
+navigation are skipped. Full initialization/migration may traverse the whole
+route because that outcome was explicitly requested.
 
 ## Deterministic updates and validation
 
-Use `python3 -B` for the bundled scripts. Update source facts before derived
-blocks. When applicable, use the dedicated development-rules, contributing,
-iteration-strategy, and AGENTS navigation updaters; each must preserve other
-managed regions and fail closed on ambiguous markers or drift.
+Use `python3 -B` for the bundled scripts. Update source facts and the exact
+development-tier line before managed blocks. When applicable, use the dedicated
+development-rules, contributing, and AGENTS navigation updaters; each must
+preserve other managed regions and fail closed on ambiguous markers or drift.
+`update_contributing.py` is the only strategy updater and atomically migrates a
+structurally valid retired dynamic-strategy block.
 
 Run:
 
@@ -106,17 +108,19 @@ python3 -B "<skill-dir>/scripts/validate_project_docs.py" "<project-root>"
 ```
 
 Also run relevant repository documentation checks. Use strict diagnostics for an
-authorized migration or cleanup. A validator proves structure, source digests,
-managed-block consistency, and reports a missing or non-canonical root
+authorized migration or cleanup. A validator proves structure, the complete
+static tier catalog, selected-strategy consistency, managed-block consistency,
+and reports a missing or non-canonical root
 `CLAUDE.md` bridge; it does not replace semantic review of the prose.
 If an invariant map changed, hand engineering-router synchronization explicitly
 to `write-agent-guides` before claiming the whole route is current. Hand bridge
 warnings to that skill as well; this skill does not rewrite user instruction
 files outside its existing root navigation block.
 
-On resume, re-resolve the project, language, canonical paths, write set, managed
-boundaries, and affected source digests. Preserve non-overlapping user changes;
-old validation is stale after a relevant input change.
+On resume, re-resolve the project, language, canonical paths, exact development
+tier, write set, managed boundaries, and affected asset snapshots. Preserve
+non-overlapping user changes; old validation is stale after a relevant input
+change.
 
 ## Complete and report
 
@@ -126,7 +130,6 @@ the diff contains no out-of-set change. For migration/cleanup, strict diagnostic
 must pass or the remaining unauthorized cleanup must be reported exactly.
 
 Lead with the outcome, then list changed and deliberately preserved files,
-canonical evidence, language decision, validation results, cleanup candidates,
-unverified items, router or `CLAUDE.md` bridge follow-up, and the smallest
-remaining action. Omit
-routine process narration.
+canonical evidence, language and development-tier decisions, validation results,
+cleanup candidates, unverified items, router or `CLAUDE.md` bridge follow-up,
+and the smallest remaining action. Omit routine process narration.

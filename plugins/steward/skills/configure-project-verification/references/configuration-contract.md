@@ -55,9 +55,10 @@ running them during configuration.
 
 The base adapter is the sole case catalog. Include cases required by the current
 authorized outcome, hard constraints, reachable risks, stable `C*`, triggered
-`INV-*`, and supported `RF-*`. A source-current iteration strategy may narrow
-discretionary work inside that authority; it does not remove existing contracts
-or create exclusion proof. `quick` marks low-cost diagnostic cases. `full` means
+`INV-*`, and supported `RF-*`. A validator-confirmed static development-tier
+strategy may narrow discretionary work inside that authority; it does not remove
+existing contracts or create exclusion proof. `quick` marks low-cost diagnostic
+cases. `full` means
 the entire current catalog, not every hypothetical future scenario.
 
 The local quick entry requires a trusted impact plan and falls back to full when
