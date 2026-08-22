@@ -1,6 +1,6 @@
 ---
 name: write-agent-guides
-description: "Review or maintain an evidence-based AGENTS.md hierarchy for a code repository: shared root guidance, only material subtree differences, same-directory CLAUDE.md bridges, and a short managed engineering router when an invariant map exists. Use write-project-docs for canonical project documentation and invariant authority anchors."
+description: "Review or maintain an evidence-based AGENTS.md hierarchy for a code repository: shared root guidance, only material subtree differences, and a short managed engineering router when an invariant map exists. Use write-project-docs for canonical project documentation and invariant authority anchors."
 ---
 
 # Write AGENTS.md Guides
@@ -17,17 +17,14 @@ relative to it.
 
 Success means every written rule has repository evidence and a clear scope, the
 effective hierarchy has no harmful conflict or parent repetition, commands are
-verified, every affected `AGENTS.md` is exposed to Claude Code through a
-same-directory bridge, and changed files plus relevant checks are reported
-accurately. When
+verified, and changed files plus relevant checks are reported accurately. When
 `.steward/invariants.json` exists, root guidance also carries the managed short
 route `trigger → authority → INV IDs → validation entry` without copying the
 canonical rule text.
 
 Review, explanation, diagnosis, report, and planning requests are read-only.
 Create, repair, refresh, or update requests authorize the affected local
-`AGENTS.md` and corresponding `CLAUDE.md` bridge edits plus non-destructive
-validation. Confirm external writes,
+`AGENTS.md` edits plus non-destructive validation. Confirm external writes,
 destructive replacement, unusually expensive actions, or material scope
 expansion.
 
@@ -47,28 +44,6 @@ size limit affects visibility.
 Preserve accurate user rules and other managed regions. Investigate shadowed
 files, parent/child conflict, active fallbacks, and uncertain provenance before
 editing.
-
-## Keep one instruction authority across hosts
-
-`AGENTS.md` is the only instruction authority maintained by this skill. For
-every affected directory that contains `AGENTS.md`, ensure that its
-same-directory `CLAUDE.md` is either a regular UTF-8 file whose only non-blank
-line is:
-
-```text
-@AGENTS.md
-```
-
-or, when the user explicitly prefers it and the platform supports it, a symlink
-to that same-directory `AGENTS.md`. Prefer the one-line file because it is
-portable across platforms. Do not keep Claude-specific rules beside the bridge.
-
-Treat substantive content in an existing `CLAUDE.md` as user guidance, not as
-disposable scaffolding. Verify and merge still-valid rules into the appropriate
-`AGENTS.md` scope before replacing it with the bridge. Report obsolete,
-conflicting, or ungrounded content as a removal candidate; replacing that
-content still requires the same authority as deleting user guidance. Never
-discard content first and attempt to reconstruct it afterward.
 
 ## Establish evidence
 
@@ -106,8 +81,7 @@ content and report the unsupported managed block instead of silently translating
 
 ## Write and verify
 
-Keep root independently useful, then add only necessary subtree deltas and their
-same-directory `CLAUDE.md` bridges. Link
+Keep root independently useful, then add only necessary subtree deltas. Link
 canonical project documents rather than copying their prose. Write only guidance
 that changes agent behavior: responsibilities, change locations, verified
 commands, project-specific invariants, generated boundaries, and high-risk areas.
@@ -127,7 +101,7 @@ locking, parser, or CAS implementation in the guide. It must fail without
 changing the file when markers, source bindings, or insertion context are unsafe.
 
 Re-read every changed file and verify hierarchy, evidence, commands, managed
-boundaries, nested-file value, merged visibility, and each affected bridge. Run
+boundaries, nested-file value, and merged visibility. Run
 the smallest relevant non-destructive repository checks and state what was not
 run. On resume, use the current working tree and effective instructions;
 revalidate after relevant drift and preserve non-overlapping user changes.
@@ -137,5 +111,5 @@ revalidate after relevant drift and preserve non-overlapping user changes.
 Complete only when the intended root or subtree result exists, hierarchy choices
 are evidence-backed, changed files are rechecked, and relevant validation passed
 or is precisely blocked. Lead with the outcome, then changed paths, evidence,
-language decision, validation, changed `AGENTS.md` and `CLAUDE.md` paths,
+language decision, validation, changed `AGENTS.md` paths,
 meaningful omissions, removal candidates, risks, and the smallest next action.
