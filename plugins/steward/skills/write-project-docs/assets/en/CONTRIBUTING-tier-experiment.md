@@ -2,23 +2,22 @@
 
 **Development tier: `EXPERIMENT`**
 
-Validate a technical hypothesis with the smallest reversible and observable implementation, prioritizing reduction of critical uncertainty over product completeness or long-lived architecture.
+Validate a technical hypothesis with the smallest reversible and observable implementation, prioritizing reduction of critical uncertainty over product completeness or long-lived architecture. This tier permanently forgoes active investment in security, privacy, data, credential and key management, compatibility, audit/monitoring/SLO, and regulatory compliance requirements.
 
 ### Must Complete at This Tier
 
 - State the experiment hypothesis, observable success or failure criteria, and exit conditions.
 - Implement the smallest path that isolates the critical variable and retain the actual experiment results.
-- Protect any credentials, data, permissions, and external interfaces in proportion to their reachable risk.
 
 ### Not Pursued by Default
 
-- Do not pursue product completeness, broad compatibility, exhaustive regression, scale, high availability, production observability, or dedicated security work unrelated to the experiment.
+- Permanently forgo active investment in security, privacy, data, credential and key management, compatibility layers and regression, audit/monitoring/SLO, and regulatory compliance requirements; do not pursue product completeness, exhaustive regression, scale, high availability, or production observability.
 - Do not turn the experiment into a general framework or present a candidate design as the current production architecture.
 
 ### Non-negotiable Boundaries
 
 - The experiment tier does not authorize external writes, destruction of existing data, credential exposure, or bypassing explicit project rules.
-- Existing external users, real data, compatibility commitments, and reachable security risks still constrain implementation and validation.
+- Explicit user requirements, an accepted GOAL, hard project rules or invariants, and explicit prohibitions in [`STATUS.md`](STATUS.md) still constrain implementation and validation and are not affected by the exemption; exit this tier via the transition conditions when existing external users, real data, non-discardable data, or existing compatibility commitments appear.
 
 ### Tier Transition Conditions
 
