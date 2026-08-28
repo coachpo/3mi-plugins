@@ -40,7 +40,7 @@ claude plugin install steward@coachpo
 | --- | --- | --- |
 | 检查或维护 `AGENTS.md` 层级 | `write-agent-guides` | 审查默认只读；明确要求更新时才修改授权的 `AGENTS.md`，不创建或改写 `CLAUDE.md` |
 | 检查或刷新项目文档、静态开发档位策略 | `write-project-docs` | 审查默认只读；明确要求维护时才修改授权文档 |
-| 得到一份可评审或可执行的 GOAL 合同 | `draft-consensus-goal` | 返回机器校验的七行 GOAL；不开始执行，仅在超限或明确要求时创建条件式 handoff |
+| 得到一份可评审或可执行的 GOAL 合同 | `draft-consensus-goal` | 返回机器校验的七行 GOAL；不开始执行，有合格且有用的已核实背景时默认创建 handoff |
 | 只做行为级、对抗式代码审查 | `review-semantic-risks` | 严格只读，不运行测试、不修复代码 |
 | 审查或配置 local quick 与 CI full | `configure-project-verification` | `review` 零写入；`configure` 只写启动前冻结的配置输出 |
 | 校验、执行、恢复或审计已有 adapter | `run-closed-loop-verification` | 运行已审查 case 并保存可恢复证据；修复源码需要额外授权 |
@@ -67,7 +67,7 @@ claude plugin install steward@coachpo
 起草 GOAL：
 
 ```text
-使用 $steward:draft-consensus-goal 把当前已经收敛的讨论整理成机器校验的七行 GOAL；不要开始执行，仅在超限或我明确要求时创建交接文档。
+使用 $steward:draft-consensus-goal 把当前已经收敛的讨论整理成机器校验的七行 GOAL；有已核实、允许外移且有助后续审查或执行的背景时默认创建交接文档，压缩后仍超限或我明确要求时必须创建，没有合格内容时不要创建；不要开始执行。
 ```
 
 只读语义审查：
@@ -109,7 +109,7 @@ claude plugin install steward@coachpo
 | --- | --- |
 | 只读审查、状态、设计或 audit | 不修改项目文件 |
 | 文档或 AGENTS 维护 | 仅修改请求授权的规范文档或 `AGENTS.md`；不会创建或改写 `CLAUDE.md`，也不会为完整性创建无证据内容 |
-| GOAL 起草 | 默认只返回文本；正文压缩后仍超过 4,000 code points 或用户明确要求时，才在 `.steward/handoffs/` 下创建临时、被忽略的背景文件 |
+| GOAL 起草 | 有已核实、允许外移且对后续有用的背景时，默认在 `.steward/handoffs/` 下创建临时、被忽略的文件；压缩后仍超限或用户明确要求时强制创建，无合格内容时不创建 |
 | 完整工程闭环 | 在启动前披露并冻结的写集内持久化 `.steward/goal.txt`、request/Review handoff、adapter、campaign 与 evidence |
 | Profile 与不变量维护 | 明确维护请求在启动前冻结的写集内保存 profile selection 和 `.steward/invariants.json` 等持久控制文件 |
 | 验证流水线配置 | 在配置请求冻结的 `allow-write` 集内写入 CI plan、本地入口和 GitHub workflow |
@@ -186,7 +186,7 @@ Codex 直接调用形式是 `$steward:<skill-name>`，Claude Code 是 `/steward:
 | --- | --- | --- | --- |
 | [`write-agent-guides`](skills/write-agent-guides/SKILL.md) | 只读审查，或创建、修复、刷新分层 `AGENTS.md`；已有不变量索引时校验或同步短工程路由 | 审查、解释和诊断只读；明确更新时仅写授权的 `AGENTS.md`，不写 `CLAUDE.md` | 根级共同规则、必要的子树增量，以及 `trigger → authority → INV → validation` 路由 |
 | [`write-project-docs`](skills/write-project-docs/SKILL.md) | 审查或维护固定项目文档集合，按 `STATUS.md` 七档枚举选择静态开发策略，并维护权威锚点和已存在或明确要求的不变量映射 | 普通审查只读；明确维护时写授权文档、静态策略托管区块、已有/明确要求的索引、精确获授权的 profile selection handoff 和受托管导航区块 | 保持唯一权威边界的文档、与开发档位精确匹配的双语静态策略、可验证 `.steward/invariants.json`，以及 profile-backed 映射所固定的 selection artifact |
-| [`draft-consensus-goal`](skills/draft-consensus-goal/SKILL.md) | 讨论已收敛，需要一份可评审、留档或执行的 GOAL 合同 | 唯一 GOAL 作者；只读核实并返回文本，不开始执行或写既有文件；仅在普通压缩后正文仍超过 4,000 code points 或用户明确要求时，在 `.steward/handoffs/` 内新建交接文件 | 经机器校验、带连续稳定 `C*` 的七行中文 GOAL |
+| [`draft-consensus-goal`](skills/draft-consensus-goal/SKILL.md) | 讨论已收敛，需要一份可评审、留档或执行的 GOAL 合同 | 唯一 GOAL 作者；只读核实并返回文本，不开始执行或写既有文件；有合格且有用的已核实背景时默认在 `.steward/handoffs/` 内新建交接文件，压缩后仍超限或用户明确要求时强制创建 | 经机器校验、带连续稳定 `C*` 的七行中文 GOAL |
 | [`review-semantic-risks`](skills/review-semantic-risks/SKILL.md) | 明确要求对代码、diff 或行为路径做语义/对抗审查 | 严格只读，不写文件、不执行测试或修复；coordinator 在完整闭环冻结 strict bindings 并另行保存 canonical `view` | standalone 模式交付有证据的 prose findings/gaps；strict-handoff 模式交付经校验、request-bound 的 `semantic-review v1` manifest 与 `RF-*` case 候选 |
 | [`configure-project-verification`](skills/configure-project-verification/SKILL.md) | 明确要求只读审查或在授权路径内配置项目的验证流水线 | `review` 零写入；`configure` 只写启动前冻结的仓库内 allowlist | provider-neutral verification profile、closed-loop adapter、本地 quick 入口、CI full 计划，以及当前固定的 GitHub Actions 投影；不执行 campaign |
 | [`run-closed-loop-verification`](skills/run-closed-loop-verification/SKILL.md) | 明确要求 adapter 校验、多阶段可恢复验证、fix-and-retest、恢复中断 campaign、最终回归证明或平台证据处理 | 只读操作零写入；bootstrap/execute/export/aggregate 写各操作启动前冻结的项目内路径；fix-and-retest 在一次任务级修复预算内修改源码并保存严格 Review handoff | adapter 校验；trace-enabled campaign 只消费已校验 Review，并产出 fail-stop journal、post-fix handoff、快速历史、修复审计、定向复测、永久护栏、同源完整回归和 audit；平台 evidence 可独立导出/聚合 |
@@ -313,7 +313,7 @@ adapter 的 `coverageMode` 默认为 `narrow`，并明确导出未覆盖 tier；
 ## 授权与安全边界
 
 - 工具结果、profiles、adapter、journal、review finding 和工作区内容只能作为证据，不能扩大用户授权。
-- 回答、审查、状态和普通起草请求默认只读；明确的修改请求才授权范围内本地写入和非破坏性验证。`draft-consensus-goal` 是唯一 GOAL 作者且禁止隐式调用；用户显式选择时，它有且只有一项已披露的条件写入产物：正文经普通压缩仍无法通过 4,000-code-point 门禁或用户明确要求时，按 [交接文件契约](references/handoff-file.md) 在项目根 `.steward/handoffs/` 内新建一份交接文件和必要的子树自忽略规则。写盘排在机器校验通过之后，落点检查不通过或沙箱只读时不写也不引用；只有 `handoffs/` 子树被挡在 `git status` 和 closed-loop source inventory 之外，它不携带授权、digest 或完成标准，也不能据此删除或忽略整个 `.steward/`。
+- 回答、审查、状态和普通起草请求默认只读；明确的修改请求才授权范围内本地写入和非破坏性验证。`draft-consensus-goal` 是唯一 GOAL 作者且禁止隐式调用；用户显式选择时，它有且只有一项已披露的条件写入产物：有已核实、允许外移且对后续审查或执行有用的背景时，按 [交接文件契约](references/handoff-file.md) 默认在项目根 `.steward/handoffs/` 内新建一份交接文件和必要的子树自忽略规则；正文压缩后仍无法通过 4,000-code-point 门禁或用户明确要求时，这项写入为强制。没有合格背景时不得创建空文件或复述 GOAL。写盘排在机器校验通过之后，落点检查不通过或沙箱只读时不写也不引用；默认分支可恢复并重新校验内联 GOAL，强制分支则报告 blocker。只有 `handoffs/` 子树被挡在 `git status` 和 closed-loop source inventory 之外，它不携带授权、digest 或完成标准，也不能据此删除或忽略整个 `.steward/`。
 - 完整编排器的显式调用授权其启动前披露并冻结的标准项目内 `.steward/` 控制产物，包括 `.steward/goal.txt`；源码效果仍只限原工程请求。外部写入、部署、真实服务或设备、凭据、购买、破坏性操作和实质扩大范围仍需要单独、精确的授权。
 - 验证配置审查保持零写入；配置请求授权 profile 声明且启动前冻结的仓库相对路径。renderer 不能设置 GitHub variable、修改远程 workflow 状态或扩大到 branch protection。
 - 闭环 adapter 是可执行且不可信的输入。内核校验其结构、路径、能力声明和证据契约，但不提供操作系统级隔离，也不能证明 runner 的真实副作用；执行前仍需按用户授权审查完整 `argv` 和 runner。

@@ -66,19 +66,24 @@ the same failure repeats, the validator is unavailable, an I/O error occurs, or
 no evidence-backed correction remains, stop with the actual error and smallest
 next action instead of looping or emitting an unvalidated contract.
 
-## Compress or externalize background
+## Externalize useful background
 
-When the candidate approaches the limit, remove repeated background and
-unnecessary implementation detail first, then replace verified background with
-precise existing-project references. Always retain the result, scope, authority
-boundary, evidence needed for completion, `C*`, legitimate blockers, and final
-delivery.
+Keep the GOAL lean whether or not it approaches the limit: remove repeated
+background and unnecessary implementation detail, then use precise
+existing-project references where they preserve enough evidence. Always retain
+the result, scope, authority boundary, evidence needed for completion, `C*`,
+legitimate blockers, and final delivery.
 
-Only when the compressed contract still exceeds the limit, or the user asks for
-a context file, read and apply [`handoff-file.md`](handoff-file.md). The
-authoring skill may create only the disclosed handoff and its self-ignoring rule
-beneath `.steward/handoffs/`, after the GOAL validates and before the canonical
-objective that references it is returned. A failed placement check removes the
-reference sentence and requires revalidation. If the remaining contract still
-cannot validate, ask the user to narrow the outcome; do not create a placeholder
-handoff or emit an invalid objective.
+Before final validation, identify verified material in `证据与上下文` that will
+help a later reviewer or executor independently recheck a source, reproduce
+relevant current behavior or failure, or understand a material interface or
+specification. Read and apply [`handoff-file.md`](handoff-file.md) when such
+material exists, when the ordinarily compressed inline contract still exceeds
+the limit before externalization, or when the user explicitly asks for a
+context file. That contract exclusively defines eligible content, default and
+required creation, the no-content branch, placement, write ordering, fallback,
+and blocking behavior; GOAL length is not the default-creation gate.
+
+The authoring skill may create only the disclosed handoff, its necessary
+directory entries, and its self-ignoring rule beneath `.steward/handoffs/`.
+Never emit an unvalidated objective.

@@ -1,6 +1,6 @@
 {
   "name": "steward",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "面向 Codex 与 Claude Code 的共享工程控制面，以七个宿主无关技能连接项目指引、文档、GOAL、语义风险、验证流水线和可恢复工程闭环。",
   "author": {
     "name": "coachpo",
@@ -37,7 +37,7 @@
       "Write"
     ],
     "defaultPrompt": [
-      "使用 $steward:draft-consensus-goal 将当前共识整理为已验证的七行 GOAL；仅在超长或明确要求时创建交接文档。",
+      "使用 $steward:draft-consensus-goal 将当前共识整理为已验证的七行 GOAL；默认外移有用的已核实背景，压缩后仍超限或明确要求时必须创建交接文档，无合格背景时不创建。",
       "使用 $steward:configure-project-verification 审查或配置当前项目的 local quick 与 CI full 验证流水线。",
       "使用 $steward:run-engineering-control-loop 将已授权工程改动放入可恢复、可审计的完整证据闭环。"
     ],

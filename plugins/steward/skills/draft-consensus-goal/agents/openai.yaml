@@ -1,7 +1,7 @@
 interface:
   display_name: "Draft Consensus Goal"
-  short_description: "起草七行中文 GOAL，超限时生成本地交接文件"
-  default_prompt: "使用 $steward:draft-consensus-goal 把当前已接受的决定整理为机器校验、带稳定 C* 的七行中文 GOAL；仅返回合同，除超限或我明确要求外不要创建交接文件，也不要开始执行。"
+  short_description: "起草七行 GOAL，默认外移有用的已核实背景"
+  default_prompt: "使用 $steward:draft-consensus-goal 把当前已接受的决定整理为机器校验、带稳定 C* 的七行中文 GOAL；有已核实、可外移且有助后续审查或执行的背景时默认创建交接文件，压缩后仍超限或我明确要求时必须创建，没有合格内容时不要创建；不要开始执行。"
 
 policy:
   allow_implicit_invocation: false
