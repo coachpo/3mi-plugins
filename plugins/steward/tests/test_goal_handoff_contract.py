@@ -27,7 +27,7 @@ class GoalHandoffContractTests(unittest.TestCase):
         handoff = HANDOFF.read_text(encoding="utf-8")
 
         self.assertIn("externalize verified, eligible evidence by default", skill)
-        self.assertIn("single source for\nwhether a handoff", skill)
+        self.assertIn("whether a handoff is default, required, or forbidden", skill)
         self.assertIn("GOAL length is not the default-creation gate", authoring)
         self.assertIn("**默认创建：**", handoff)
         self.assertIn("GOAL 是否接近 4,000 字符不参与这项判断", handoff)
@@ -83,17 +83,19 @@ class GoalHandoffContractTests(unittest.TestCase):
 
         self.assertIn("校验通过之后才开始写盘", handoff)
         for command in (
-            "git rev-parse --show-toplevel",
-            "git ls-files --error-unmatch",
-            "git check-ignore -q",
+            'git -C "<target-worktree-root>" rev-parse --show-toplevel',
+            'git -C "<target-worktree-root>" ls-files --error-unmatch',
+            'git -C "<target-worktree-root>" check-ignore -q',
         ):
             self.assertIn(command, handoff)
+        self.assertIn('worktree_binding.py" verify-view', handoff)
+        self.assertIn("同一 Git 仓库的 sibling worktree", handoff)
         self.assertIn("内容恰为一行 `*`", handoff)
         self.assertIn("1 是唯一可恢复结果", handoff)
         self.assertIn("符号链接或其他类型不通过", handoff)
         self.assertIn("截取前 64 个字符", handoff)
         self.assertIn("结果为空时使用 `goal-context`", handoff)
-        self.assertIn("只新建缺少的 `.steward`", handoff)
+        self.assertIn("内新建缺少的 `.steward`", handoff)
         self.assertIn("写盘任一步失败时", handoff)
         self.assertIn("先回滚本轮已新建且内容仍未变", handoff)
         self.assertIn("本轮新建且仍为空的目录", handoff)
@@ -135,11 +137,10 @@ class GoalHandoffContractTests(unittest.TestCase):
         default_prompt = manifest["interface"]["defaultPrompt"][0]
         combined = f"{agent}\n{readme}\n{default_prompt}"
 
-        self.assertIn("默认创建交接文件", agent)
-        self.assertIn("压缩后仍超限或我明确要求时必须创建", agent)
-        self.assertIn("没有合格内容时不要创建", agent)
-        self.assertIn("默认外移有用的已核实背景", default_prompt)
-        self.assertIn("无合格背景时不创建", default_prompt)
+        self.assertIn("主会话已解析的唯一目标 worktree 根", agent)
+        self.assertIn("不要读取宿主 Goal 或执行状态", agent)
+        self.assertIn("主会话已解析的唯一目标 worktree 根", default_prompt)
+        self.assertIn("条件式交接文档", default_prompt)
         for obsolete in (
             "仅在超限或明确要求时",
             "仅在超长或明确要求时",

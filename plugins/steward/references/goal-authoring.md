@@ -5,13 +5,39 @@ This is the single authoring contract for a new seven-line GOAL, and
 validated GOAL or delegate an already-converged request to that skill; they do
 not independently draft, compress, or externalize one.
 
+## Bind the target worktree
+
+The main session or caller must supply exactly one already-resolved session
+worktree root as `<target-worktree-root>`. Resolve the calling skill directory
+as `<skill-dir>`, then validate the supplied absolute path through:
+
+```text
+python3 -B "<skill-dir>/../../scripts/worktree_binding.py" view "<target-worktree-root>"
+```
+
+Freeze the canonical `view` in memory. Do not discover or replace the target
+from `<skill-dir>`, shell cwd, a repository match, or any other worktree. Before
+each fact-gathering phase and each conditional write, require the caller to
+freshly provide `<current-session-worktree-root>` and pass it to `verify-view`
+with the frozen view on standard input. The fresh value comes from the caller's
+session workspace binding, never cwd. When a command reports a project root,
+validate it with `verify-root`; run repository commands with
+`git -C "<target-worktree-root>"` or an equivalent explicit workdir, with
+repository-selecting `GIT_DIR`, `GIT_WORK_TREE`, and related overrides cleared.
+
+Missing or multiple candidates, resolution failure, a normalized Git top-level
+different from the supplied root, a sibling substituted for or observed instead
+of the frozen target, or binding drift is a blocker. Stop without writing a
+handoff or returning a GOAL. Keep absolute binding paths internal; the
+seven-line GOAL and every handoff reference use project-relative paths.
+
 ## Establish the source facts
 
 Treat the current user request and later accepted decisions as the authority for
 the result, scope, and allowed effects. Verify workspace facts only as needed to
 make the outcome, paths, commands, constraints, and completion checks accurate.
 Repository evidence can constrain an implementation, but it cannot expand the
-request.
+request. Read every repository fact from `<target-worktree-root>`.
 
 Do not treat assistant suggestions, rejected options, silence, examples, stale
 summaries, or superseded decisions as consensus. A reasonable assumption may be
@@ -24,7 +50,8 @@ and do not emit a GOAL.
 For an engineering GOAL, inspect the managed Current Development Strategy when
 it intersects the request. First validate the exact `STATUS.md` development-tier
 line, complete static asset catalog, and selected managed block through the
-read-only project-docs validator. Read the consumer rules in
+read-only project-docs validator with `<target-worktree-root>` as its explicit
+project-root argument. Read the consumer rules in
 [`development-tiers.md`](../skills/write-project-docs/references/development-tiers.md)
 only in that case.
 
@@ -39,11 +66,10 @@ reachable risks take precedence over tier defaults.
 
 ## Write and validate the contract
 
-Resolve the calling skill directory as `<skill-dir>`, then use
-[`goal-template.txt`](goal-template.txt) exactly. The output has seven logical
-lines, in the template order, with the exact labels and full-width colon. Fill
-every placeholder. `结果`, `范围`, `完成标准`, and `最终交付` require substantive
-content; the other fields may be `无` when nothing applies.
+Use [`goal-template.txt`](goal-template.txt) exactly. The output has seven
+logical lines, in the template order, with the exact labels and full-width
+colon. Fill every placeholder. `结果`, `范围`, `完成标准`, and `最终交付` require
+substantive content; the other fields may be `无` when nothing applies.
 
 Write independently verifiable completion outcomes as `(C1) ...；(C2) ...`,
 with unique consecutive IDs starting at `C1`. Keep those IDs stable within the
@@ -85,5 +111,6 @@ required creation, the no-content branch, placement, write ordering, fallback,
 and blocking behavior; GOAL length is not the default-creation gate.
 
 The authoring skill may create only the disclosed handoff, its necessary
-directory entries, and its self-ignoring rule beneath `.steward/handoffs/`.
-Never emit an unvalidated objective.
+directory entries, and its self-ignoring rule beneath
+`<target-worktree-root>/.steward/handoffs/`. Never emit an unvalidated
+objective.

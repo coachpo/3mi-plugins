@@ -9,6 +9,18 @@ GOAL 正文有 4,000 字符硬上限，由 [`goal_contract.py`](../scripts/goal_
 
 [`draft-consensus-goal`](../skills/draft-consensus-goal/SKILL.md) 是本契约的唯一技能消费者。其余技能不写交接文件。新交接文件统一位于项目内 `.steward/handoffs/` 子树；该临时子树与同一命名空间下可跟踪的正式控制面文件隔离。
 
+## 目标 worktree 绑定
+
+本契约只消费 `goal-authoring.md` 已冻结的 `<target-worktree-root>`，不得从插件目录、shell cwd 或“同一仓库”重新推断项目根。所有路径检查、Git 命令、目录创建和写盘都以该精确根为基准；同一 Git 仓库的 sibling worktree 也不是等价目标。
+
+开始落点检查前和下面每个写入步骤前，都要求调用方重新提供 `<current-session-worktree-root>`，并通过标准输入把内存中的冻结 `view` 交给共享验证器核对。这个当前根来自调用方的会话 workspace 绑定，不是 shell cwd：
+
+```text
+python3 -B "<skill-dir>/../../scripts/worktree_binding.py" verify-view "<current-session-worktree-root>" -
+```
+
+缺少、歧义、无法解析或已经变化的绑定立即阻塞。尚未写盘时撤回候选引用并恢复内联背景；写盘已经开始时进入本契约的失败回滚。不得留下悬空引用。
+
 ## 可以外移的内容
 
 只有“证据与上下文”里已核实的背景材料可以外移：相关文件与符号、当前行为、错误或日志原文、长篇接口说明、规范来源的引文。它还必须能帮助后续审查或执行复核来源、复现相关行为或理解实质接口与规范；未经核实的线索、仅重复正文的摘要和对后续工作没有作用的材料都不写。
@@ -17,18 +29,20 @@ GOAL 正文有 4,000 字符硬上限，由 [`goal_contract.py`](../scripts/goal_
 
 ## 落点
 
-落点固定在项目根下的 `.steward/handoffs/<安全标识>.md`。从“结果”字段派生 `<安全标识>` 时，把 ASCII 字母转成小写，保留 ASCII 数字，以单个连字符替换其余连续字符并去掉首尾连字符，再截取前 64 个字符并重新去掉末尾连字符；结果为空时使用 `goal-context`。用户在本次请求里点名确切项目相对路径时，只有规范化后的前两段精确为 `.steward/handoffs` 才使用；其他路径即使已被 git 忽略也不使用，只请用户改为 `.steward/handoffs/` 下的路径。
+落点固定在 `<target-worktree-root>` 下的项目相对路径 `.steward/handoffs/<安全标识>.md`。从“结果”字段派生 `<安全标识>` 时，把 ASCII 字母转成小写，保留 ASCII 数字，以单个连字符替换其余连续字符并去掉首尾连字符，再截取前 64 个字符并重新去掉末尾连字符；结果为空时使用 `goal-context`。用户在本次请求里点名确切项目相对路径时，只有规范化后的前两段精确为 `.steward/handoffs` 才使用；其他路径即使已被 git 忽略也不使用，只请用户改为 `.steward/handoffs/` 下的路径。
 
 按顺序跑完下面这几项只读检查来定落点。只有 `git check-ignore` 返回 1 可以按表中规则推迟到写入阶段补自忽略规则；其余任一检查不通过就不写文件、也不在 GOAL 里写引用句：
 
+下面所有 Git 命令都清除 `GIT_DIR`、`GIT_WORK_TREE` 及其他会改选仓库的环境覆盖，不能让进程环境绕过 `-C "<target-worktree-root>"`。
+
 | 检查 | 做法 | 判据 |
 | --- | --- | --- |
-| 解析项目根 | `git rev-parse --show-toplevel` | 退出码 0，且输出的 checkout 就是“证据与上下文”里已核实的那个项目 |
+| 解析项目根 | `git -C "<target-worktree-root>" rev-parse --show-toplevel`，再把输出交给 `worktree_binding.py verify-root` | 退出码均为 0，且规范化后的 Git top-level 与 `<target-worktree-root>` 完全相同；同仓库其他 worktree 不通过 |
 | 限定交接目录 | 规范化项目相对路径后比较前两段 | 前两段必须精确为 `.steward/handoffs`，且规范化结果仍在该子树内 |
-| 检查目录组件 | 逐段检查项目根下已有的 `.steward` 与 `handoffs` 组件 | 不存在的组件可在写入阶段新建；已存在的组件必须是真实目录，符号链接或其他类型不通过 |
-| 确认未被跟踪 | `git ls-files --error-unmatch -- <路径>` | 退出码 1（未跟踪）通过。0 表示该路径已在版本控制里，128 表示落在项目外——`../` 与项目外的绝对路径都在这里被挡住 |
+| 检查目录组件 | 逐段检查 `<target-worktree-root>` 下已有的 `.steward` 与 `handoffs` 组件 | 不存在的组件可在写入阶段新建；已存在的组件必须是真实目录，符号链接或其他类型不通过 |
+| 确认未被跟踪 | `git -C "<target-worktree-root>" ls-files --error-unmatch -- <路径>` | 退出码 1（未跟踪）通过。0 表示该路径已在版本控制里，128 表示落在目标外——`../` 与项目外的绝对路径都在这里被挡住 |
 | 不覆盖既有文件 | 目标文件已存在时改用 `-2`、`-3` 递增后缀，取第一个不存在的路径 | 既有文件不读取、不比对、不删除，它可能是上一轮起草或别人的在途内容 |
-| 确认已被忽略 | `git check-ignore -q -- <最终路径>` | 退出码 0 通过。1 是唯一可恢复结果：记下写入阶段要在 `.steward/handoffs/` 内补一条忽略规则。128（无法判定）按不通过处理 |
+| 确认已被忽略 | `git -C "<target-worktree-root>" check-ignore -q -- <最终路径>` | 退出码 0 通过。1 是唯一可恢复结果：记下写入阶段要在 `.steward/handoffs/` 内补一条忽略规则。128（无法判定）按不通过处理 |
 
 落点已被忽略是硬要求，不是偏好。[`run-closed-loop-verification`](../skills/run-closed-loop-verification/SKILL.md) 的 Git source provider 用 `git ls-files --cached --others --exclude-standard` 建 source inventory：已跟踪条目和**未被忽略**的未跟踪条目都进 source fingerprint。一份未被忽略的交接文件因此会制造 source drift，让正在跑的 schema-4 campaign 把当前 attempt 保存为 `INVALIDATED`、转入 `BLOCKED` 并要求新建 campaign root；portable evidence 的导出与聚合还另外要求 `source.excludes` 之外的 Git worktree 干净。
 
@@ -38,8 +52,8 @@ GOAL 正文有 4,000 字符硬上限，由 [`goal_contract.py`](../scripts/goal_
 
 上面这几项检查全都是只读的。落点定下来之后，先在内存里完成外移、写好引用句，把候选文本交给共享验证器重新校验。校验通过之后才开始写盘，一次落完：
 
-1. 只新建缺少的 `.steward` 与 `.steward/handoffs` 目录组件，并记录本轮创建的目录以便失败回滚；不得穿过符号链接，也不改变既有目录。
-2. 记了要补忽略规则时，新建 `.steward/handoffs/.gitignore`，内容恰为一行 `*`，再重跑一次 `git check-ignore` 确认返回 0；仍非 0 就不写交接文件，报出这份刚建出来的 `.gitignore` 的确切路径。这一行同时忽略 `handoffs/` 内的全部文件和它自己，整棵临时子树因此不进 `git status --porcelain -uall`，也不进 source inventory；它的作用域只覆盖 `handoffs/`，同一项目里 `.steward/invariants.json`、验证配置和其他正式控制面路径照常可以 add 和提交。不得在 `.steward/` 根写入会忽略整个插件命名空间的规则。
+1. 只在 `<target-worktree-root>` 内新建缺少的 `.steward` 与 `.steward/handoffs` 目录组件，并记录本轮创建的目录以便失败回滚；不得穿过符号链接，也不改变既有目录。
+2. 记了要补忽略规则时，新建 `.steward/handoffs/.gitignore`，内容恰为一行 `*`，再重跑一次 `git -C "<target-worktree-root>" check-ignore -q -- <最终路径>` 确认返回 0；仍非 0 就不写交接文件，报出这份刚建出来的 `.gitignore` 的确切路径。这一行同时忽略 `handoffs/` 内的全部文件和它自己，整棵临时子树因此不进目标 worktree 的 `git status --porcelain -uall`，也不进 source inventory；它的作用域只覆盖 `handoffs/`，同一项目里 `.steward/invariants.json`、验证配置和其他正式控制面路径照常可以 add 和提交。不得在 `.steward/` 根写入会忽略整个插件命名空间的规则。
 
    该路径上已经有文件时不覆盖、不追加、不删除，直接按落点检查不通过处理：它既然没能让 `check-ignore` 返回 0，说明这个目录已被别的规则或用途占着。本契约授权的是新建那两个文件，不是改写任何既有文件。
 3. 写交接文件。
@@ -52,7 +66,7 @@ GOAL 正文有 4,000 字符硬上限，由 [`goal_contract.py`](../scripts/goal_
 
 ## 引用句
 
-引用句并入“证据与上下文”字段，与该字段其余内容用中文分号衔接——七个字段各占一个逻辑行，引用句不另起一行。路径写成裸的项目相对路径，例如：
+引用句并入“证据与上下文”字段，与该字段其余内容用中文分号衔接——七个字段各占一个逻辑行，引用句不另起一行。路径写成裸的项目相对路径，不写入本机绝对 `<target-worktree-root>`，例如：
 
 ```text
 补充背景见 .steward/handoffs/retry-backoff.md；该路径已被 git 忽略，可删除 .steward/handoffs/ 子树但不得据此删除整个 .steward/，执行前先读取；读不到时按本字段其余来源自行核实，不推测其内容，并在最终交付中说明

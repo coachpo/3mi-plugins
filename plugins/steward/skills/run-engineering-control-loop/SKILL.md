@@ -16,6 +16,26 @@ infer it from ordinary implementation, review, or test work.
 Resolve this skill directory as `<skill-dir>` and the shared validator as
 `"<skill-dir>/../../scripts/goal_contract.py"`.
 
+## Target worktree
+
+Require the main session or caller to provide exactly one already-resolved
+session worktree root as `<target-worktree-root>`. Validate and freeze it with:
+
+```text
+python3 -B "<skill-dir>/../../scripts/worktree_binding.py" view "<target-worktree-root>"
+```
+
+Do not derive or replace it from the plugin directory, shell cwd, or another
+worktree in the same Git repository.
+
+Pass that exact root and frozen binding to `draft-consensus-goal` and every
+later gate. Run all repository reads and project-local writes against it,
+requiring the main session or caller to freshly provide its current workspace
+root at gate entry and before writes, then checking that value against the
+frozen view with `verify-view`. Missing, ambiguous, unresolved, mismatched, or
+changed bindings stop the loop with no further writes. Keep the absolute root
+out of the GOAL and cross-gate references, which remain project-relative.
+
 ## Authority and write set
 
 An explicit full-loop request and its scoped engineering change authorize normal
@@ -39,10 +59,11 @@ digest, carrying stable IDs rather than copied contract text.
 
 ## Bind the accepted GOAL
 
-Resolve the project root. Input is either explicit seven-line GOAL text or a
-user-identified path, or an accepted current request with materially complete
-result, scope, authority boundary, criteria, and blockers. Validate inline input
-through standard input with:
+Use the frozen `<target-worktree-root>` as `<project-root>`. Input is either
+explicit seven-line GOAL text or a user-identified path inside that worktree, or
+an accepted current request with materially complete result, scope, authority
+boundary, criteria, and blockers. Validate inline input through standard input
+with:
 
 ```text
 python3 -B "<skill-dir>/../../scripts/goal_contract.py" view -
@@ -51,7 +72,8 @@ python3 -B "<skill-dir>/../../scripts/goal_contract.py" view -
 For a supplied path, quote it and replace `-` with that path. Never repair,
 reinterpret, or renumber explicit input. For a converged request, use
 [`draft-consensus-goal`](../draft-consensus-goal/SKILL.md) as the sole author and
-ask only when a material contract decision is missing.
+pass it the exact frozen `<target-worktree-root>`; ask only when a material
+contract decision is missing.
 
 Freeze `.steward/goal.txt` in the disclosed write set, persist the canonical
 objective exactly, and bind its digest. Reuse an existing file only after

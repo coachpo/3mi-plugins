@@ -27,6 +27,17 @@ digests are computed by the shared loaders, not from ad hoc JSON formatting or
 raw GOAL bytes. IDs are carried by reference and are never renumbered or
 assigned a new meaning merely to make a campaign pass.
 
+GOAL authoring and the full-loop coordinator additionally consume one ephemeral
+target-worktree binding. The main session or caller supplies the already-resolved
+session worktree root; `worktree_binding.py` normalizes it, requires the Git
+top-level to be exactly equal, and distinguishes sibling worktrees by their Git
+directory. The binding is never inferred from plugin location, shell cwd, or
+shared repository identity. It stays out of the seven-line GOAL and handoff
+references, which remain project-relative. Before each phase or write, the
+caller freshly supplies its current session workspace root and `verify-view`
+compares it with the frozen binding; missing, ambiguous, stale, switched, or
+mismatched bindings fail before further project-local writes.
+
 The full-loop handoffs normally live beneath `.steward/`: canonical
 `goal.txt`, deterministic `profile-selection.json` when architecture profiles
 are selected, `invariants.json`, canonical `semantic-review.json`, distinct
@@ -48,11 +59,13 @@ disclose its exact path before creation without requesting path confirmation
 again.
 Draft-only and standalone read-only skills do not write full-loop artifacts.
 The sole `draft-consensus-goal` authoring skill may additionally create one
-handoff file and its self-ignoring rule beneath
-`.steward/handoffs/`, as specified by [`handoff-file.md`](handoff-file.md);
-only that temporary subtree is ignored. It is not a full-loop handoff, carries
-no digest or authority, and stays out of the Git source inventory precisely because it is ignored,
-while sibling control-plane files retain their existing Git behavior. The
+handoff file and its self-ignoring rule beneath the exact bound target
+worktree's `.steward/handoffs/`, as specified by
+[`handoff-file.md`](handoff-file.md); only that temporary subtree is ignored.
+The same repository's other worktrees are rejected. It is not a full-loop
+handoff, carries no digest or authority, and stays out of the Git source
+inventory precisely because it is ignored, while sibling control-plane files
+retain their existing Git behavior. The
 full-loop coordinator may persist canonical Review stdout and frozen expected
 Review requests only at the exact project-relative paths in the disclosed write
 set. New post-fix handoffs stay within that set and do not require path-by-path

@@ -1,6 +1,6 @@
 ---
 name: draft-consensus-goal
-description: Author Steward's sole machine-validated seven-line Chinese GOAL from accepted decisions and verified facts. Use for a reviewable or executable contract, including full-loop input; return it without starting execution, and externalize verified, eligible evidence by default when it will help later review or execution.
+description: Author Steward's sole machine-validated seven-line Chinese GOAL from accepted decisions and verified facts in one caller-provided target worktree. Use for a reviewable or executable contract, including full-loop input; return it without starting execution, and externalize verified, eligible evidence by default when it will help later review or execution.
 ---
 
 # Draft Consensus Goal
@@ -12,26 +12,39 @@ handoff branches.
 This workflow requires an explicit user request for GOAL text or a GOAL input to
 another explicitly requested Steward workflow.
 
+## Target worktree
+
+Require the main session or caller to provide exactly one already-resolved
+session worktree root as `<target-worktree-root>`. Consume that value; never
+derive it from the plugin directory, shell current directory, or another
+worktree in the same repository.
+
+Use that exact worktree for every repository fact, strategy read, and handoff
+path. A missing, ambiguous, unresolved, mismatched, or changed binding is a
+blocker before delivery; do not write a handoff or return an objective that
+references one. The authoring contract owns normalization and drift checks.
+
 ## Authority
 
-The request authorizes read-only fact checking and the text result. It does not
-authorize implementation, changes to existing files, or reading, mutating, or
-reporting host Goal or execution state. The only conditional local writes are
+The request authorizes reading the caller-provided workspace root, read-only
+fact checking there, and the text result. It does not authorize implementation,
+changes to existing files, or reading, mutating, or reporting host Goal,
+execution progress, or other host state. The only conditional local writes are
 one new handoff, its necessary directory entries, and, when needed, its
 self-ignoring rule. A caller with separate write authority may persist the
 returned canonical objective outside this skill's write set.
 
 ## Author and hand off
 
-Resolve this skill directory as `<skill-dir>`, then read and apply
-[`goal-authoring.md`](../../references/goal-authoring.md). Use its detailed
-evidence, strategy-authority, uncertainty, seven-line format, compression,
-handoff, and bounded-validation rules. That contract is the single source for
-whether a handoff is default, required, or forbidden and for its fallback or
-blocking behavior.
+Read and apply [`goal-authoring.md`](../../references/goal-authoring.md). Use its
+detailed binding, evidence, strategy-authority, uncertainty, seven-line format,
+compression, handoff, and bounded-validation rules. That contract is the single
+source for whether a handoff is default, required, or forbidden and for its
+fallback or blocking behavior.
 
 ## Output
 
-If clarification or a required handoff blocks, return only the actual blocker
-and smallest next action. Otherwise return exactly the validator `view` field
-`objective`, with no JSON, digest, introduction, or text after the seventh line.
+If target binding, clarification, or a required handoff blocks, return only the
+actual blocker and smallest next action. Otherwise return exactly the validator
+`view` field `objective`, with no JSON, digest, introduction, or text after the
+seventh line.
