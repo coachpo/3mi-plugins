@@ -21,40 +21,37 @@ CLAUDE_MANIFEST = PLUGIN_ROOT / ".claude-plugin" / "plugin.json"
 
 
 class GoalHandoffContractTests(unittest.TestCase):
-    def test_useful_verified_context_is_the_default_trigger(self) -> None:
+    def test_every_goal_requires_exactly_one_handoff(self) -> None:
         skill = SKILL.read_text(encoding="utf-8")
         authoring = AUTHORING.read_text(encoding="utf-8")
         handoff = HANDOFF.read_text(encoding="utf-8")
 
-        self.assertIn("externalize verified, eligible evidence by default", skill)
-        self.assertIn("whether a handoff is default, required, or forbidden", skill)
-        self.assertIn("GOAL length is not the default-creation gate", authoring)
-        self.assertIn("**默认创建：**", handoff)
-        self.assertIn("GOAL 是否接近 4,000 字符不参与这项判断", handoff)
+        self.assertIn("always create one project-local handoff", skill)
+        self.assertIn("one\nhandoff for every delivered GOAL", skill)
+        self.assertIn("For every GOAL", authoring)
+        self.assertIn("prepare\nexactly one handoff", authoring)
+        self.assertIn("每次起草 GOAL 都必须在交付前创建且只创建一份交接文件", handoff)
+        self.assertIn("用户是否另行要求文件都不参与创建判断", handoff)
 
-    def test_over_limit_and_explicit_requests_require_the_handoff(self) -> None:
+    def test_handoff_failure_always_blocks_goal_delivery(self) -> None:
         skill = SKILL.read_text(encoding="utf-8")
         authoring = AUTHORING.read_text(encoding="utf-8")
         handoff = HANDOFF.read_text(encoding="utf-8")
 
-        self.assertIn("default, required, or forbidden", skill)
-        self.assertIn("ordinarily compressed inline contract still exceeds", authoring)
-        self.assertIn("user explicitly asks for a\ncontext file", authoring)
-        self.assertIn("**强制创建：**", handoff)
-        self.assertIn("内联正文在外移前经过普通压缩仍超过", handoff)
-        self.assertIn("必须成功落盘后才能交付", handoff)
-        self.assertIn("强制分支失败时交付不完整", handoff)
+        self.assertIn("handoff creation blocks", skill)
+        self.assertIn("successful handoff creation\nis always required", authoring)
+        self.assertIn("落点、校验或写盘失败也阻塞 GOAL 交付", handoff)
+        self.assertIn("不存在退回纯内联 GOAL 的分支", handoff)
 
-    def test_no_eligible_payload_means_no_file(self) -> None:
+    def test_handoff_always_has_verified_source_content(self) -> None:
         authoring = AUTHORING.read_text(encoding="utf-8")
         handoff = HANDOFF.read_text(encoding="utf-8")
 
-        self.assertIn("no-content branch", authoring)
-        self.assertIn("没有合格内容时不得创建空文件", handoff)
-        self.assertIn("不得通过复述 GOAL 凑出文件内容", handoff)
-        self.assertIn("提供至少一项已核实的合格背景或撤回文件要求", handoff)
-        self.assertIn("文件必须至少包含一项合格背景", handoff)
-        self.assertIn("排除不合格内容后为空就不创建", handoff)
+        self.assertIn("current request or later accepted decisions as provenance", authoring)
+        self.assertIn("不得创建空文件，也不得虚构背景", handoff)
+        self.assertIn("当前用户请求和后来明确接受的决定", handoff)
+        self.assertIn("文件必须至少包含一项已核实来源或合格背景", handoff)
+        self.assertIn("排除不合格内容后为空就阻塞", handoff)
 
     def test_the_seven_line_goal_remains_the_authority_boundary(self) -> None:
         handoff = HANDOFF.read_text(encoding="utf-8")
@@ -99,8 +96,8 @@ class GoalHandoffContractTests(unittest.TestCase):
         self.assertIn("写盘任一步失败时", handoff)
         self.assertIn("先回滚本轮已新建且内容仍未变", handoff)
         self.assertIn("本轮新建且仍为空的目录", handoff)
-        self.assertIn("把引用句从“证据与上下文”撤回", handoff)
-        self.assertIn("把外移的背景放回原处", handoff)
+        self.assertIn("撤回候选 GOAL 的引用句", handoff)
+        self.assertIn("把外移背景恢复到内存", handoff)
         self.assertIn("带着悬空引用交付比没有附件更糟", handoff)
 
     def test_handoff_ignore_rule_does_not_hide_sibling_control_files(self) -> None:
@@ -140,7 +137,7 @@ class GoalHandoffContractTests(unittest.TestCase):
         self.assertIn("主会话已解析的唯一目标 worktree 根", agent)
         self.assertIn("不要读取宿主 Goal 或执行状态", agent)
         self.assertIn("主会话已解析的唯一目标 worktree 根", default_prompt)
-        self.assertIn("条件式交接文档", default_prompt)
+        self.assertIn("必建交接文档", default_prompt)
         for obsolete in (
             "仅在超限或明确要求时",
             "仅在超长或明确要求时",

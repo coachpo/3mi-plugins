@@ -92,7 +92,7 @@ the same failure repeats, the validator is unavailable, an I/O error occurs, or
 no evidence-backed correction remains, stop with the actual error and smallest
 next action instead of looping or emitting an unvalidated contract.
 
-## Externalize useful background
+## Create the required handoff
 
 Keep the GOAL lean whether or not it approaches the limit: remove repeated
 background and unnecessary implementation detail, then use precise
@@ -100,15 +100,16 @@ existing-project references where they preserve enough evidence. Always retain
 the result, scope, authority boundary, evidence needed for completion, `C*`,
 legitimate blockers, and final delivery.
 
-Before final validation, identify verified material in `证据与上下文` that will
-help a later reviewer or executor independently recheck a source, reproduce
-relevant current behavior or failure, or understand a material interface or
-specification. Read and apply [`handoff-file.md`](handoff-file.md) when such
-material exists, when the ordinarily compressed inline contract still exceeds
-the limit before externalization, or when the user explicitly asks for a
-context file. That contract exclusively defines eligible content, default and
-required creation, the no-content branch, placement, write ordering, fallback,
-and blocking behavior; GOAL length is not the default-creation gate.
+For every GOAL, read and apply [`handoff-file.md`](handoff-file.md), prepare
+exactly one handoff, and follow that contract's validate-before-write sequence.
+Record the verified sources and context that support the draft, including the
+current request or later accepted decisions as provenance when no richer
+repository background is needed. Move eligible detail out of `证据与上下文`, but
+keep the evidence necessary to make the seven-line contract independently
+bounded and verifiable. The handoff contract exclusively defines eligible
+content, placement, write ordering, rollback, and blocking behavior. GOAL length
+and an explicit file request do not gate creation: successful handoff creation
+is always required before delivery.
 
 The authoring skill may create only the disclosed handoff, its necessary
 directory entries, and its self-ignoring rule beneath

@@ -1,13 +1,13 @@
 ---
 name: draft-consensus-goal
-description: Author Steward's sole machine-validated seven-line Chinese GOAL from accepted decisions and verified facts in one caller-provided target worktree. Use for a reviewable or executable contract, including full-loop input; return it without starting execution, and externalize verified, eligible evidence by default when it will help later review or execution.
+description: Author Steward's sole machine-validated seven-line Chinese GOAL from accepted decisions and verified facts in one caller-provided target worktree. Use for a reviewable or executable contract, including full-loop input; always create one project-local handoff before returning the GOAL, without starting execution.
 ---
 
 # Draft Consensus Goal
 
 Return one complete GOAL contract for later review or execution. This is the
 only Steward skill that authors a GOAL and owns its 4,000-code-point and
-handoff branches.
+required-handoff contract.
 
 This workflow requires an explicit user request for GOAL text or a GOAL input to
 another explicitly requested Steward workflow.
@@ -29,8 +29,8 @@ references one. The authoring contract owns normalization and drift checks.
 The request authorizes reading the caller-provided workspace root, read-only
 fact checking there, and the text result. It does not authorize implementation,
 changes to existing files, or reading, mutating, or reporting host Goal,
-execution progress, or other host state. The only conditional local writes are
-one new handoff, its necessary directory entries, and, when needed, its
+execution progress, or other host state. The only required local writes are one
+new handoff, its necessary directory entries, and, when needed, its
 self-ignoring rule. A caller with separate write authority may persist the
 returned canonical objective outside this skill's write set.
 
@@ -38,13 +38,13 @@ returned canonical objective outside this skill's write set.
 
 Read and apply [`goal-authoring.md`](../../references/goal-authoring.md). Use its
 detailed binding, evidence, strategy-authority, uncertainty, seven-line format,
-compression, handoff, and bounded-validation rules. That contract is the single
-source for whether a handoff is default, required, or forbidden and for its
-fallback or blocking behavior.
+compression, handoff, and bounded-validation rules. That contract requires one
+handoff for every delivered GOAL and is the single source for its eligible
+content, placement, write ordering, rollback, and blocking behavior.
 
 ## Output
 
-If target binding, clarification, or a required handoff blocks, return only the
+If target binding, clarification, or handoff creation blocks, return only the
 actual blocker and smallest next action. Otherwise return exactly the validator
 `view` field `objective`, with no JSON, digest, introduction, or text after the
 seventh line.

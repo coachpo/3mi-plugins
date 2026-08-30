@@ -42,7 +42,7 @@ claude plugin install steward@coachpo
 | --- | --- | --- |
 | 检查或维护 `AGENTS.md` 层级 | `write-agent-guides` | 审查默认只读；明确要求更新时才修改授权的 `AGENTS.md`，不创建或改写 `CLAUDE.md` |
 | 检查或刷新项目文档、静态开发档位策略 | `write-project-docs` | 审查默认只读；明确要求维护时才修改授权文档 |
-| 得到一份可评审或可执行的 GOAL 合同 | `draft-consensus-goal` | 绑定调用方提供的精确目标 worktree，返回机器校验的七行 GOAL；不开始执行，有合格且有用的已核实背景时默认创建 handoff |
+| 得到一份可评审或可执行的 GOAL 合同 | `draft-consensus-goal` | 绑定调用方提供的精确目标 worktree，始终创建 handoff，再返回机器校验的七行 GOAL；不开始执行 |
 | 只做行为级、对抗式代码审查 | `review-semantic-risks` | 严格只读，不运行测试、不修复代码 |
 | 审查或配置 local quick 与 CI full | `configure-project-verification` | `review` 零写入；`configure` 只写启动前冻结的配置输出 |
 | 校验、执行、恢复或审计已有 adapter | `run-closed-loop-verification` | 运行已审查 case 并保存可恢复证据；修复源码需要额外授权 |
@@ -112,7 +112,7 @@ claude plugin install steward@coachpo
 | --- | --- |
 | 只读审查、状态、设计或 audit | 不修改项目文件 |
 | 文档或 AGENTS 维护 | 仅修改请求授权的规范文档或 `AGENTS.md`；不会创建或改写 `CLAUDE.md`，也不会为完整性创建无证据内容 |
-| GOAL 起草 | 只在精确 `<target-worktree-root>` 内核实事实并落盘；有已核实、允许外移且对后续有用的背景时，默认在项目相对 `.steward/handoffs/` 下创建临时、被忽略的文件；压缩后仍超限或用户明确要求时强制创建，无合格内容时不创建 |
+| GOAL 起草 | 只在精确 `<target-worktree-root>` 内核实事实；每次都在项目相对 `.steward/handoffs/` 下创建一份临时、被忽略的 handoff，成功落盘后才交付 GOAL |
 | 完整工程闭环 | 在启动前披露并冻结的写集内持久化 `.steward/goal.txt`、request/Review handoff、adapter、campaign 与 evidence |
 | Profile 与不变量维护 | 明确维护请求在启动前冻结的写集内保存 profile selection 和 `.steward/invariants.json` 等持久控制文件 |
 | 验证流水线配置 | 在配置请求冻结的 `allow-write` 集内写入 CI plan、本地入口和 GitHub workflow |
@@ -186,13 +186,13 @@ flowchart LR
 
 Codex 直接调用形式是 `$steward:<skill-name>`，Claude Code 是 `/steward:<skill-name>`。除 `write-agent-guides` 保留默认的隐式路由能力外，其余六个技能均应显式调用。Codex 通过 `agents/openai.yaml` 强制这项策略；共享 `SKILL.md` 还要求存在明确用户请求，使未提供等价 frontmatter 策略的宿主不得进入这些工作流。普通任务选择一个最窄的专用技能，不因插件存在总编排器而自动升级为持久闭环。
 
-显式调用 `run-engineering-control-loop` 会先消费、验证并冻结主会话提供的唯一 `<target-worktree-root>`，再把同一绑定传给 GOAL 作者和各 gate；不会从 cwd 或同仓库其他 worktree 改选目标。它授权启动前披露并冻结的标准项目内 `.steward/` 控制产物写集，包括 `.steward/goal.txt`、request/Review handoff、adapter 与 campaign；原工程请求范围内的源码路径可由后续影响证据确定，无需预先列入控制产物写集或逐路径确认。经校验的 drift/new-root 规则若要求在已披露的项目内 campaign 命名空间创建新 root，则创建前解析、冻结并报告精确路径，无需再次确认。控制产物写集和该命名空间外路径、原请求范围外源码、外部系统、部署、凭据、破坏性或付费动作及实质扩域仍需确认。expected-request 与 Review handoff 的精确路径必须不同且在 source observation 前预排除；保存 Review 时只写 validator `view` 的 canonical stdout 字节，不保存 Reviewer 的外围说明。GOAL 起草技能的 `.steward/handoffs/` 条件产物仍按其独立契约执行。
+显式调用 `run-engineering-control-loop` 会先消费、验证并冻结主会话提供的唯一 `<target-worktree-root>`，再把同一绑定传给 GOAL 作者和各 gate；不会从 cwd 或同仓库其他 worktree 改选目标。它授权启动前披露并冻结的标准项目内 `.steward/` 控制产物写集，包括 `.steward/goal.txt`、request/Review handoff、adapter 与 campaign；原工程请求范围内的源码路径可由后续影响证据确定，无需预先列入控制产物写集或逐路径确认。经校验的 drift/new-root 规则若要求在已披露的项目内 campaign 命名空间创建新 root，则创建前解析、冻结并报告精确路径，无需再次确认。控制产物写集和该命名空间外路径、原请求范围外源码、外部系统、部署、凭据、破坏性或付费动作及实质扩域仍需确认。expected-request 与 Review handoff 的精确路径必须不同且在 source observation 前预排除；保存 Review 时只写 validator `view` 的 canonical stdout 字节，不保存 Reviewer 的外围说明。GOAL 起草技能始终按独立契约创建 `.steward/handoffs/` 产物。
 
 | 技能 | 使用时机 | 读写模式 | 主要结果 |
 | --- | --- | --- | --- |
 | [`write-agent-guides`](skills/write-agent-guides/SKILL.md) | 只读审查，或创建、修复、刷新分层 `AGENTS.md`；已有不变量索引时校验或同步短工程路由 | 审查、解释和诊断只读；明确更新时仅写授权的 `AGENTS.md`，不写 `CLAUDE.md` | 根级共同规则、必要的子树增量，以及 `trigger → authority → INV → validation` 路由 |
 | [`write-project-docs`](skills/write-project-docs/SKILL.md) | 审查或维护固定项目文档集合，按 `STATUS.md` 七档枚举选择静态开发策略，并维护权威锚点和已存在或明确要求的不变量映射 | 普通审查只读；明确维护时写授权文档、静态策略托管区块、已有/明确要求的索引、精确获授权的 profile selection handoff 和受托管导航区块 | 保持唯一权威边界的文档、与开发档位精确匹配的双语静态策略、可验证 `.steward/invariants.json`，以及 profile-backed 映射所固定的 selection artifact |
-| [`draft-consensus-goal`](skills/draft-consensus-goal/SKILL.md) | 讨论已收敛，需要一份可评审、留档或执行的 GOAL 合同 | 唯一 GOAL 作者；只消费调用方提供并验证的精确 `<target-worktree-root>`，在那里只读核实并返回文本，不开始执行或写既有文件；有合格且有用的已核实背景时默认在项目相对 `.steward/handoffs/` 内新建交接文件，压缩后仍超限或用户明确要求时强制创建 | 经机器校验、带连续稳定 `C*` 的七行中文 GOAL |
+| [`draft-consensus-goal`](skills/draft-consensus-goal/SKILL.md) | 讨论已收敛，需要一份可评审、留档或执行的 GOAL 合同 | 唯一 GOAL 作者；只消费调用方提供并验证的精确 `<target-worktree-root>`，在那里核实事实并始终于项目相对 `.steward/handoffs/` 内新建一份交接文件；成功落盘后返回文本，不开始执行或改写既有文件 | 经机器校验、带连续稳定 `C*` 且引用 handoff 的七行中文 GOAL |
 | [`review-semantic-risks`](skills/review-semantic-risks/SKILL.md) | 明确要求对代码、diff 或行为路径做语义/对抗审查 | 严格只读，不写文件、不执行测试或修复；coordinator 在完整闭环冻结 strict bindings 并另行保存 canonical `view` | standalone 模式交付有证据的 prose findings/gaps；strict-handoff 模式交付经校验、request-bound 的 `semantic-review v1` manifest 与 `RF-*` case 候选 |
 | [`configure-project-verification`](skills/configure-project-verification/SKILL.md) | 明确要求只读审查或在授权路径内配置项目的验证流水线 | `review` 零写入；`configure` 只写启动前冻结的仓库内 allowlist | provider-neutral verification profile、closed-loop adapter、本地 quick 入口、CI full 计划，以及当前固定的 GitHub Actions 投影；不执行 campaign |
 | [`run-closed-loop-verification`](skills/run-closed-loop-verification/SKILL.md) | 明确要求 adapter 校验、多阶段可恢复验证、fix-and-retest、恢复中断 campaign、最终回归证明或平台证据处理 | 只读操作零写入；bootstrap/execute/export/aggregate 写各操作启动前冻结的项目内路径；fix-and-retest 在一次任务级修复预算内修改源码并保存严格 Review handoff | adapter 校验；trace-enabled campaign 只消费已校验 Review，并产出 fail-stop journal、post-fix handoff、快速历史、修复审计、定向复测、永久护栏、同源完整回归和 audit；平台 evidence 可独立导出/聚合 |
