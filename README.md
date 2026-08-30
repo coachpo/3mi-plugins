@@ -10,7 +10,7 @@ CoachPo 的 Codex 与 Claude Code 插件市场。两个宿主从同一个 Git �
 
 | Plugin | Category | 简介 |
 | --- | --- | --- |
-| [`steward`](plugins/steward/README.md) | Productivity | 面向 Coding Agent 的工程控制面，通过七个共享技能连接项目指引、文档、GOAL、语义风险、验证流水线与可恢复的工程闭环。 |
+| [`steward`](plugins/steward/README.md) | Productivity | 面向 Coding Agent 的工程控制面，通过八个共享技能连接项目指引、文档、GOAL、语义风险、验证流水线与可恢复的工程闭环。 |
 
 ## Codex 安装
 

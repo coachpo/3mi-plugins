@@ -1,6 +1,6 @@
 # Steward
 
-Steward 是同时面向 Codex 与 Claude Code 的工程控制面：以仓库事实为依据，用“薄编排器 + 稳定机器契约 + 可独立调用技能”把 GOAL、项目不变量、语义风险、验证证据和永久技术护栏连成可恢复、可审计的闭环。两个宿主安装同一个插件并加载同一个 `skills/` 目录；插件包含七个共享技能，普通任务只调用所需技能，只有用户明确要求完整持久工程闭环时才使用总编排器。
+Steward 是同时面向 Codex 与 Claude Code 的工程控制面：以仓库事实为依据，用“薄编排器 + 稳定机器契约 + 可独立调用技能”把 GOAL、项目不变量、语义风险、验证证据和永久技术护栏连成可恢复、可审计的闭环。两个宿主安装同一个插件并加载同一个 `skills/` 目录；插件包含八个共享技能，普通任务只调用所需技能，只有用户明确要求完整持久工程闭环时才使用总编排器。
 
 ## 安装
 
@@ -41,6 +41,7 @@ claude plugin install steward@coachpo
 | 你的目标 | 使用的技能 | 默认效果 |
 | --- | --- | --- |
 | 检查或维护 `AGENTS.md` 层级 | `write-agent-guides` | 审查默认只读；明确要求更新时才修改授权的 `AGENTS.md`，不创建或改写 `CLAUDE.md` |
+| 把复杂代码库调研拆成多个独立只读搜索 lane | `parallel-repository-research` | 当前主会话模型按宿主能力规划 worker、收集并复核 `path:line` 或符号证据；不运行项目代码、不修改文件 |
 | 检查或刷新项目文档、静态开发档位策略 | `write-project-docs` | 审查默认只读；明确要求维护时才修改授权文档 |
 | 得到一份可评审或可执行的 GOAL 合同 | `draft-consensus-goal` | 绑定调用方提供的精确目标 worktree，始终创建 handoff，再返回机器校验的七行 GOAL；不开始执行 |
 | 只做行为级、对抗式代码审查 | `review-semantic-risks` | 严格只读，不运行测试、不修复代码 |
@@ -58,6 +59,12 @@ claude plugin install steward@coachpo
 
 ```text
 使用 $steward:write-agent-guides 只读审查当前仓库的 AGENTS.md 层级，报告重复、缺失和作用域错误，不修改文件。
+```
+
+并行只读仓库调研：
+
+```text
+使用 $steward:parallel-repository-research 将当前仓库中的实现定位、调用链与测试覆盖调研拆成独立搜索 lane，通过宿主可用的子代理收集可核验的 path:line 或符号证据，再由当前主会话模型复核、去重并汇总；不运行项目代码，不修改文件。
 ```
 
 刷新项目文档：
@@ -184,13 +191,16 @@ flowchart LR
 
 ## 什么时候使用哪个技能
 
-Codex 直接调用形式是 `$steward:<skill-name>`，Claude Code 是 `/steward:<skill-name>`。除 `write-agent-guides` 保留默认的隐式路由能力外，其余六个技能均应显式调用。Codex 通过 `agents/openai.yaml` 强制这项策略；共享 `SKILL.md` 还要求存在明确用户请求，使未提供等价 frontmatter 策略的宿主不得进入这些工作流。普通任务选择一个最窄的专用技能，不因插件存在总编排器而自动升级为持久闭环。
+Codex 直接调用形式是 `$steward:<skill-name>`，Claude Code 是 `/steward:<skill-name>`。`write-agent-guides` 和 `parallel-repository-research` 保留默认的隐式路由能力，其余六个技能均应显式调用。Codex 通过 `agents/openai.yaml` 强制这项策略；共享 `SKILL.md` 还要求六个显式技能必须存在明确用户请求，使未提供等价 frontmatter 策略的宿主不得进入这些工作流。普通任务选择一个最窄的专用技能，不因插件存在总编排器而自动升级为持久闭环。
+
+`parallel-repository-research` 只负责定位、映射、盘点、依赖追踪和收集可核验证据，不把搜索结果直接升级为风险 finding、severity、`RF-*`、反例或 campaign case。需要行为级或对抗式风险裁决时，改用 `review-semantic-risks`；后者负责审查合同和风险结论，不承担通用并行仓库盘点。
 
 显式调用 `run-engineering-control-loop` 会先消费、验证并冻结主会话提供的唯一 `<target-worktree-root>`，再把同一绑定传给 GOAL 作者和各 gate；不会从 cwd 或同仓库其他 worktree 改选目标。它授权启动前披露并冻结的标准项目内 `.steward/` 控制产物写集，包括 `.steward/goal.txt`、request/Review handoff、adapter 与 campaign；原工程请求范围内的源码路径可由后续影响证据确定，无需预先列入控制产物写集或逐路径确认。经校验的 drift/new-root 规则若要求在已披露的项目内 campaign 命名空间创建新 root，则创建前解析、冻结并报告精确路径，无需再次确认。控制产物写集和该命名空间外路径、原请求范围外源码、外部系统、部署、凭据、破坏性或付费动作及实质扩域仍需确认。expected-request 与 Review handoff 的精确路径必须不同且在 source observation 前预排除；保存 Review 时只写 validator `view` 的 canonical stdout 字节，不保存 Reviewer 的外围说明。GOAL 起草技能始终按独立契约创建 `.steward/handoffs/` 产物。
 
 | 技能 | 使用时机 | 读写模式 | 主要结果 |
 | --- | --- | --- | --- |
 | [`write-agent-guides`](skills/write-agent-guides/SKILL.md) | 只读审查，或创建、修复、刷新分层 `AGENTS.md`；已有不变量索引时校验或同步短工程路由 | 审查、解释和诊断只读；明确更新时仅写授权的 `AGENTS.md`，不写 `CLAUDE.md` | 根级共同规则、必要的子树增量，以及 `trigger → authority → INV → validation` 路由 |
+| [`parallel-repository-research`](skills/parallel-repository-research/SKILL.md) | 复杂只读仓库调研可拆成至少两个有价值的独立定位、映射、盘点或依赖追踪 lane | 不写文件，不运行项目代码、测试、构建或安装；Codex 使用 `gpt-5.6-luna` worker 和逐 lane reasoning effort，Claude Code 使用内置 Explore、按次请求 `haiku` 并另设 search depth，无子代理能力时顺序回退 | 由当前主会话模型复核、去重并综合的 `path:line` 或符号证据、已搜索/未搜索范围、冲突和缺口；不产出语义风险审查合同 |
 | [`write-project-docs`](skills/write-project-docs/SKILL.md) | 审查或维护固定项目文档集合，按 `STATUS.md` 七档枚举选择静态开发策略，并维护权威锚点和已存在或明确要求的不变量映射 | 普通审查只读；明确维护时写授权文档、静态策略托管区块、已有/明确要求的索引、精确获授权的 profile selection handoff 和受托管导航区块 | 保持唯一权威边界的文档、与开发档位精确匹配的双语静态策略、可验证 `.steward/invariants.json`，以及 profile-backed 映射所固定的 selection artifact |
 | [`draft-consensus-goal`](skills/draft-consensus-goal/SKILL.md) | 讨论已收敛，需要一份可评审、留档或执行的 GOAL 合同 | 唯一 GOAL 作者；只消费调用方提供并验证的精确 `<target-worktree-root>`，在那里核实事实并始终于项目相对 `.steward/handoffs/` 内新建一份交接文件；成功落盘后返回文本，不开始执行或改写既有文件 | 经机器校验、带连续稳定 `C*` 且引用 handoff 的七行中文 GOAL |
 | [`review-semantic-risks`](skills/review-semantic-risks/SKILL.md) | 明确要求对代码、diff 或行为路径做语义/对抗审查 | 严格只读，不写文件、不执行测试或修复；coordinator 在完整闭环冻结 strict bindings 并另行保存 canonical `view` | standalone 模式交付有证据的 prose findings/gaps；strict-handoff 模式交付经校验、request-bound 的 `semantic-review v1` manifest 与 `RF-*` case 候选 |
