@@ -30,10 +30,9 @@ relative to it.
 | `docs/源代码规模与职责规则.md` or `docs/source-code-size-and-responsibility-rules.md` | Shared source responsibility policy rendered from bundled assets. |
 
 Root `AGENTS.md` is a navigation/agent-behavior surface, not a ninth canonical
-document. `.steward/invariants.json` is a machine map, not documentation; create
-or maintain it only when it already exists or the user explicitly requests
-profile/invariant work. `CLAUDE.md` is not a canonical document and is outside
-this skill's write and validation scope.
+document. `.steward/invariants.json` is a machine map, not documentation; its
+write authority is defined below. `CLAUDE.md` is not a canonical document and is
+outside this skill's write and validation scope.
 
 ## Mode and authority
 
@@ -42,6 +41,12 @@ maintain, merge, standardize, repair, or migrate request authorizes local edits
 only to the documents and managed blocks affected by that request, plus relevant
 non-destructive validation. It does not authorize filling every missing canonical
 document.
+
+An authorized update to an existing invariant map, or an explicit
+profile/invariant request, also authorizes its named `.steward` files and
+`ensure-root` creation or validation of the real directory and exact `*\n`
+`.steward/.gitignore`. It authorizes no other Steward control artifact. Ordinary
+documentation work never runs `ensure-root`.
 
 File deletion, moves, archival, cleanup outside the authorized document or
 managed-block write set, external writes, source/configuration/CI edits, or
@@ -82,10 +87,9 @@ project between supported canonical language sets is an explicit migration.
    the deterministic `architecture_profiles.py validate → select → compile`
    chain with evidence-based tri-state capabilities; never guess profiles,
    execute profile checks, or create an index for ordinary document work. Before
-   creating or updating any requested file below `.steward/`, run
+   an authorized write below `.steward/`, run
    `python3 -B "<skill-dir>/../../scripts/goal_workspace.py" ensure-root "<project-root>"`;
-   the whole control directory must remain untracked,
-   self-ignored, non-symbolic, and worktree-local.
+   stop if the root contract rejects the existing layout.
 6. Update only affected and authorized files. Use the bundled updaters for owned
    marker blocks; do not hand-edit those regions or copy their implementation
    details into documentation.
