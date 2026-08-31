@@ -6,145 +6,131 @@ description: Run parallel, read-only repository research when a question benefit
 # Parallel Repository Research
 
 Collect verifiable repository evidence without changing the target worktree. The
-current main-session model is always the coordinator: it plans the search,
-dispatches workers when useful, verifies their evidence, and writes the final
-research answer. Do not assume or require a particular coordinator model.
+current main-session model coordinates the research, verifies decisive evidence,
+and writes the answer; workers only search frozen lanes. This skill may be
+selected implicitly or invoked as `$steward:parallel-repository-research` in
+Codex or `/steward:parallel-repository-research` in Claude Code.
 
-Users may invoke this skill explicitly as
-`$steward:parallel-repository-research` in Codex or
-`/steward:parallel-repository-research` in Claude Code. It may also be selected
-implicitly for a matching research request.
+Use parallel lanes only when at least two independent searches are useful. For a
+single symbol, file, or serial lookup, perform the same bounded research directly.
+Stop at repository facts: semantic findings, severity, counterexamples, `RF-*`,
+and campaign cases belong to `review-semantic-risks`.
 
-## Decide whether to fan out
+## Freeze one research plan
 
-Fan out only when the question can be split into at least two independently
-useful lanes whose evidence can be collected concurrently. Good lanes cover
-distinct components, entry points, dependency directions, implementation
-families, or bounded directory groups.
+Before any dispatch, resolve the exact target worktree and freeze every lane,
+including every deliberate cross-check. Record each lane's `laneId`, whether it
+is `required`, and its optional `crossCheckOf`. The first dispatch sets
+`planSealed=true`: later batches may run frozen lanes, but no lane may be added,
+split, broadened, or replaced. A newly discovered gap changes the aggregate
+status; it does not create more work in this run.
 
-An explicit invocation does not force delegation. For a single symbol, file, or
-tightly serial lookup, perform the narrow read-only search directly and do not
-spawn workers. Do not use this skill to edit code, run tests, or decide semantic
-risk findings. Neutral evidence gathered here may support a later review, but
-findings, severity, counterexamples, `RF-*` records, and campaign cases belong to
-`review-semantic-risks`.
+Set `maxConcurrent` to the number of mechanically restricted worker slots, or to
+`1` for the sequential fallback. Set `batchCount` to the number of batches needed
+to run the frozen lane set at that concurrency. These values and the frozen lane
+count are task-wide ceilings.
 
-## Freeze the research contract
+### Worker input contract
 
-Resolve the exact target repository before dispatch. Give every worker a
-self-contained lane prompt with these bindings:
+Give every lane a self-contained prompt with exactly these fields:
 
-- `targetRoot`: the exact worktree root; all paths and searches stay beneath it;
-- `researchGoal`: the question the final answer must resolve;
-- `include` and `exclude`: requested paths, file classes, generated/vendor
-  boundaries, and other scope limits;
-- `sourceBinding`: the applicable baseline, diff, revision, or observed source
-  identity when the request depends on one;
-- `laneObjective`: one non-overlapping evidence question assigned to this worker;
-- `evidenceBudget`: the intended search depth, time or evidence limit, and the
-  stopping condition;
-- `outputContract`: the result fields defined below;
-- host controls: Codex `reasoningEffort` or Claude `searchDepth`, never treating
-  one as the other.
+- `laneId`: frozen lane identifier;
+- `required`: whether aggregate completeness depends on this lane;
+- `crossCheckOf`: another lane identifier or `not-applicable`;
+- `targetRoot`: resolved worktree root; searches stay beneath it;
+- `researchGoal`: question the aggregate answer must resolve;
+- `include`: paths and file classes inside scope;
+- `exclude`: generated, vendor, or otherwise excluded scope;
+- `sourceBinding`: relevant revision, baseline, diff, or observed source identity;
+- `laneObjective`: one bounded, non-overlapping evidence question;
+- `applicableInstructions`: governing instructions needed to execute the lane;
+- `evidenceBudget`: search depth or evidence limit and stopping condition;
+- `outputContract`: the lane-result and execution schemas below;
+- `constraints`: `read-only`, `no-network`, `no-secrets`, and `no-delegation`.
 
-Do not invent a baseline or diff when it is irrelevant. A worker must be able to
-complete its lane from its prompt without relying on the main conversation,
-unstated repository rules, or another worker's result.
+Do not invent a source binding when none applies. Repeat applicable instructions
+in the prompt rather than relying on inherited conversation context.
 
-## Plan lanes and capacity
+Each frozen lane has `maxAttempts=2` and `retryOn=transient-only`. Attempt two
+must reuse the identical frozen prompt and is allowed only after a transient
+worker-launch or read-tool failure. An incomplete search, evidence gap, conflict,
+or source drift is a result, not a retry reason.
 
-Create one worker per useful independent lane, bounded by the host's currently
-available worker slots. The coordinator chooses the lane count; there is no
-fixed worker default. Dispatch independent lanes concurrently. If useful lanes
-outnumber available slots, run them in batches without duplicating a completed
-lane.
+## Select one host adapter
 
-Workers must not delegate to further agents. Start a later batch only for a new
-evidence gap, a deliberate independent cross-check, or a lane invalidated by
-source drift. Repeating this skill later in the same investigation is valid, but
-do not repeat already satisfied searches without one of those reasons.
+Read exactly one adapter for the current host and do not load the other:
 
-## Use the host adapter
+- Codex: [`references/codex.md`](references/codex.md)
+- Claude Code: [`references/claude-code.md`](references/claude-code.md)
 
-### Codex
+Use delegated workers only when the host mechanically restricts their tools to
+repository reads and read-only Git inspection with network access disabled. This
+is `delegationGate=mechanical-read-only-no-network`; prompt restrictions alone do
+not pass it. Otherwise use `fallbackRoute=sequential` and execute every frozen
+lane in the coordinator without dropping or broadening scope.
 
-Spawn each lane with model `gpt-5.6-luna`. The current coordinator selects a
-per-lane `reasoning_effort` from `low`, `medium`, `high`, `xhigh`, or `max`
-according to the lane's ambiguity and depth; do not derive it from the
-coordinator's model or apply one fixed value to every lane.
+The coordinator and any worker may inspect files, configuration, tests as text,
+symbols, directories, and read-only Git history. The fixed constraints prohibit
+file or Git writes; project code, tests, builds, package tools, installers, and
+migrations; network or external-service calls; seeking, copying, or returning
+secret values; and further delegation.
 
-When overriding the worker model, set `fork_turns` to `"none"` or to the smallest
-positive turn count that supplies indispensable context. Never omit it or use
-`"all"` with the model override. Prefer `"none"` because the frozen lane prompt
-is self-contained.
+## Return the fixed lane result
 
-### Claude Code
+Every lane returns all of these fields:
 
-Use the built-in `Explore` subagent for every lane and request `model: haiku` on
-each invocation. Pass one of `quick`, `medium`, or `very thorough` as the lane's
-`searchDepth`. This controls search work, not model reasoning effort; report
-Claude `reasoningEffort` as not applicable rather than claiming equivalence.
-
-Do not rely on Explore inheriting the main conversation or its complete rules.
-Repeat `targetRoot`, scope, lane objective, read-only restrictions, stopping
-condition, and output contract in every Explore prompt.
-
-### Sequential fallback
-
-When the host has no subagent capability, no usable worker slot, or the required
-worker model is unavailable, perform the same lanes sequentially in the current
-coordinator. Report `sequential-fallback` and the reason. Limited capacity alone
-uses batches when at least one worker slot remains; it is not a reason to drop
-lanes or silently broaden their scope.
-
-## Keep the scan read-only
-
-The coordinator and workers may read files, inspect tests and configuration as
-text, search text or symbols, list directories, and use read-only Git inspection.
-They must not:
-
-- create, edit, delete, format, generate, or redirect output into repository
-  files;
-- run project code, tests, builds, formatters, code generation, package managers,
-  installers, migrations, or other commands that may alter the worktree;
-- perform Git writes, network requests, or external-service calls;
-- seek, copy, or return secret values;
-- use the research request as authority for a fix or any other mutation.
-
-Describe enforcement accurately. Use `sandbox` only when an actual read-only
-sandbox enforces the boundary, `tool-restricted` for Claude Explore's restricted
-tool surface, and `instruction-only` when Codex or the sequential fallback lacks
-mechanical read-only enforcement. Never present prompt restrictions as a
-mechanical guarantee.
-
-## Return lane evidence
-
-Each worker returns a structured conversational result with all of these fields:
-
+- `laneId`: frozen lane identifier;
 - `status`: `complete`, `partial`, `blocked`, or `drifted`;
-- `directAnswer`: the lane's concise answer, without final cross-lane judgment;
-- `evidence`: project-relative `path:line` citations or symbols, with the fact
-  each location proves;
-- `searched`: paths, symbols, history, and strategies actually examined;
+- `sourceBinding`: the binding actually searched and cited;
+- `directAnswer`: concise lane answer without cross-lane judgment;
+- `evidence`: project-relative `path:line` or symbol locators and the fact proved;
+- `searched`: paths, symbols, history, and strategies examined;
 - `unsearched`: requested or relevant scope not examined;
-- `conflicts`: contradictory evidence or source disagreement;
-- `gaps`: unanswered questions and the smallest search needed to close each one;
-- `execution`: host adapter, requested worker model, `reasoningEffort` binding,
-  `searchDepth` binding, and `readOnlyEnforcement`.
+- `conflicts`: contradictory repository evidence;
+- `gaps`: unanswered questions and the smallest missing evidence;
+- `stoppingReason`: satisfied, budget exhausted, transient retry exhausted,
+  blocked, or drifted;
+- `execution`: the fixed execution record below.
 
-Use `complete` only when the lane objective and bounded scope are satisfied.
-Use `partial` when useful evidence exists but the stopping condition arrived
-first, `blocked` when the lane could not be searched, and `drifted` when cited
-source changed enough to invalidate the result.
+### Execution record
 
-## Verify and synthesize
+The `execution` record contains every field, using the exact casing shown:
 
-The coordinator reopens decisive evidence, confirms paths against the current
-source, deduplicates overlaps, and reconciles conflicts before answering. Rerun
-only the affected lanes when source drift invalidates evidence. Preserve
-material disagreement when the repository does not resolve it.
+- `adapter`: selected host adapter;
+- `route`: `delegated` or `sequential-fallback`;
+- `workerModel`: requested worker model or `not-applicable`;
+- `reasoning_effort`: Codex value or `not-applicable`;
+- `searchDepth`: Claude Code value or `not-applicable`;
+- `attempts`: `1` or `2`;
+- `readOnlyEnforcement`: mechanical mechanism or `coordinator-policy`;
+- `toolLimitations`: unavailable or restricted capabilities that affected work;
+- `fallbackReason`: reason for sequential fallback or `not-applicable`.
 
-Deliver the answer to the original research question with verified citations,
-then state meaningful unsearched scope, conflicts, gaps, fallback use, and
-read-only enforcement limitations. Stop at repository facts and evidence; do
-not turn the synthesis into semantic-risk adjudication or implementation work.
+A lane is `complete` only when its frozen objective and scope are satisfied,
+`partial` when useful evidence exists but material scope remains, `blocked` when
+it cannot be searched, and `drifted` when its source binding or cited source is
+no longer valid.
+
+## Verify and aggregate
+
+The coordinator reopens decisive evidence, confirms it against the frozen source
+binding, deduplicates overlaps, and preserves material conflicts. Return exactly:
+
+- `status`: aggregate `complete`, `partial`, `blocked`, or `drifted`;
+- `directAnswer`: answer to the original research goal;
+- `evidence`: coordinator-verified citations and claims;
+- `searched`: combined verified search coverage;
+- `unsearched`: requested or relevant scope not covered;
+- `conflicts`: unresolved repository disagreement;
+- `gaps`: missing evidence and limitations;
+- `laneResults`: one final result for every frozen lane;
+- `executionSummary`: adapter, route, `frozenLaneIds`, `requiredLaneIds`,
+  `maxConcurrent`, `batchCount`, fallback, and read-only enforcement.
+
+Use `complete` only when every required lane is complete and coordinator
+verification succeeds. If useful evidence exists but any required lane is not
+complete, or a material gap remains, use `partial`. Use `blocked` when missing
+access or tooling prevents any useful evidence-backed answer. Use `drifted` when
+the frozen source binding changed or a required lane drifted; do not synthesize
+invalidated evidence. State meaningful unsearched scope, conflicts, gaps,
+fallback use, and enforcement limitations in the final answer.

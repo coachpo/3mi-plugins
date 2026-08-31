@@ -19,22 +19,25 @@ Resolve this skill directory as `<skill-dir>` and the shared validator as
 ## Target worktree
 
 Require the main session or caller to provide exactly one already-resolved
-session worktree root as `<target-worktree-root>`. Validate and freeze it with:
+session worktree root as `<target-worktree-root>`. Validate it once and freeze
+the canonical stdout `view`:
 
 ```text
 python3 -B "<skill-dir>/../../scripts/worktree_binding.py" view "<target-worktree-root>"
 ```
 
 Do not derive or replace it from the plugin directory, shell cwd, or another
-worktree in the same Git repository.
+worktree in the same Git repository. Pass that exact root and frozen binding to
+`draft-consensus-goal` and every later gate, and use it as the explicit workdir
+for repository reads and project-local writes.
 
-Pass that exact root and frozen binding to `draft-consensus-goal` and every
-later gate. Run all repository reads and project-local writes against it,
-requiring the main session or caller to freshly provide its current workspace
-root at gate entry and before writes, then checking that value against the
-frozen view with `verify-view`. Missing, ambiguous, unresolved, mismatched, or
-changed bindings stop the loop with no further writes. Keep the absolute root
-out of the GOAL and cross-gate references, which remain project-relative.
+Revalidate the same frozen root, Git-directory, and common-directory binding with
+`verify-view` on resume or context loss, after actual drift evidence, and
+immediately before a write. This check does not attest to host or conversation
+state or prove that a repository recreated at identical paths is unchanged.
+Missing, ambiguous, unresolved, mismatched, or changed bindings stop the loop
+with no further writes. Keep the absolute root out of the GOAL and cross-gate
+references, which remain project-relative.
 
 ## Authority and write set
 

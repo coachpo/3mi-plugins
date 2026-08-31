@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -13,10 +14,9 @@ from pathlib import Path
 PLUGIN_ROOT = Path(__file__).resolve().parents[1]
 BINDING_SCRIPT = PLUGIN_ROOT / "scripts" / "worktree_binding.py"
 GOAL_SCRIPT = PLUGIN_ROOT / "scripts" / "goal_contract.py"
-DRAFT_SKILL = PLUGIN_ROOT / "skills" / "draft-consensus-goal" / "SKILL.md"
 CALLER_SKILL = PLUGIN_ROOT / "skills" / "run-engineering-control-loop" / "SKILL.md"
 AUTHORING_CONTRACT = PLUGIN_ROOT / "references" / "goal-authoring.md"
-HANDOFF_CONTRACT = PLUGIN_ROOT / "references" / "handoff-file.md"
+GOAL_CONTEXT_CONTRACT = PLUGIN_ROOT / "references" / "goal-context.md"
 
 
 class TargetWorktreeBindingTests(unittest.TestCase):
@@ -122,7 +122,7 @@ class TargetWorktreeBindingTests(unittest.TestCase):
         self.assertIn("differs from the frozen target binding", switched.stderr)
         self.assertNotEqual(primary_text, sibling_text)
 
-    def test_cwd_and_plugin_location_do_not_change_handoff_destination(self) -> None:
+    def test_cwd_and_plugin_location_do_not_change_context_destination(self) -> None:
         from_primary, primary_view = self._view(self.sibling, self.primary)
         from_plugin, plugin_view = self._view(self.sibling, PLUGIN_ROOT)
         self.assertEqual(from_primary, from_plugin)
@@ -141,16 +141,16 @@ class TargetWorktreeBindingTests(unittest.TestCase):
         self.assertEqual(from_plugin, from_misleading_environment.stdout)
 
         target = Path(str(plugin_view["targetWorktreeRoot"]))
-        handoffs = target / ".steward" / "handoffs"
-        handoffs.mkdir(parents=True)
-        (handoffs / ".gitignore").write_text("*\n", encoding="utf-8")
-        handoff = handoffs / "context.md"
-        handoff.write_text("verified sibling context\n", encoding="utf-8")
+        context_dir = target / ".steward" / "goal-context"
+        context_dir.mkdir(parents=True)
+        (context_dir / ".gitignore").write_text("*\n", encoding="utf-8")
+        context_file = context_dir / "context.md"
+        context_file.write_text("verified sibling context\n", encoding="utf-8")
 
-        self.assertTrue(handoff.is_file())
+        self.assertTrue(context_file.is_file())
         self.assertFalse((self.primary / ".steward").exists())
         status = self._git("status", "--porcelain", "-uall", cwd=self.sibling).stdout
-        self.assertNotIn("handoffs", status)
+        self.assertNotIn("goal-context", status)
 
     def test_missing_ambiguous_and_unresolvable_targets_are_zero_write(self) -> None:
         subdirectory = self.primary / "nested"
@@ -172,32 +172,58 @@ class TargetWorktreeBindingTests(unittest.TestCase):
 
         self.assertFalse((self.primary / ".steward").exists())
         self.assertFalse((self.sibling / ".steward").exists())
-        skill = DRAFT_SKILL.read_text(encoding="utf-8")
-        self.assertIn("blocker before delivery", skill)
-        self.assertIn("do not write a handoff", skill)
 
-    def test_full_loop_caller_passes_the_frozen_target_unchanged(self) -> None:
+    def test_contract_revalidates_the_frozen_target_without_host_attestation(
+        self,
+    ) -> None:
         caller = CALLER_SKILL.read_text(encoding="utf-8")
         authoring = AUTHORING_CONTRACT.read_text(encoding="utf-8")
-        self.assertIn("Pass that exact root and frozen binding", caller)
-        self.assertIn("freshly provide its current workspace", caller)
-        self.assertIn("pass it the exact frozen `<target-worktree-root>`", caller)
-        self.assertIn("Do not derive or replace", caller)
-        self.assertIn(
-            "Read every repository fact from `<target-worktree-root>`", authoring
-        )
-        self.assertIn("explicit\nproject-root argument", authoring)
-        self.assertIn("`<current-session-worktree-root>`", authoring)
+        combined = f"{caller}\n{authoring}"
 
-    def test_goal_keeps_only_the_project_relative_handoff_reference(self) -> None:
-        relative_handoff = ".steward/handoffs/context.md"
+        self.assertNotIn("<current-session-worktree-root>", combined)
+        self.assertNotIn("freshly provide its current workspace", combined)
+        self.assertIn("Pass that exact root and frozen binding", caller)
+        self.assertIn("do not create a second binding", authoring)
+        self.assertIn(
+            'verify-view "<target-worktree-root>" -',
+            authoring,
+        )
+        for trigger in ("resume or context loss", "actual drift evidence", "before a write"):
+            self.assertIn(trigger, combined)
+        self.assertIn("does not attest to host or conversation state", combined)
+
+    def test_same_path_recreation_is_documented_as_outside_binding_view(self) -> None:
+        recreated = self.root / "recreated"
+        self._git("init", "-q", str(recreated), cwd=self.root)
+        frozen_text, _ = self._view(recreated, self.root)
+
+        shutil.rmtree(recreated / ".git")
+        self._git("init", "-q", str(recreated), cwd=self.root)
+        verification = self._binding(
+            "verify-view",
+            str(recreated),
+            "-",
+            cwd=self.root,
+            input_text=frozen_text,
+        )
+
+        self.assertEqual(0, verification.returncode, verification.stderr)
+        contracts = (
+            AUTHORING_CONTRACT.read_text(encoding="utf-8")
+            + "\n"
+            + CALLER_SKILL.read_text(encoding="utf-8")
+        )
+        self.assertIn("recreated at identical", contracts)
+
+    def test_goal_keeps_only_the_project_relative_context_reference(self) -> None:
+        relative_context = ".steward/goal-context/context.md"
         goal = "\n".join(
             (
                 "结果：交付绑定目标工作树的合同",
-                f"证据与上下文：补充背景见 {relative_handoff}",
+                f"证据与上下文：补充背景见 {relative_context}",
                 "范围：只处理目标工作树中的项目事实",
                 "约束与授权：绝对工作树根仅用于运行时绑定",
-                "完成标准：(C1) GOAL 只含项目相对 handoff 引用",
+                "完成标准：(C1) GOAL 只含项目相对 context 引用",
                 "正当阻塞项：目标工作树绑定缺失或漂移时停止",
                 "最终交付：返回规范七行 GOAL",
             )
@@ -211,13 +237,15 @@ class TargetWorktreeBindingTests(unittest.TestCase):
         )
         self.assertEqual(0, checked.returncode, checked.stderr)
         objective = json.loads(checked.stdout)["objective"]
-        self.assertIn(relative_handoff, objective)
+        self.assertIn(relative_context, objective)
         self.assertNotIn(str(self.primary), objective)
         self.assertNotIn(str(self.sibling), objective)
 
-        handoff_contract = HANDOFF_CONTRACT.read_text(encoding="utf-8")
-        self.assertIn("不写入本机绝对 `<target-worktree-root>`", handoff_contract)
-        self.assertIn("补充背景见 .steward/handoffs/retry-backoff.md", handoff_contract)
+        context_contract = GOAL_CONTEXT_CONTRACT.read_text(encoding="utf-8")
+        self.assertIn(
+            "补充背景见 .steward/goal-context/retry-backoff.md",
+            context_contract,
+        )
 
 
 if __name__ == "__main__":

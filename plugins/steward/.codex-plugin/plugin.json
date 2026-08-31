@@ -1,7 +1,7 @@
 {
   "name": "steward",
-  "version": "0.0.10",
-  "description": "面向 Codex 与 Claude Code 的共享工程控制面，以八个共享技能连接项目指引、文档、GOAL、语义风险、验证流水线和可恢复工程闭环。",
+  "version": "0.0.11",
+  "description": "面向 Codex 与 Claude Code 的共享工程控制面，以九个共享技能连接变更请求调研、项目指引、文档、GOAL、语义风险、验证流水线和可恢复工程闭环。",
   "author": {
     "name": "coachpo",
     "url": "https://github.com/coachpo"
@@ -29,7 +29,7 @@
   "interface": {
     "displayName": "Steward",
     "shortDescription": "Codex 与 Claude Code 共享的工程控制面",
-    "longDescription": "面向 Codex 与 Claude Code 的八技能工程控制面。它以一套共享入口把并行只读仓库调研、可验证 GOAL、分层 AGENTS 路由、项目文档、技术栈 profiles、项目不变量、local quick 与 CI full、只读语义审查、可恢复验证、永久护栏、同源完整回归和 audit 连成证据闭环。技能不直接创建或更新宿主 Goal；GOAL 文本、交接文档和项目内 journal 可由两个宿主共同消费。",
+    "longDescription": "面向 Codex 与 Claude Code 的九技能工程控制面。它以一套共享入口把变更请求需求调研、并行只读仓库调研、可验证 GOAL、分层 AGENTS 路由、项目文档、技术栈 profiles、项目不变量、local quick 与 CI full、只读语义审查、可恢复验证、永久护栏、同源完整回归和 audit 连成证据闭环。技能不直接创建或更新宿主 Goal；GOAL 文本、goal-context 文档、Review handoff 和项目内 journal 可由两个宿主共同消费。",
     "developerName": "CoachPo",
     "category": "Productivity",
     "capabilities": [
@@ -37,7 +37,7 @@
       "Write"
     ],
     "defaultPrompt": [
-      "使用 $steward:draft-consensus-goal，将主会话已解析的唯一目标 worktree 根绑定到事实核实、必建交接文档和七行 GOAL。",
+      "使用 $steward:draft-consensus-goal，将主会话已解析的唯一目标 worktree 根绑定到事实核实、必建 goal-context 文档和七行 GOAL。",
       "使用 $steward:configure-project-verification 审查或配置当前项目的 local quick 与 CI full 验证流水线。",
       "使用 $steward:run-engineering-control-loop 将已授权工程改动放入可恢复、可审计的完整证据闭环。"
     ],

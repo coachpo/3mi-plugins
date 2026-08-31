@@ -10,7 +10,7 @@
       "name": "steward",
       "source": "./plugins/steward",
       "displayName": "Steward",
-      "description": "通过八个共享技能连接项目指引、文档、GOAL、语义风险、验证流水线与可恢复工程闭环。",
+      "description": "通过九个共享技能连接变更请求调研、项目指引、文档、GOAL、语义风险、验证流水线与可恢复工程闭环。",
       "category": "Productivity",
       "license": "MIT"
     }

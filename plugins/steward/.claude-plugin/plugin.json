@@ -2,8 +2,8 @@
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "steward",
   "displayName": "Steward",
-  "version": "0.0.10",
-  "description": "面向 Codex 与 Claude Code 的共享工程控制面，以八个共享技能连接项目指引、文档、GOAL、语义风险、验证流水线和可恢复工程闭环。",
+  "version": "0.0.11",
+  "description": "面向 Codex 与 Claude Code 的共享工程控制面，以九个共享技能连接变更请求调研、项目指引、文档、GOAL、语义风险、验证流水线和可恢复工程闭环。",
   "author": {
     "name": "coachpo",
     "url": "https://github.com/coachpo"

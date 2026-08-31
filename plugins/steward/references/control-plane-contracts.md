@@ -28,15 +28,17 @@ raw GOAL bytes. IDs are carried by reference and are never renumbered or
 assigned a new meaning merely to make a campaign pass.
 
 GOAL authoring and the full-loop coordinator additionally consume one ephemeral
-target-worktree binding. The main session or caller supplies the already-resolved
-session worktree root; `worktree_binding.py` normalizes it, requires the Git
+target-worktree binding. The caller supplies one already-resolved session
+worktree root; `worktree_binding.py` normalizes it once, requires the Git
 top-level to be exactly equal, and distinguishes sibling worktrees by their Git
 directory. The binding is never inferred from plugin location, shell cwd, or
-shared repository identity. It stays out of the seven-line GOAL and handoff
-references, which remain project-relative. Before each phase or write, the
-caller freshly supplies its current session workspace root and `verify-view`
-compares it with the frozen binding; missing, ambiguous, stale, switched, or
-mismatched bindings fail before further project-local writes.
+shared repository identity. All repository operations use that frozen root as
+an explicit workdir. `verify-view` revalidates the same root, Git-directory, and
+common-directory fields on resume or context loss, after actual drift evidence,
+and before a write; it does not attest to host or conversation state or detect a
+repository recreated at identical paths. Missing, ambiguous, stale, switched, or
+mismatched bindings fail before further project-local writes. Absolute roots stay
+out of GOAL and cross-stage references, which remain project-relative.
 
 The full-loop handoffs normally live beneath `.steward/`: canonical
 `goal.txt`, deterministic `profile-selection.json` when architecture profiles
@@ -58,14 +60,14 @@ campaign namespace remains within the operation authority; resolve, freeze, and
 disclose its exact path before creation without requesting path confirmation
 again.
 Draft-only and standalone read-only skills do not write full-loop artifacts.
-The sole `draft-consensus-goal` authoring skill may additionally create one
-handoff file and its self-ignoring rule beneath the exact bound target
-worktree's `.steward/handoffs/`, as specified by
-[`handoff-file.md`](handoff-file.md); only that temporary subtree is ignored.
-The same repository's other worktrees are rejected. It is not a full-loop
-handoff, carries no digest or authority, and stays out of the Git source
-inventory precisely because it is ignored, while sibling control-plane files
-retain their existing Git behavior. The
+The explicit-only `draft-consensus-goal` authoring skill instead creates exactly
+one GOAL context file and, when absent, its new self-ignoring rule beneath the
+bound target's `.steward/goal-context/`, as specified by
+[`goal-context.md`](goal-context.md). Only that temporary subtree is ignored.
+The context carries no digest or authority and stays out of the Git source
+inventory, while sibling control-plane files retain their existing Git
+behavior. This GOAL-specific context is distinct from Review and campaign
+handoffs. The
 full-loop coordinator may persist canonical Review stdout and frozen expected
 Review requests only at the exact project-relative paths in the disclosed write
 set. New post-fix handoffs stay within that set and do not require path-by-path

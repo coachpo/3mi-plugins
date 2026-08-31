@@ -1,7 +1,7 @@
 interface:
   display_name: "Draft Consensus Goal"
   short_description: "绑定目标 worktree 并起草七行中文 GOAL"
-  default_prompt: "使用 $steward:draft-consensus-goal，消费主会话已解析的唯一目标 worktree 根，在该精确工作树核实事实并起草七行中文 GOAL；按契约处理交接文件，不要读取宿主 Goal 或执行状态。"
+  default_prompt: "使用 $steward:draft-consensus-goal，消费主会话已解析的唯一目标 worktree 根；此显式调用会在该工作树的 .steward/goal-context/ 下新建且只新建一份被忽略的 GOAL 上下文文件，再返回七行中文 GOAL，不读取宿主 Goal 或执行状态。"
 
 policy:
   allow_implicit_invocation: false
