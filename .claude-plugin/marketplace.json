@@ -10,7 +10,7 @@
       "name": "steward",
       "source": "./plugins/steward",
       "displayName": "Steward",
-      "description": "通过九个共享技能连接变更请求调研、项目指引、文档、GOAL、语义风险、验证流水线与可恢复工程闭环。",
+      "description": "面向 Codex 与 Claude Code 的六技能工程工作流，覆盖项目文档维护、只读需求调研，以及 GOAL 起草与闭环验收。",
       "category": "Productivity",
       "license": "MIT"
     }

@@ -1,6 +1,6 @@
 # plugins
 
-CoachPo 的 Codex 与 Claude Code 插件市场。两个宿主从同一个 Git 仓库安装同一个 `steward` 插件，并共享同一套技能、机器契约和项目状态。
+CoachPo 的 Codex 与 Claude Code 插件市场。两个宿主从同一个 Git 仓库安装插件，并共享插件内的技能、机器合同和项目状态约定。
 
 ## 插件市场
 
@@ -10,7 +10,17 @@ CoachPo 的 Codex 与 Claude Code 插件市场。两个宿主从同一个 Git �
 
 | Plugin | Category | 简介 |
 | --- | --- | --- |
-| [`steward`](plugins/steward/README.md) | Productivity | 面向 Coding Agent 的工程控制面，通过九个共享技能连接变更请求调研、项目指引、文档、GOAL、语义风险、验证流水线与可恢复的工程闭环。 |
+| [`steward`](plugins/steward/README.md) | Productivity | 六技能、三工作流：项目文档维护，只读调研分析，以及 GOAL 起草、手动实施后的验收与修补闭环。 |
+
+## Steward 工作流
+
+| 工作流 | 技能 |
+| --- | --- |
+| 项目文档 | `write-project-docs`、`write-agent-guides` |
+| 调研分析 | `parallel-repository-research`、`analyze-change-request` |
+| GOAL 交付 | `draft-consensus-goal`、`run-closed-loop-verification` |
+
+完整用法、权限边界和 `.steward/` 工作树本地状态约定见 [Steward 文档](plugins/steward/README.md)。
 
 ## Codex 安装
 
@@ -38,7 +48,7 @@ claude plugin install steward@coachpo
 /steward:<skill-name>
 ```
 
-安装或更新后，请新建 Codex 任务或 Claude Code 会话以加载最新技能。
+安装或更新后，新建 Codex 任务或 Claude Code 会话以加载当前技能。
 
 ## 许可证
 

@@ -1,51 +1,47 @@
 ---
 name: draft-consensus-goal
-description: Author Steward's sole machine-validated seven-line Chinese GOAL from accepted decisions and verified facts in one caller-provided target worktree. Use only when explicitly invoked for a reviewable or executable contract, including full-loop input; the invocation writes exactly one ignored project-local file below .steward/goal-context/ before returning the GOAL, without starting execution.
+description: Author and persist Steward's machine-validated seven-line Chinese GOAL from accepted decisions and verified facts in one caller-provided worktree. Use only when explicitly invoked to create the canonical .steward/goal.txt and its sole context file for later manual execution; do not start implementation.
 ---
 
 # Draft Consensus Goal
 
-Return one complete GOAL contract for later review or execution. This is the
-only Steward skill that authors a GOAL and owns its 4,000-code-point and
-required goal-context contract.
+Create the single reviewable GOAL contract that a user will execute manually and
+`run-closed-loop-verification` can later accept. This skill alone authors that
+GOAL and owns its 4,000-code-point, context, and workspace contracts.
 
-This workflow requires an explicit user request for GOAL text or a GOAL input to
-another explicitly requested Steward workflow. That explicit invocation
-authorizes the narrow local write disclosed below.
+Explicit invocation authorizes only the project-local control writes described
+here. It does not authorize implementation, verification, external effects, or
+changes outside `.steward/`.
 
-## Target worktree
+## Bind the target worktree
 
 Require the main session or caller to provide exactly one already-resolved
-session worktree root as `<target-worktree-root>`. Consume that value; never
-derive it from the plugin directory, shell current directory, or another
-worktree in the same repository.
+`<target-worktree-root>`. Never derive it from the plugin directory, shell cwd,
+repository discovery, or a sibling worktree.
 
-Use that exact worktree for repository facts, strategy reads, and the permitted
-goal-context write. The authoring contract owns binding and drift checks. A
-missing, ambiguous, unresolved, mismatched, or changed binding blocks delivery.
+Read and apply [`goal-authoring.md`](../../references/goal-authoring.md). It owns
+worktree binding, evidence, strategy authority, uncertainty, the seven-line
+format, and bounded validation. Read and apply
+[`goal-context.md`](../../references/goal-context.md) while assembling the sole
+context file and the project-relative reference embedded in the GOAL.
 
-## Authority
+## Persist the canonical workspace
 
-The request authorizes reading the caller-provided workspace root, read-only
-fact checking there, and the text result. It does not authorize implementation,
-changes to existing files, or reading, mutating, or reporting host Goal,
-execution progress, or other host state. Its only local writes are one new file
-below `.steward/goal-context/`, missing directory entries for that subtree, and,
-when absent, its new self-ignoring rule. Do not overwrite existing content. A
-caller with separate write authority may persist the returned canonical
-objective outside this skill's write set.
+After the candidate and context are complete in memory, invoke the shared
+workspace creator exactly once as described by `goal-authoring.md`. It validates
+the input, creates or validates the exact root self-ignore, writes the context,
+and writes `.steward/goal.txt` last.
 
-## Author and preserve context
-
-Read and apply [`goal-authoring.md`](../../references/goal-authoring.md). Use its
-binding, evidence, strategy-authority, uncertainty, seven-line format,
-compression, context, and bounded-validation rules. It is the single source for
-goal-context eligibility, placement, write ordering, rollback, and failure
-behavior.
+The allowed result is one complete workspace: canonical `goal.txt`, exactly one
+referenced context file, and any unrelated untracked Steward controls that were
+already present. An identical complete workspace may be reused idempotently. A
+different GOAL, tracked control path, symbolic path, invalid ignore rule, or
+partial workspace blocks; do not overwrite, clean, convert, or choose another
+worktree.
 
 ## Output
 
-If target binding, clarification, or goal-context creation blocks, return only
-the actual blocker and smallest next action. Otherwise return exactly the
-validator `view` field `objective`, with no JSON, digest, introduction, or text
-after the seventh line.
+On success, return exactly `goalContract.objective` from the creator's canonical
+view, with no JSON, digest, introduction, or text after the seventh line. On a
+blocker, return only the actual blocker and smallest next action. Never start
+executing the GOAL.

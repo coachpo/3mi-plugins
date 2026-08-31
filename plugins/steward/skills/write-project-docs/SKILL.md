@@ -81,7 +81,11 @@ project between supported canonical language sets is an explicit migration.
    invariant map exists or profile/invariant maintenance was requested. Then run
    the deterministic `architecture_profiles.py validate → select → compile`
    chain with evidence-based tri-state capabilities; never guess profiles,
-   execute profile checks, or create an index for ordinary document work.
+   execute profile checks, or create an index for ordinary document work. Before
+   creating or updating any requested file below `.steward/`, run
+   `python3 -B "<skill-dir>/../../scripts/goal_workspace.py" ensure-root "<project-root>"`;
+   the whole control directory must remain untracked,
+   self-ignored, non-symbolic, and worktree-local.
 6. Update only affected and authorized files. Use the bundled updaters for owned
    marker blocks; do not hand-edit those regions or copy their implementation
    details into documentation.

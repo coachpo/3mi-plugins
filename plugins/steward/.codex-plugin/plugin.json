@@ -1,7 +1,7 @@
 {
   "name": "steward",
-  "version": "0.0.11",
-  "description": "面向 Codex 与 Claude Code 的共享工程控制面，以九个共享技能连接变更请求调研、项目指引、文档、GOAL、语义风险、验证流水线和可恢复工程闭环。",
+  "version": "0.1.0",
+  "description": "面向 Codex 与 Claude Code 的六技能工程工作流，覆盖项目文档维护、只读需求调研，以及 GOAL 起草与闭环验收。",
   "author": {
     "name": "coachpo",
     "url": "https://github.com/coachpo"
@@ -15,12 +15,10 @@
     "codex",
     "documentation",
     "goals",
+    "requirements-analysis",
+    "repository-research",
     "verification",
-    "invariants",
-    "semantic-review",
-    "architecture-profiles",
-    "control-plane",
-    "ci",
+    "workflows",
     "testing",
     "regression",
     "steward"
@@ -28,8 +26,8 @@
   "skills": "./skills/",
   "interface": {
     "displayName": "Steward",
-    "shortDescription": "Codex 与 Claude Code 共享的工程控制面",
-    "longDescription": "面向 Codex 与 Claude Code 的九技能工程控制面。它以一套共享入口把变更请求需求调研、并行只读仓库调研、可验证 GOAL、分层 AGENTS 路由、项目文档、技术栈 profiles、项目不变量、local quick 与 CI full、只读语义审查、可恢复验证、永久护栏、同源完整回归和 audit 连成证据闭环。技能不直接创建或更新宿主 Goal；GOAL 文本、goal-context 文档、Review handoff 和项目内 journal 可由两个宿主共同消费。",
+    "shortDescription": "项目文档、调研分析与 GOAL 验收工作流",
+    "longDescription": "Steward 用六个共享技能组织三条工程工作流：维护 canonical 项目文档与 AGENTS.md 层级，执行只读仓库调研与变更请求分析，以及起草持久 GOAL、在手动实施后按 repairPolicy 修补并完成完整回归和 audit。Codex 与 Claude Code 读取同一套技能、合同和工作树本地证据。",
     "developerName": "CoachPo",
     "category": "Productivity",
     "capabilities": [
@@ -37,9 +35,9 @@
       "Write"
     ],
     "defaultPrompt": [
-      "使用 $steward:draft-consensus-goal，将主会话已解析的唯一目标 worktree 根绑定到事实核实、必建 goal-context 文档和七行 GOAL。",
-      "使用 $steward:configure-project-verification 审查或配置当前项目的 local quick 与 CI full 验证流水线。",
-      "使用 $steward:run-engineering-control-loop 将已授权工程改动放入可恢复、可审计的完整证据闭环。"
+      "使用 $steward:write-project-docs 维护 canonical 项目文档，再用 $steward:write-agent-guides 同步 AGENTS.md 层级。",
+      "使用 $steward:analyze-change-request 调研当前变更请求；需要复杂仓库搜索时使用 $steward:parallel-repository-research。",
+      "使用 $steward:draft-consensus-goal 写入可执行 GOAL；手动执行完成后，用 $steward:run-closed-loop-verification 以 repairPolicy=within-goal 验收并修补。"
     ],
     "brandColor": "#1A73E8",
     "websiteURL": "https://github.com/coachpo/plugins/tree/main/plugins/steward"

@@ -6,7 +6,6 @@ import re
 import unittest
 from pathlib import Path
 
-
 PLUGIN_ROOT = Path(__file__).resolve().parents[1]
 SKILL = PLUGIN_ROOT / "skills" / "analyze-change-request" / "SKILL.md"
 AGENT = SKILL.parent / "agents" / "openai.yaml"
@@ -76,7 +75,9 @@ class AnalyzeChangeRequestContractTests(unittest.TestCase):
         self.assertRegex(self.agent, r"(?m)^\s*allow_implicit_invocation:\s*false\s*$")
         self.assertIn("$steward:analyze-change-request", self.agent)
         self.assertIn("按需", self.agent)
-        self.assertIn("整体状态", self.agent)
+        self.assertIn("尚未接受", self.agent)
+        for forbidden_effect in ("不写文件", "不生成 GOAL", "不实施"):
+            self.assertIn(forbidden_effect, self.agent)
 
     def test_entrypoint_uses_progressive_disclosure(self) -> None:
         self.assertEqual(

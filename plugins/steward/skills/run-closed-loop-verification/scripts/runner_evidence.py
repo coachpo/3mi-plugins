@@ -7,7 +7,6 @@ import ctypes
 import hashlib
 import ntpath
 import os
-from pathlib import Path
 import re
 import select
 import signal
@@ -16,8 +15,9 @@ import subprocess
 import sys
 import threading
 import time
-from typing import Any, Dict, List, Optional, Tuple
 import uuid
+from pathlib import Path
+from typing import Any
 
 from adapter_paths import (
     is_within,
@@ -32,8 +32,8 @@ from model import (
     ARTIFACT_MANIFEST_VERSION,
     SCHEMA_VERSION,
     SCRIPT_VERSION,
-    CampaignError,
     SECRET_PATTERNS,
+    CampaignError,
     atomic_write_json,
     atomic_write_text,
     canonical_bytes,
@@ -87,7 +87,7 @@ def artifact_metadata_is_reparse(metadata: os.stat_result) -> bool:
 
 def artifact_tree_entries(
     artifact_dir: Path,
-) -> List[Tuple[Path, os.stat_result]]:
+) -> list[tuple[Path, os.stat_result]]:
     """Enumerate a bounded artifact tree without following links/reparse points."""
 
     try:
@@ -101,7 +101,7 @@ def artifact_tree_entries(
     ):
         raise CampaignError("artifact directory is a symlink/reparse or non-directory")
 
-    observed: List[Tuple[Path, os.stat_result]] = []
+    observed: list[tuple[Path, os.stat_result]] = []
     pending = [artifact_dir]
     while pending:
         directory = pending.pop()
@@ -216,7 +216,7 @@ class _BoundedStreamCollector:
         except OSError:
             pass
 
-    def snapshot(self) -> Tuple[str, bool, bool, bool]:
+    def snapshot(self) -> tuple[str, bool, bool, bool]:
         with self._lock:
             prefix = bytes(self._prefix)
             secret_detected = self._secret_detected
@@ -246,7 +246,7 @@ SECRET_BYTE_PATTERNS = [
 ]
 
 
-def _redact_bytes(content: bytes) -> Tuple[bytes, bool]:
+def _redact_bytes(content: bytes) -> tuple[bytes, bool]:
     """Redact ASCII secret forms without rewriting unrelated binary bytes."""
 
     decoded_found = has_secret_like(content.decode("utf-8", "replace"))
@@ -268,7 +268,7 @@ def _atomic_write_bytes(path: Path, content: bytes) -> None:
     flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL
     if hasattr(os, "O_NOFOLLOW"):
         flags |= os.O_NOFOLLOW
-    descriptor: Optional[int] = None
+    descriptor: int | None = None
     try:
         descriptor = os.open(str(temporary), flags, 0o600)
         with os.fdopen(descriptor, "wb") as handle:
@@ -286,7 +286,7 @@ def _atomic_write_bytes(path: Path, content: bytes) -> None:
             pass
 
 
-def _stream_file(path: Path, redact: bool) -> Tuple[int, str, bool]:
+def _stream_file(path: Path, redact: bool) -> tuple[int, str, bool]:
     """Hash and secret-scan a file with bounded memory; rewrite only if needed."""
 
     total = 0
@@ -296,7 +296,7 @@ def _stream_file(path: Path, redact: bool) -> Tuple[int, str, bool]:
     scanner._scan_carry = ""
     scanner._pending_assignment = False
     decoder = codecs.getincrementaldecoder("utf-8")("replace")
-    descriptor: Optional[int] = None
+    descriptor: int | None = None
     try:
         metadata = path.lstat()
         if (
@@ -361,18 +361,18 @@ def _stream_file(path: Path, redact: bool) -> Tuple[int, str, bool]:
     return total, "sha256:" + digest.hexdigest(), found
 
 
-def _absolute_ps_path() -> Optional[str]:
+def _absolute_ps_path() -> str | None:
     for candidate in ("/bin/ps", "/usr/bin/ps"):
         if os.path.isfile(candidate) and os.access(candidate, os.X_OK):
             return candidate
     return None
 
 
-def _linux_process_table() -> Optional[Dict[int, Tuple[int, int, str]]]:
+def _linux_process_table() -> dict[int, tuple[int, int, str]] | None:
     proc_root = Path("/proc")
     if not proc_root.is_dir():
         return None
-    table: Dict[int, Tuple[int, int, str]] = {}
+    table: dict[int, tuple[int, int, str]] = {}
     try:
         entries = list(proc_root.iterdir())
     except OSError:
@@ -428,7 +428,7 @@ class _DarwinProcBSDInfo(ctypes.Structure):
     ]
 
 
-def _darwin_process_table() -> Optional[Dict[int, Tuple[int, int, str]]]:
+def _darwin_process_table() -> dict[int, tuple[int, int, str]] | None:
     if sys.platform != "darwin":
         return None
     try:
@@ -454,7 +454,7 @@ def _darwin_process_table() -> Optional[Dict[int, Tuple[int, int, str]]]:
         return None
 
     status_names = {5: "Z"}
-    table: Dict[int, Tuple[int, int, str]] = {}
+    table: dict[int, tuple[int, int, str]] = {}
     for pid in pids[:returned]:
         if pid <= 0:
             continue
@@ -470,7 +470,7 @@ def _darwin_process_table() -> Optional[Dict[int, Tuple[int, int, str]]]:
     return table
 
 
-def _posix_process_table() -> Optional[Dict[int, Tuple[int, int, str]]]:
+def _posix_process_table() -> dict[int, tuple[int, int, str]] | None:
     """Return pid -> (ppid, pgid, state) without consulting PATH."""
 
     native = _linux_process_table()
@@ -495,7 +495,7 @@ def _posix_process_table() -> Optional[Dict[int, Tuple[int, int, str]]]:
         return None
     if completed.returncode != 0:
         return None
-    table: Dict[int, Tuple[int, int, str]] = {}
+    table: dict[int, tuple[int, int, str]] = {}
     try:
         output = completed.stdout.decode("ascii", "strict")
         for line in output.splitlines():
@@ -509,7 +509,7 @@ def _posix_process_table() -> Optional[Dict[int, Tuple[int, int, str]]]:
     return table
 
 
-def _descendant_pids(root_pid: int, table: Dict[int, Tuple[int, int, str]]) -> set[int]:
+def _descendant_pids(root_pid: int, table: dict[int, tuple[int, int, str]]) -> set[int]:
     descendants: set[int] = set()
     frontier = {root_pid}
     while frontier:
@@ -624,7 +624,7 @@ class _PosixProcessMonitor:
                 break
             self._sample()
 
-    def stop(self) -> Tuple[set[int], bool, bool, bool]:
+    def stop(self) -> tuple[set[int], bool, bool, bool]:
         # A final sample closes the normal-exit race before the watcher stops.
         self._sample()
         self._stop.set()
@@ -643,7 +643,7 @@ class _PosixProcessMonitor:
 
 def _terminate_posix_tree(
     process: subprocess.Popen[bytes],
-    extra_pids: Optional[set[int]] = None,
+    extra_pids: set[int] | None = None,
     escaped_seen: bool = False,
     enumeration_failed: bool = False,
 ) -> bool:
@@ -653,7 +653,7 @@ def _terminate_posix_tree(
     certain = not enumeration_failed
     escaped_group = escaped_seen
     known: set[int] = set(extra_pids or ())
-    previous_discovered: Optional[set[int]] = None
+    previous_discovered: set[int] | None = None
 
     # Freeze the isolated group before walking PPID relationships. A descendant
     # that has created another session is also stopped as soon as it is found.
@@ -728,7 +728,7 @@ def _terminate_posix_tree(
 
 def terminate_process_tree(
     process: subprocess.Popen[bytes],
-    extra_pids: Optional[set[int]] = None,
+    extra_pids: set[int] | None = None,
     escaped_seen: bool = False,
     enumeration_failed: bool = False,
 ) -> bool:
@@ -776,7 +776,7 @@ def terminate_process_tree(
     return False
 
 
-def _trusted_windows_system_directory() -> Optional[str]:
+def _trusted_windows_system_directory() -> str | None:
     if os.name != "nt":
         return None
     try:  # pragma: no cover - exercised through mocks on POSIX
@@ -790,19 +790,20 @@ def _trusted_windows_system_directory() -> Optional[str]:
         return None
 
 
-def safe_child_environment(artifact_dir: Path) -> Dict[str, str]:
-    environment: Dict[str, str] = {}
+def safe_child_environment(artifact_dir: Path) -> dict[str, str]:
+    environment: dict[str, str] = {}
     for key, value in os.environ.items():
         uppercase = key.upper()
-        if uppercase in SAFE_CHILD_ENV_KEYS or uppercase.startswith("LC_"):
-            if not SECRET_ENV_PATTERN.search(key):
-                environment[key] = value
+        if (
+            uppercase in SAFE_CHILD_ENV_KEYS or uppercase.startswith("LC_")
+        ) and not SECRET_ENV_PATTERN.search(key):
+            environment[key] = value
     environment["CLOSED_LOOP_EVIDENCE_DIR"] = str(artifact_dir)
     environment["CLOSED_LOOP_CASE_ID"] = artifact_dir.name
     return environment
 
 
-def _join_collectors(collectors: List[_BoundedStreamCollector], timeout: float) -> bool:
+def _join_collectors(collectors: list[_BoundedStreamCollector], timeout: float) -> bool:
     deadline = time.monotonic() + timeout
     for collector in collectors:
         collector.thread.join(max(0.0, deadline - time.monotonic()))
@@ -811,19 +812,18 @@ def _join_collectors(collectors: List[_BoundedStreamCollector], timeout: float) 
 
 def _finish_stream_capture(
     process: subprocess.Popen[bytes],
-    collectors: List[_BoundedStreamCollector],
+    collectors: list[_BoundedStreamCollector],
     tree_cleanup_certain: bool,
-    monitor: Optional[_PosixProcessMonitor] = None,
-) -> Tuple[List[Tuple[str, bool, bool, bool]], bool]:
+    monitor: _PosixProcessMonitor | None = None,
+) -> tuple[list[tuple[str, bool, bool, bool]], bool]:
     """Finish both drains without waiting forever on inherited pipe handles."""
 
     known: set[int] = set()
     escaped = False
     enumeration_failed = False
-    tracking_unavailable = False
     if not _join_collectors(collectors, 0.25):
         if monitor is not None:
-            known, escaped, enumeration_failed, tracking_unavailable = monitor.stop()
+            known, escaped, enumeration_failed, _tracking_unavailable = monitor.stop()
             monitor = None
         tree_cleanup_certain = (
             terminate_process_tree(process, known, escaped, enumeration_failed)
@@ -832,7 +832,7 @@ def _finish_stream_capture(
         if not _join_collectors(collectors, READER_JOIN_SECONDS):
             tree_cleanup_certain = False
     elif monitor is not None:
-        known, escaped, enumeration_failed, tracking_unavailable = monitor.stop()
+        known, escaped, enumeration_failed, _tracking_unavailable = monitor.stop()
         table = _posix_process_table()
         live_known = bool(
             table is not None
@@ -872,14 +872,14 @@ def evidence_file_path(artifact_dir: Path, relative: str) -> Path:
 
 def inspect_evidence(
     artifact_dir: Path,
-    contract: Dict[str, List[str]],
+    contract: dict[str, list[str]],
     redact_files: bool = True,
-) -> Tuple[Dict[str, Any], bool]:
+) -> tuple[dict[str, Any], bool]:
     required = contract.get("requiredFiles", [])
     non_empty = set(contract.get("nonEmptyFiles", []))
-    files: List[Dict[str, Any]] = []
-    missing: List[str] = []
-    empty: List[str] = []
+    files: list[dict[str, Any]] = []
+    missing: list[str] = []
+    empty: list[str] = []
     secret_detected = False
     for relative in required:
         path = evidence_file_path(artifact_dir, relative)
@@ -933,27 +933,24 @@ def scan_artifact_text_files(artifact_dir: Path, redact_files: bool = True) -> b
         total_bytes += metadata.st_size
         if total_bytes > MAX_ARTIFACT_TOTAL_BYTES:
             raise CampaignError("case artifacts exceed the safe total size limit")
-        try:
-            _size, _digest, found = _stream_file(path, redact_files)
-        except CampaignError:
-            raise
+        _size, _digest, found = _stream_file(path, redact_files)
         if not found:
             continue
         found_any = True
     return found_any
 
 
-def write_case_result(artifact_dir: Path, result: Dict[str, Any]) -> None:
+def write_case_result(artifact_dir: Path, result: dict[str, Any]) -> None:
     atomic_write_json(artifact_dir / "result.json", result)
 
 
 def write_artifact_manifest(
     artifact_dir: Path, artifact_relative: str
-) -> Tuple[Dict[str, Any], List[str]]:
+) -> tuple[dict[str, Any], list[str]]:
     """Bind every regular case artifact except the manifest itself."""
 
-    files: List[Dict[str, Any]] = []
-    unsafe: List[str] = []
+    files: list[dict[str, Any]] = []
+    unsafe: list[str] = []
     total_bytes = 0
     entries = artifact_tree_entries(artifact_dir)
     for path, metadata in sorted(entries, key=lambda item: item[0].as_posix()):
@@ -994,22 +991,22 @@ def write_artifact_manifest(
 
 
 def _start_case_process(
-    argv: List[str],
+    argv: list[str],
     project_root: Path,
     cwd_value: str,
     cwd_label: str,
-    environment: Dict[str, str],
+    environment: dict[str, str],
 ) -> subprocess.Popen[bytes]:
     """Start an isolated child without leaving an interrupt-before-return gap."""
 
-    popen_options: Dict[str, Any] = {}
+    popen_options: dict[str, Any] = {}
     if os.name == "posix":
         popen_options["start_new_session"] = True
     elif os.name == "nt":  # pragma: no cover - exercised with mocks
         popen_options["creationflags"] = subprocess.CREATE_NEW_PROCESS_GROUP
 
-    process: Optional[subprocess.Popen[bytes]] = None
-    previous_mask: Optional[set[signal.Signals]] = None
+    process: subprocess.Popen[bytes] | None = None
+    previous_mask: set[signal.Signals] | None = None
     if os.name == "posix" and hasattr(signal, "pthread_sigmask"):
         previous_mask = signal.pthread_sigmask(signal.SIG_BLOCK, {signal.SIGINT})
     try:
@@ -1059,11 +1056,11 @@ def _start_case_process(
 def execute_case(
     campaign: Campaign,
     attempt_id: str,
-    case: Dict[str, Any],
+    case: dict[str, Any],
     ordinal: int,
     source_fingerprint: str,
     round_mode: str,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     case_id = case["id"]
     run_id, artifact_dir = campaign.allocate_case_artifact(attempt_id, case_id, ordinal)
     artifact_relative = relative_to_root(campaign.adapter.campaign_root, artifact_dir)
@@ -1087,10 +1084,10 @@ def execute_case(
     stderr_secret = False
     stdout_truncated = False
     stderr_truncated = False
-    exit_code: Optional[int] = None
+    exit_code: int | None = None
     timed_out = False
-    command_error: Optional[str] = None
-    execution_safety_error: Optional[str] = None
+    command_error: str | None = None
+    execution_safety_error: str | None = None
     tree_cleanup_certain = True
     try:
         process = _start_case_process(
@@ -1104,11 +1101,11 @@ def execute_case(
             tree_cleanup_certain = terminate_process_tree(process)
             raise CampaignError("command output pipes could not be created")
 
-        process_monitor: Optional[_PosixProcessMonitor] = None
+        process_monitor: _PosixProcessMonitor | None = None
         if os.name == "posix":
             process_monitor = _PosixProcessMonitor(process.pid)
             process_monitor.start()
-        collectors: List[_BoundedStreamCollector] = []
+        collectors: list[_BoundedStreamCollector] = []
         try:
             for handle in (process.stdout, process.stderr):
                 collector = _BoundedStreamCollector(handle)
@@ -1122,13 +1119,12 @@ def execute_case(
                 known: set[int] = set()
                 escaped = False
                 enumeration_failed = False
-                tracking_unavailable = False
                 if process_monitor is not None:
                     (
                         known,
                         escaped,
                         enumeration_failed,
-                        tracking_unavailable,
+                        _tracking_unavailable,
                     ) = process_monitor.stop()
                     process_monitor = None
                 tree_cleanup_certain = terminate_process_tree(
@@ -1157,9 +1153,8 @@ def execute_case(
             known = set()
             escaped = False
             enumeration_failed = False
-            tracking_unavailable = False
             if process_monitor is not None:
-                known, escaped, enumeration_failed, tracking_unavailable = (
+                known, escaped, enumeration_failed, _tracking_unavailable = (
                     process_monitor.stop()
                 )
             terminate_process_tree(process, known, escaped, enumeration_failed)
@@ -1205,7 +1200,7 @@ def execute_case(
 
     atomic_write_text(artifact_dir / "stdout.txt", stdout_text)
     atomic_write_text(artifact_dir / "stderr.txt", stderr_text)
-    evidence_error: Optional[str] = None
+    evidence_error: str | None = None
     try:
         evidence_report, evidence_secret = inspect_evidence(
             artifact_dir, case.get("evidence") or {}
@@ -1231,8 +1226,8 @@ def execute_case(
         stdout_secret or stderr_secret or evidence_secret or artifact_secret
     )
 
-    source_after: Optional[str]
-    source_error: Optional[str] = None
+    source_after: str | None
+    source_error: str | None = None
     try:
         source_after = campaign.current_source()
     except CampaignError:
@@ -1249,7 +1244,7 @@ def execute_case(
     elif source_error:
         status = "BLOCKED"
         reason = source_error
-    elif round_mode in {"quick", "initial", "retest"} and source_after != source_fingerprint:
+    elif round_mode in {"initial", "retest", "regression"} and source_after != source_fingerprint:
         status = "BLOCKED"
         reason = "source fingerprint drifted during execution"
     elif not tree_cleanup_certain:
@@ -1362,11 +1357,13 @@ def execute_case(
 def record_blocked_case(
     campaign: Campaign,
     attempt_id: str,
-    case: Dict[str, Any],
+    case: dict[str, Any],
     ordinal: int,
     source_fingerprint: str,
     reason: str,
-) -> Dict[str, Any]:
+    *,
+    status: str = "BLOCKED",
+) -> dict[str, Any]:
     case_id = case["id"]
     round_mode = next(
         (
@@ -1376,8 +1373,10 @@ def record_blocked_case(
         ),
         None,
     )
-    if round_mode not in {"quick", "initial", "retest", "regression"}:
+    if round_mode not in {"initial", "retest", "regression"}:
         raise CampaignError("blocked case does not belong to a valid attempt")
+    if status not in {"BLOCKED", "NOT_RUN"}:
+        raise CampaignError("unavailable case status is invalid")
     run_id, artifact_dir = campaign.allocate_case_artifact(attempt_id, case_id, ordinal)
     artifact_relative = relative_to_root(campaign.adapter.campaign_root, artifact_dir)
     campaign.commit(
@@ -1409,7 +1408,7 @@ def record_blocked_case(
             "runId": run_id,
             "caseId": case_id,
             "round": round_mode,
-            "status": "BLOCKED",
+            "status": status,
             "exitCode": None,
             "timedOut": False,
             "durationMs": 0,
@@ -1433,7 +1432,7 @@ def record_blocked_case(
         "caseId": case_id,
         "ordinal": ordinal,
         "artifactDir": artifact_relative,
-        "status": "BLOCKED",
+        "status": status,
         "reason": reason,
         "exitCode": None,
         "timedOut": False,

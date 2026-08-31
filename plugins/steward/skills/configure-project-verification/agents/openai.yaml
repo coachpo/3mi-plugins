@@ -1,7 +1,0 @@
-interface:
-  display_name: "Configure Project Verification"
-  short_description: "审查或配置项目事实驱动的本地 quick 与 CI full 验证流水线"
-  default_prompt: "使用 $steward:configure-project-verification 审查或配置当前仓库的静态 verification profile、base adapter、local quick 与 CI full 投影；不要运行 campaign。"
-
-policy:
-  allow_implicit_invocation: false

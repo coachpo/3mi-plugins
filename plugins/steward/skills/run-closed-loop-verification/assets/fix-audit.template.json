@@ -1,30 +1,30 @@
 {
-  "failedCaseId": "smoke-entry",
+  "schemaVersion": 1,
+  "failedCaseId": "acceptance",
   "failedRound": "initial",
   "failedAttemptId": "attempt-0001-initial-00000000",
-  "failedSourceFingerprint": "sha256:replace-with-failure-fingerprint",
-  "fixedSourceFingerprint": "sha256:replace-with-current-fingerprint",
-  "rootCause": "Describe the proven root cause, not only the symptom.",
-  "violatedInvariant": "INV-CORE-0123456789AB",
+  "failedRunId": "run-0001-acceptance",
+  "failedSourceFingerprint": "sha256:replace-with-failure-source-fingerprint",
+  "fixedSourceFingerprint": "sha256:replace-with-fixed-source-fingerprint",
+  "rootCause": "Describe the proven project-source root cause.",
   "rootCauseSource": {
-    "path": "relative/path/to/root-cause-source",
+    "path": "relative/path/to/source",
     "lineStart": 1,
     "lineEnd": 1,
-    "symbol": "optional_symbol_name"
+    "failedSha256": "sha256:replace-with-failed-source-file-digest",
+    "symbol": "optional_symbol"
   },
-  "resolvedFindingIds": ["RF-EXAMPLE-001"],
-  "changedFiles": ["relative/path/to/changed-file"],
-  "fixSummary": "Describe the smallest authorized repair and its scope.",
-  "externalCondition": false,
-  "permanentGuardrail": {
-    "kind": "test",
-    "sourcePath": "relative/path/to/permanent-guardrail",
-    "caseId": "smoke-entry",
-    "evidenceFile": "proof.json"
-  },
-  "minimalRegression": {
-    "evidence": [
-      "Name the focused local proof to be rerun by retest."
-    ]
-  }
+  "affectedCriteria": [
+    "C1"
+  ],
+  "sourceDelta": [
+    {
+      "path": "relative/path/to/changed-source",
+      "change": "modified"
+    }
+  ],
+  "fixSummary": "Describe the smallest GOAL-scoped repair.",
+  "newEvidence": [
+    "State the failure evidence or new root-cause evidence that supports this repair."
+  ]
 }

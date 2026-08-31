@@ -84,6 +84,8 @@
 
 项目已有 `.steward/invariants.json` 或任务明确要求应用架构 profile/维护不变量时，对应的 canonical 项目文档仍是本地规则正文的唯一权威。每个 binding 的 `authority.path` 必须选中对应语言的 canonical 政策文档，`authority.anchor` 用独占一行的 `<a id="<lower-case-invariant-id>"></a>` 精确出现一次并紧邻其权威规则；不在 `AGENTS.md` 或 JSON 中复制正文。
 
+任何获授权的 `.steward/` 写入前，先运行 `goal_workspace.py ensure-root <project-root>`。该命令只建立或验证 worktree-local 的根自忽略合同；tracked、符号链接或错误 ignore 布局立即阻塞，不通过修改仓库根 `.gitignore`、`.git/info/exclude` 或共享 Git 配置绕过。
+
 Profile 映射先走插件的确定性编译器，不从文件名或依赖名称直接猜测。运行 `python3 <skill-dir>/../../scripts/architecture_profiles.py validate` 后，准备 schema v1 evidence：`components` 非空并按唯一 project-relative `scope` 组织，`signals` 使用 catalog token，`capabilities` 的 key 排序且值只用 `present`、`absent`、`unknown`。用同一脚本依次执行 `select --evidence ... --output ...` 固定 catalog/profile 选择，再执行 `compile --selection ... --output ...` 产生 digest-bound 的 scope、profile id/version/digest、不变量、检查、场景和 `applicabilityByScope`；两个命令只编译数据，不执行 profile 中的检查模板。选择与编译产物不匹配、digest 漂移或证据仍为 `unknown` 时不得手工修补输出。
 
 把 compiled 不变量投影到索引时，用 map-level `profileSelection.path` 指向 selector 产物，并令 `profileSelection.digest` 精确等于其已验证的 `contentDigest`；loader 会根据捆绑 catalog 重新编译，不信任另存的 compiled JSON。每个 compiled 硬不变量 ID 只保留一个 binding，精确保留 profile pin、合并后的 scopes 和排序的 `applicabilityByScope`。singular `applicability` 采用保守格：任一 scope 为 `applicable` 则整体为 `applicable`；否则任一 scope 为 `unverified` 则整体为 `unverified`；只有所有选中 scope 都是 `not_applicable` 且有技术证据与原因时，整体才能是 `not_applicable`。`status` 独立记录项目控制的审计结果，不从编译器适用性推导；路由只列 `applicable` 或 `unverified` 的触发 scope。

@@ -117,7 +117,7 @@ using the research contract's explicit `complete`, `partial`, `blocked`, or
 use answer-local `R*` IDs, an allowed requirement-authority category, traceability
 to `U*` and evidence records, and observable acceptance criteria.
 
-Do not dump the brief or worker transcripts, emit persistent Steward `C*`, `RF-*`,
+Do not dump the brief or worker transcripts, emit persistent Steward `C*`,
 invariant, or campaign identities, or claim that candidates are accepted,
 canonical, implemented, verified, or safe. Report material assumptions,
 conflicts, gaps, and unsearched scope without starting another workflow.

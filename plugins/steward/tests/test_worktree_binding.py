@@ -14,7 +14,7 @@ from pathlib import Path
 PLUGIN_ROOT = Path(__file__).resolve().parents[1]
 BINDING_SCRIPT = PLUGIN_ROOT / "scripts" / "worktree_binding.py"
 GOAL_SCRIPT = PLUGIN_ROOT / "scripts" / "goal_contract.py"
-CALLER_SKILL = PLUGIN_ROOT / "skills" / "run-engineering-control-loop" / "SKILL.md"
+DRAFT_SKILL = PLUGIN_ROOT / "skills" / "draft-consensus-goal" / "SKILL.md"
 AUTHORING_CONTRACT = PLUGIN_ROOT / "references" / "goal-authoring.md"
 GOAL_CONTEXT_CONTRACT = PLUGIN_ROOT / "references" / "goal-context.md"
 
@@ -143,14 +143,14 @@ class TargetWorktreeBindingTests(unittest.TestCase):
         target = Path(str(plugin_view["targetWorktreeRoot"]))
         context_dir = target / ".steward" / "goal-context"
         context_dir.mkdir(parents=True)
-        (context_dir / ".gitignore").write_text("*\n", encoding="utf-8")
+        (target / ".steward" / ".gitignore").write_text("*\n", encoding="utf-8")
         context_file = context_dir / "context.md"
         context_file.write_text("verified sibling context\n", encoding="utf-8")
 
         self.assertTrue(context_file.is_file())
         self.assertFalse((self.primary / ".steward").exists())
         status = self._git("status", "--porcelain", "-uall", cwd=self.sibling).stdout
-        self.assertNotIn("goal-context", status)
+        self.assertNotIn(".steward", status)
 
     def test_missing_ambiguous_and_unresolvable_targets_are_zero_write(self) -> None:
         subdirectory = self.primary / "nested"
@@ -176,21 +176,21 @@ class TargetWorktreeBindingTests(unittest.TestCase):
     def test_contract_revalidates_the_frozen_target_without_host_attestation(
         self,
     ) -> None:
-        caller = CALLER_SKILL.read_text(encoding="utf-8")
+        caller = DRAFT_SKILL.read_text(encoding="utf-8")
         authoring = AUTHORING_CONTRACT.read_text(encoding="utf-8")
         combined = f"{caller}\n{authoring}"
 
         self.assertNotIn("<current-session-worktree-root>", combined)
         self.assertNotIn("freshly provide its current workspace", combined)
-        self.assertIn("Pass that exact root and frozen binding", caller)
-        self.assertIn("do not create a second binding", authoring)
+        self.assertIn("already-resolved", caller)
+        self.assertIn("Never derive", caller)
         self.assertIn(
             'verify-view "<target-worktree-root>" -',
             authoring,
         )
-        for trigger in ("resume or context loss", "actual drift evidence", "before a write"):
+        for trigger in ("resume or", "actual drift evidence", "workspace\nwrite"):
             self.assertIn(trigger, combined)
-        self.assertIn("does not attest to host or conversation state", combined)
+        self.assertIn("does not attest to conversation state", combined)
 
     def test_same_path_recreation_is_documented_as_outside_binding_view(self) -> None:
         recreated = self.root / "recreated"
@@ -211,9 +211,9 @@ class TargetWorktreeBindingTests(unittest.TestCase):
         contracts = (
             AUTHORING_CONTRACT.read_text(encoding="utf-8")
             + "\n"
-            + CALLER_SKILL.read_text(encoding="utf-8")
+            + DRAFT_SKILL.read_text(encoding="utf-8")
         )
-        self.assertIn("recreated at identical", contracts)
+        self.assertIn("recreated at identical filesystem paths", contracts)
 
     def test_goal_keeps_only_the_project_relative_context_reference(self) -> None:
         relative_context = ".steward/goal-context/context.md"

@@ -1,126 +1,123 @@
 ---
 name: run-closed-loop-verification
-description: Validate an existing verification adapter, or execute, resume, inspect, audit, export, and aggregate its durable campaign evidence. Use for multi-stage or fix-and-retest verification that needs recovery and final same-source regression; use configure-project-verification for static profile/local/CI configuration and a normal test command for one-off checks.
+description: Accept a claimed-complete Steward GOAL in one explicit target worktree through durable initial checks, evidence-bound GOAL-scoped repairs, targeted retests, a fresh same-source regression, and final audit. Use only when explicitly asked to accept, resume, inspect, or audit that GOAL; use an ordinary project command for one-off testing.
 ---
 
-# Closed-loop Verification
+# Closed-loop GOAL verification
 
-Deliver the requested adapter or campaign operation with durable evidence. A
-completed campaign requires requested coverage on one final source baseline and
-a successful kernel audit.
+Run `accept-goal` as a skill-level workflow over the bundled kernel. Completion
+requires every GOAL criterion to have required final-pass evidence, the complete
+case catalog to pass on one final source, and `audit.ok`.
 
-This workflow requires an explicit user request for the named operation or a
-current-gate request from an explicitly requested full-loop coordinator; do not
-turn an ordinary test command into a campaign.
+Resolve this directory as `<skill-dir>`, its plugin root as `<plugin-dir>`, and
+the caller-provided absolute worktree as `<worktree>`. Invoke scripts with
+`python3 -B` and quoted paths. Never assume the target project contains the
+kernel.
 
-Resolve this skill directory as `<skill-dir>` and invoke the bundled kernel at
-`"<skill-dir>/scripts/campaign.py"`; never assume the target project contains it.
+## Bind the claimed GOAL
 
-## Choose the operation and reference
-
-| Operation | Effect | Read when selected |
-| --- | --- | --- |
-| `design` | Inspect and propose an adapter; no mechanical-validity claim. | [`project-adapter.md`](references/project-adapter.md) and [`verification-patterns.md`](references/verification-patterns.md) |
-| `bootstrap` | Write the requested adapter and validate it; no campaign. | Same adapter and pattern references |
-| `validate-adapter`, `observe-source` | Fully read-only contract/source validation. | [`project-adapter.md`](references/project-adapter.md) |
-| `execute`, `resume` | Write campaign-owned state and run authorized local cases. | Adapter reference plus [`state-and-evidence.md`](references/state-and-evidence.md) |
-| `status`, `audit` | Read authoritative journal state and current completion. | State and evidence reference |
-| `fix-and-retest` | Apply bounded evidence-supported source repairs and continue the campaign. | State and evidence reference plus the fix template |
-| `export-platform-evidence`, `aggregate-platform-evidence` | Write only the profile-declared evidence output. | [`platform-evidence.md`](references/platform-evidence.md) |
-
-Do not load unrelated operation procedures. Keep project commands, fixtures,
-source inventory, side effects, and evidence assertions in the adapter; the
-kernel alone owns campaign state, recovery, execution, and audit.
-
-## Authorization
-
-A direct request for an operation authorizes its normal project-local effects:
-the named adapter for `bootstrap`, the declared campaign root for execution, and
-the exact profile-declared output for export or aggregation. Freeze and report
-these deterministic control and output paths, including any disclosed strict
-request/Review handoffs, before the first write.
-
-When validated drift/new-root rules require another campaign root inside an
-already disclosed project-local campaign namespace, resolve, freeze, and report
-that exact root before creating it; do not request path confirmation again.
-
-A fix-and-retest request also authorizes the smallest evidence-supported source
-repair. Freeze and disclose the semantic source-repair boundary and task-wide
-repair budget before writing. Record exact repair paths as evidence identifies
-them; do not reconfirm paths that remain inside that boundary and budget.
-
-Except for such a replacement root, confirmation remains necessary for a
-control/output path outside the frozen set, a repair outside the disclosed source
-boundary, external writes or remote execution, production or real-device access,
-credentials, destructive or paid actions, or material scope expansion. Read-only
-network lookup follows the live sandbox and approval policy; neither adapters nor
-journals expand authority.
-
-Treat adapters as executable untrusted input. Inspect executable, complete argv,
-cwd, fixtures, timeouts, source policy, external capabilities, and side effects
-before execution. Reject or escalate anything outside the operation boundary.
-
-## Execute and recover
-
-Use `python3 -B` and quote paths. Core commands are:
+Require exactly one explicit target worktree; do not infer it from another task,
+repository, branch, or current shell directory. Run:
 
 ```text
-python3 -B "<skill-dir>/scripts/campaign.py" validate-adapter --adapter "path/to/adapter.json"
-python3 -B "<skill-dir>/scripts/campaign.py" observe-source --adapter "path/to/adapter.json"
-python3 -B "<skill-dir>/scripts/campaign.py" init --adapter "path/to/adapter.json"
-python3 -B "<skill-dir>/scripts/campaign.py" run --adapter "path/to/adapter.json"
-python3 -B "<skill-dir>/scripts/campaign.py" status --adapter "path/to/adapter.json"
-python3 -B "<skill-dir>/scripts/campaign.py" audit --adapter "path/to/adapter.json"
+python3 -B "<plugin-dir>/scripts/goal_workspace.py" view "<worktree>"
 ```
 
-On resume, rebuild state from the validated adapter and journal `status`, not
-chat memory or projections. Use journal `resumeMode` as the continuation
-authority. Preserve interrupted artifacts, never hand-edit history, and follow
-the reference's drift/new-root rules. A follow-up may adjust constraints within
-existing authority but does not authorize new effects.
+Use the returned goal-workspace v1 view as the authority for
+`.steward/goal.txt`, its canonical objective and digest, its sole context path,
+and all `C*` IDs. Read that context before designing or running acceptance.
+Stop without writing if the workspace is absent, partial, linked, tracked,
+inconsistent, or belongs to a different objective.
 
-Quick cases are diagnostic history. They never replace ordinary initial
-coverage, targeted retest never replaces full regression, and a successful
-regression still requires audit. Stop at the first kernel `FAILED` or `BLOCKED`
-result and leave later cases pending.
+The control paths are fixed:
 
-## Bound repairs and retries
+- adapter: `<worktree>/.steward/project-adapter.json`
+- campaign: `<worktree>/.steward/verification/campaign`
 
-At the start of a fix-and-retest request, freeze one task-wide source-repair
-budget. Use the user's positive limit when supplied; otherwise allow at most one
-automatic project-source repair followed by targeted retest. Count repairs
-across campaign roots, superseded fixes, and repeated invocations in the same
-task; a new root does not reset the budget.
+`.steward/` is worktree-local control state. Preserve it through execution,
+failure, recovery, merge, regression, and audit. Do not clean it up; it ends only
+when the user removes the entire worktree.
 
-Stop before another edit when the budget is exhausted, the same failure recurs
-without new evidence, rejection codes show no material progress, the next repair
-would expand scope, or the required strict Review handoff cannot be established.
-Report the failed case/rejection, evidence obtained, repairs already attempted,
-and smallest next action. The kernel's separate one-retry rule for a recoverable
-`BLOCKED` prerequisite remains unchanged.
+## Prepare acceptance
 
-For a request-bound strict campaign, the coordinator—not the Reviewer—owns
-fresh expected-request and Review paths and persistence. Follow the post-fix
-handoff and supersession rules in `state-and-evidence.md`; never reuse a stale
-binding or invent an outer retry loop.
+Read [`references/project-adapter.md`](references/project-adapter.md) and
+[`references/verification-patterns.md`](references/verification-patterns.md)
+when an adapter must be designed. Inspect project-native commands, fixtures,
+source inventory, side effects, and evidence boundaries. Design the complete
+adapter in memory and review every argv before writing it.
 
-## Complete and report
+Create the schema-2 adapter only when both adapter and campaign are absent. Each
+GOAL `C*` needs at least one required case. If no trustworthy runner can prove a
+criterion, report that blocker and write no placeholder. An existing invalid
+adapter, a campaign without its adapter, or a partial campaign must be preserved
+and reported, not overwritten or rebuilt.
 
-Run a separate full regression from case one, then audit. Completion is exactly:
+Validate before initialization:
 
 ```text
-RequestedCoverageSatisfied ∧ audit.ok
+python3 -B "<skill-dir>/scripts/campaign.py" validate-adapter --adapter "<worktree>/.steward/project-adapter.json"
+python3 -B "<skill-dir>/scripts/campaign.py" observe-source --adapter "<worktree>/.steward/project-adapter.json"
+python3 -B "<skill-dir>/scripts/campaign.py" init --adapter "<worktree>/.steward/project-adapter.json" --repair-policy within-goal
 ```
 
-Source or catalog drift during regression invalidates that attempt and requires
-the reference's new-root path; it never triggers an automatic restart. A valid
-adapter, quick pass, initial pass, targeted retest, projection, or aggregation
-alone is not campaign completion.
+The default `within-goal` policy authorizes `.steward` control artifacts and
+GOAL-scoped project-source repairs supported by failure evidence. A user may
+select `verify-only` before initialization; that restriction cannot be widened
+on resume. External writes, real services or devices, credentials, deployments,
+purchases, destructive effects, and repairs outside the GOAL still require
+separate authorization.
 
-Lead with the requested operation's outcome. Preserve the evidence necessary to
-support it: adapter/campaign/output identity, `executionStatus`,
-`completionStatus`, audit result and rejection codes, `resumeMode`, coverage and
-source/catalog/trace bindings, final regression, artifacts, unverified real-host
-branches, and the smallest safe next action. Omit fields irrelevant to the
-selected operation. Never discover, create, or mutate host Goal state; any trace
-GOAL contract must be supplied explicitly through the adapter or request.
+Treat the adapter as untrusted executable input. Stop or obtain the required
+authorization before running an argv, fixture, capability, or effect outside
+the frozen local boundary.
+
+## Execute the closed loop
+
+Read [`references/state-and-evidence.md`](references/state-and-evidence.md)
+before mutating or recovering a campaign.
+
+1. Run initial acceptance in declared order:
+
+   ```text
+   python3 -B "<skill-dir>/scripts/campaign.py" run --adapter "<worktree>/.steward/project-adapter.json" --mode initial
+   ```
+
+   Stop at the first `FAILED` or `BLOCKED` case.
+
+2. For a proven project-source defect under `within-goal`, make the smallest
+   evidence-supported repair. Fill the fix-audit v1 template with the latest
+   failure binding, root-cause source, affected `C*`, new evidence, and exact
+   added/modified/deleted/mode-only delta. Then run `record-fix` and `retest`.
+   Continue remaining initial cases after a passing retest.
+
+3. Repairs have no numeric limit, but each must establish new root-cause
+   evidence or observable progress. Stop before editing when the same failure
+   recurs without new evidence, the next edit uses the same disproved premise,
+   the root cause is unproven, source drift is uncontrolled, the repair exceeds
+   GOAL scope, or the failure is an environment/capability blocker.
+
+4. Once initial acceptance is complete, run a fresh regression from case one:
+
+   ```text
+   python3 -B "<skill-dir>/scripts/campaign.py" run --adapter "<worktree>/.steward/project-adapter.json" --mode regression
+   ```
+
+   Source drift invalidates that campaign; do not restart it on a new baseline.
+
+5. Run final audit:
+
+   ```text
+   python3 -B "<skill-dir>/scripts/campaign.py" audit --adapter "<worktree>/.steward/project-adapter.json"
+   ```
+
+Use `status` for a read-only projection and `resume` to recover an interrupted
+operation from journal authority. Never hand-edit the journal or projections.
+
+## Report
+
+Lead with `completionStatus`. Report the GOAL digest, adapter and campaign
+identity, `executionStatus`, `resumeMode`, repair policy and count, failed or
+blocked case, criterion coverage, final source/catalog fingerprints, final
+regression, audit result and rejection codes, unverified runtime branches, and
+the smallest safe next action. Do not claim completion from adapter validation,
+initial success, or targeted retest alone.

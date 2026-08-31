@@ -2,22 +2,15 @@
 
 from __future__ import annotations
 
-import json
 import re
 import unittest
 from pathlib import Path
 
 PLUGIN_ROOT = Path(__file__).resolve().parents[1]
-REPOSITORY_ROOT = PLUGIN_ROOT.parents[1]
 SKILL = PLUGIN_ROOT / "skills" / "parallel-repository-research" / "SKILL.md"
 AGENT = SKILL.parent / "agents" / "openai.yaml"
 CODEX_ADAPTER = SKILL.parent / "references" / "codex.md"
 CLAUDE_ADAPTER = SKILL.parent / "references" / "claude-code.md"
-README = PLUGIN_ROOT / "README.md"
-ROOT_README = REPOSITORY_ROOT / "README.md"
-CODEX_MANIFEST = PLUGIN_ROOT / ".codex-plugin" / "plugin.json"
-CLAUDE_MANIFEST = PLUGIN_ROOT / ".claude-plugin" / "plugin.json"
-CLAUDE_MARKETPLACE = REPOSITORY_ROOT / ".claude-plugin" / "marketplace.json"
 
 
 def _frontmatter_fields(text: str) -> tuple[dict[str, str], str]:
@@ -63,7 +56,6 @@ class ParallelRepositoryResearchContractTests(unittest.TestCase):
         cls.agent = AGENT.read_text(encoding="utf-8")
         cls.codex_adapter = CODEX_ADAPTER.read_text(encoding="utf-8")
         cls.claude_adapter = CLAUDE_ADAPTER.read_text(encoding="utf-8")
-        cls.readme = README.read_text(encoding="utf-8")
 
     def test_skill_has_standard_metadata_and_two_public_host_entrypoints(self) -> None:
         fields, _ = _frontmatter_fields(self.skill)
@@ -233,54 +225,17 @@ class ParallelRepositoryResearchContractTests(unittest.TestCase):
         self.assertIn("maxconcurrent", plan)
         self.assertIn("batchcount", plan)
 
-    def test_result_stays_repository_research_not_semantic_review(self) -> None:
+    def test_result_stays_at_repository_facts(self) -> None:
         lower = _normalized(self.skill)
 
-        self.assertIn("review-semantic-risks", lower)
-        for semantic_review_term in (
-            "rf-*",
-            "severity",
+        self.assertIn("stop at repository facts", lower)
+        for excluded_result in (
+            "severity labels",
+            "behavioral findings",
             "counterexamples",
-            "campaign cases",
+            "verification cases",
         ):
-            self.assertIn(semantic_review_term, lower)
-
-    def test_release_surfaces_describe_the_same_nine_skill_version(self) -> None:
-        codex = json.loads(CODEX_MANIFEST.read_text(encoding="utf-8"))
-        claude = json.loads(CLAUDE_MANIFEST.read_text(encoding="utf-8"))
-        root_readme = ROOT_README.read_text(encoding="utf-8")
-        marketplace = json.loads(CLAUDE_MARKETPLACE.read_text(encoding="utf-8"))
-        marketplace_steward = next(
-            plugin for plugin in marketplace["plugins"] if plugin["name"] == "steward"
-        )
-        skill_names = {
-            path.parent.name for path in (PLUGIN_ROOT / "skills").glob("*/SKILL.md")
-        }
-
-        self.assertEqual("0.0.11", codex["version"])
-        self.assertEqual(codex["version"], claude["version"])
-        self.assertEqual(9, len(skill_names))
-        self.assertIn("analyze-change-request", skill_names)
-        self.assertIn("parallel-repository-research", skill_names)
-        for public_description in (
-            codex["description"],
-            codex["interface"]["longDescription"],
-            claude["description"],
-            marketplace_steward["description"],
-            root_readme,
-            self.readme,
-        ):
-            self.assertIn("九", public_description)
-        self.assertIn("变更请求", codex["interface"]["longDescription"])
-        self.assertIn("并行只读", codex["interface"]["longDescription"])
-
-        routing_paragraph = next(
-            paragraph
-            for paragraph in self.readme.split("\n\n")
-            if "隐式" in paragraph and "write-agent-guides" in paragraph
-        )
-        self.assertIn("parallel-repository-research", routing_paragraph)
-        self.assertRegex(routing_paragraph, r"其余七个.*显式|七个.*显式")
+            self.assertIn(excluded_result, lower)
 
 
 if __name__ == "__main__":

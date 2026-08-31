@@ -1,7 +1,7 @@
 interface:
   display_name: "Parallel Repository Research"
   short_description: "并行只读拆分代码库调研并汇总可核验证据"
-  default_prompt: "使用 $steward:parallel-repository-research 将复杂仓库调研拆分为独立只读搜索 lane，并汇总带路径证据的结果。"
+  default_prompt: "使用 $steward:parallel-repository-research 将复杂仓库问题冻结为互不重叠的只读检索 lane；可安全并发时并发，否则顺序执行，由主会话复核路径或符号证据、冲突、未搜索范围和缺口。"
 
 policy:
   allow_implicit_invocation: true

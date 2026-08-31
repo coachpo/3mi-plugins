@@ -1,6 +1,6 @@
 ---
 name: parallel-repository-research
-description: Run parallel, read-only repository research when a question benefits from at least two independent search lanes, such as locating code, mapping architecture, inventorying implementations, or tracing dependencies. Do not use for single-point lookups, code changes or test execution, or semantic-risk adjudication handled by review-semantic-risks.
+description: Run parallel, read-only repository research when a question benefits from at least two independent search lanes, such as locating code, mapping architecture, inventorying implementations, or tracing dependencies. Do not use for single-point lookups, code changes, test execution, or behavioral-risk adjudication.
 ---
 
 # Parallel Repository Research
@@ -13,8 +13,8 @@ Codex or `/steward:parallel-repository-research` in Claude Code.
 
 Use parallel lanes only when at least two independent searches are useful. For a
 single symbol, file, or serial lookup, perform the same bounded research directly.
-Stop at repository facts: semantic findings, severity, counterexamples, `RF-*`,
-and campaign cases belong to `review-semantic-risks`.
+Stop at repository facts. Do not turn search evidence into severity labels,
+behavioral findings, counterexamples, or verification cases.
 
 ## Freeze one research plan
 
