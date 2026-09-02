@@ -94,7 +94,7 @@ content; the other fields may be `无` when nothing applies.
 
 Write independently verifiable outcomes as `(C1) ...；(C2) ...`, with unique
 consecutive IDs starting at `C1`. Keep IDs stable for the same objective. Do not
-put verification commands, transient evidence paths, or digests in the GOAL.
+put verification case IDs, adapter paths, or digests in the GOAL.
 
 Describe destination and proof, not unnecessary implementation steps. Keep the
 contract self-contained and at most 4,000 Unicode code points. Do not add a

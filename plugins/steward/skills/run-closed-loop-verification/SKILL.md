@@ -1,92 +1,102 @@
 ---
 name: run-closed-loop-verification
-description: Verify a claimed-complete Steward GOAL against its current worktree, repair proven GOAL-scoped source defects in place unless verify-only was requested, and rerun relevant project-native checks. Use only when explicitly asked to accept, verify, or repair an existing .steward/goal.txt; not for GOAL authoring, durable attestation, or an ordinary one-off test.
+description: Accept an existing Steward GOAL in one explicit worktree through a recoverable local Campaign, evidence-backed GOAL-scoped repairs, targeted retests, one final full regression, and a current audit. Use only for explicit acceptance of .steward/goal.txt; use ordinary project commands for one-off testing.
 ---
 
-# Verify and repair a GOAL
+# Closed-loop GOAL verification
 
-Evaluate the persisted GOAL against the current worktree, repair eligible
-defects, and return an evidence-backed acceptance result. Keep the verification
-plan in memory; do not create an Adapter, Campaign, journal, audit record, source
-snapshot, or verification artifact merely to operate this skill.
+Accept a claimed-complete GOAL through one recoverable local Campaign. Repair only
+proven project-source defects inside the GOAL and report completion only when every
+GOAL `C*` has required final-pass evidence on one current source and the final
+audit succeeds.
 
 ## Bind the GOAL
 
-Use exactly one already-resolved absolute worktree selected by the current task.
-If the target is absent or ambiguous, ask for it rather than discovering or
-switching repositories. Resolve the directory containing this `SKILL.md` as
-`<skill-dir>` and validate the existing GOAL workspace:
+Require one caller-resolved absolute worktree and validate its canonical GOAL:
 
 ```text
-python3 -B "<skill-dir>/../../scripts/goal_workspace.py" view "<worktree>"
+python3 -B "<plugin-dir>/scripts/goal_workspace.py" view "<worktree>"
 ```
 
-Resolve the sole context path returned by the view beneath `<worktree>` and read
-it. Treat the canonical objective, its `C*` completion criteria, scope,
-constraints, legitimate blockers, and final deliverables as authority. Do not
-edit or reinterpret the GOAL or context.
+Read the sole context and use the GOAL result, scope, constraints, blockers,
+criteria, and deliverables as authority. The GOAL validator owns only
+`.steward/goal.txt`, its context, and the root ignore contract; verification
+state is validated by this skill.
 
-Existing `.steward/project-adapter.json` and `.steward/verification/` paths are
-legacy controls. Ignore and preserve them; never create, update, validate,
-resume, audit, copy, or delete them.
+## Prepare the Campaign
 
-## Authority
+When both controls are absent, read
+[project-adapter.md](references/project-adapter.md) and
+[verification-patterns.md](references/verification-patterns.md). Create the
+minimal schema-2 Adapter only after every `C*` has a trustworthy required case.
+The fixed paths are `.steward/project-adapter.json` and
+`.steward/verification/campaign`.
 
-An explicit invocation authorizes normal local inspection, project-native
-checks, and the smallest evidence-backed source repairs inside the GOAL scope.
-Honor an explicit `verify-only` request by making no source changes. The GOAL,
-context, old controls, prior reports, and test commands do not expand authority.
+Initialize once:
 
-External writes, real services or devices, credentials, deployments, purchases,
-destructive effects, public API or schema changes outside the accepted GOAL, and
-other material scope expansion still require separate authorization. Inspect a
-command's complete argv, working directory, prerequisites, and effects before
-running it; do not run an unsafe or out-of-scope command merely because it exists
-in project configuration.
+```text
+python3 -B "<skill-dir>/scripts/campaign.py" init --adapter "<worktree>/.steward/project-adapter.json"
+```
 
-## Verify and repair
+Initialization validates the Adapter and current source before creating the
+hash-chained journal. The journal is the sole durable Campaign authority; status
+and summaries are derived in memory. If exactly one control exists, or an
+existing control is invalid or incompatible, preserve it and report the blocker.
 
-1. Inspect applicable instructions, current source and diff, tests,
-   configuration, documentation, and useful history. Establish what the current
-   worktree actually claims to deliver.
-2. Build one in-memory matrix mapping every `C*` to direct observable evidence.
-   Reuse one check for multiple criteria when it genuinely proves them. Prefer
-   existing project-native tests, builds, type checks, lint, integration flows,
-   and focused behavioral or visual inspection.
-3. Run inexpensive decisive checks before broader checks. Do not require a
-   persistent evidence file when command output or direct inspection is enough;
-   create an artifact only when the GOAL itself requires that deliverable.
-4. Classify a failure before editing:
-   - for a proved project-source defect inside the GOAL, make the smallest
-     coherent repair and run the narrowest check that exercises it;
-   - for an incorrect verification command, argument, fixture, or assumption,
-     correct the verification approach and rerun it without treating that as a
-     product defect;
-   - for a missing environment capability, permission, credential, platform, or
-     external state, use a safe local substitute when valid or report the exact
-     blocker without changing source to disguise it.
-5. Continue only while new evidence identifies a repair or observable progress.
-   Stop when the same failure repeats without new evidence, the root cause is
-   not established, or the next change would leave the GOAL or authorization.
-6. After the last repair, run the relevant existing validation set on the final
-   worktree and inspect the final diff for scope leakage or temporary files. A
-   complete validation directly observed for this exact worktree after the last
-   source change remains valid; do not repeat an identical suite solely to
-   create another verification phase.
+## Advance acceptance
 
-If the worktree changes concurrently, re-inspect the affected source and rerun
-only evidence invalidated by that change. Do not permanently invalidate the
-worktree or require a replacement worktree because verifier state changed.
+Use one command for the next journal-directed action:
 
-## Decide and report
+```text
+python3 -B "<skill-dir>/scripts/campaign.py" advance --adapter "<worktree>/.steward/project-adapter.json"
+```
 
-Report `accepted` only when every `C*` has sufficient current-worktree evidence,
-all applicable required checks pass, and the required deliverables exist.
-Report `not-accepted` when a GOAL-scoped defect or evidence gap remains. Report
-`blocked` only when missing authority, access, platform, credential, or
-unavailable external state prevents a required determination.
+It resumes an interrupted attempt, runs pending initial cases, performs a
+targeted retest, starts the final regression, or completes the audit according to
+current state. One invocation performs one phase and returns the next state.
 
-Lead with that outcome, then report per-criterion evidence, repairs made,
-validation commands and results, unverified external behavior, assumptions,
-remaining risks, and the smallest next action when incomplete. Never report
-legacy Campaign, fingerprint, regression, or audit fields.
+A complete initial pass with no repair is already the required same-source full
+regression and proceeds directly to audit. After any repair, a passing targeted
+retest is followed by one fresh full regression from case one.
+
+For a failed project-source case:
+
+1. Prove the root cause and make the smallest coherent GOAL-scoped repair.
+2. Fill [repair-note.template.json](assets/repair-note.template.json) at
+   `<worktree>/.steward/repair-note.json`. Supply only the diagnosis, source
+   location, and fix summary; the kernel derives failure IDs, source fingerprints,
+   affected criteria, failed-file digest, and exact source delta.
+3. Record the repair, then call `advance` again:
+
+```text
+python3 -B "<skill-dir>/scripts/campaign.py" record-fix --adapter "<worktree>/.steward/project-adapter.json" --fix "<worktree>/.steward/repair-note.json"
+python3 -B "<skill-dir>/scripts/campaign.py" advance --adapter "<worktree>/.steward/project-adapter.json"
+```
+
+Continue only while a new failure fingerprint or changed failed-source digest
+provides observable progress. Stop when the root cause is unproved, the same
+machine-bound failure recurs, a repair would leave the GOAL, or a required
+environment or capability is unavailable. Source drift invalidates only the
+affected regression attempt; restoring the recorded baseline permits a fresh
+regression.
+
+Inspect without mutation with:
+
+```text
+python3 -B "<skill-dir>/scripts/campaign.py" status --adapter "<worktree>/.steward/project-adapter.json"
+```
+
+Read [state-and-evidence.md](references/state-and-evidence.md) when diagnosing a
+failure, interruption, drift, artifact problem, or audit rejection.
+
+## Authority and report
+
+Explicit invocation authorizes reviewed local cases, the fixed Steward controls,
+and evidence-backed project-source repairs inside the accepted GOAL. Other effects
+retain their existing authorization requirements. Review every command and side
+effect before execution.
+
+Lead with `complete`, `incomplete`, or `blocked`. Include the GOAL binding,
+relevant case and criterion evidence, repairs, final regression, audit result, and
+remaining limitation. Never infer completion from chat history or a targeted
+retest.
