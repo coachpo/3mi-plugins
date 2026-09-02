@@ -118,9 +118,8 @@ the same failure repeats, a validator is unavailable, I/O fails, or no
 evidence-backed correction remains, stop instead of looping or persisting an
 unvalidated contract.
 
-After the frozen binding is revalidated, send one strict UTF-8 JSON object on
-standard input to the workspace creator; do not put the GOAL or context in argv
-or a temporary file:
+Serialize one strict UTF-8 JSON object in memory; do not put the GOAL or context
+in argv or a temporary file:
 
 ```json
 {
@@ -132,6 +131,24 @@ or a temporary file:
 }
 ```
 
+Before the sole creator call, validate the exact serialized creator payload
+through the creator's own request parser:
+
+```text
+python3 -B "<skill-dir>/../../scripts/goal_workspace.py" validate-create -
+```
+
+This preflight is mandatory even after `goal_contract.py view`: the contract
+validator cannot compare the separate context object with the context reference
+or derive its path from `结果`. Never guess, abbreviate, or manually reproduce
+the safe slug. If preflight reports an expected path, use that exact
+project-relative path in both `证据与上下文` and `context.path`, rebuild the
+payload, and preflight again. Freeze the bytes of the successful payload in
+memory; do not edit or reserialize them between successful preflight and create.
+
+After the frozen binding is revalidated, send those exact validated bytes to the
+workspace creator:
+
 ```text
 python3 -B "<skill-dir>/../../scripts/goal_workspace.py" create "<target-worktree-root>" -
 ```
@@ -141,8 +158,9 @@ payload. Merely setting a command tool to non-TTY does not work when it closes
 stdin immediately and has no input field.
 
 When a host can inject delayed input only through a PTY, use the bundled
-in-memory bridge. Serialize the creator request as compact single-line JSON and
-start this command in a PTY:
+in-memory bridge for both `validate-create -` and `create <target> -`. Serialize
+the creator request as compact single-line JSON and start the applicable command
+in a PTY; the create form is:
 
 ```text
 python3 -B "<skill-dir>/../../scripts/pty_stdin_bridge.py" --line -- python3 -B "<skill-dir>/../../scripts/goal_workspace.py" create "<target-worktree-root>" -

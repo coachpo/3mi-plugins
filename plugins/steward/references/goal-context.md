@@ -45,6 +45,12 @@ sibling worktree 重新选根。实际创建前必须复验冻结绑定。
 `goal-context`。文件名必须匹配小写 ASCII 字母、数字和单个连字符组成的
 安全标识，不能选择后缀路径来绕过既有文件。
 
+不得凭观察结果文字人工猜测、截短或重现该路径。构建完整 creator JSON 后，
+必须先把其精确 UTF-8 字节交给 `goal_workspace.py validate-create -`；只有该
+预检成功的相同字节才能进入一次性 create。若预检返回 expected path，须把
+该完整项目相对路径同时写入 `证据与上下文` 引用和 `context.path`，重建
+payload 后再次预检。
+
 把该路径作为唯一 context 引用并入 `证据与上下文` 字段，不另起第八行：
 
 ```text

@@ -481,13 +481,22 @@ def _load_create_request(raw_input: bytes) -> CreateRequest:
         raise GoalWorkspaceError("WORKSPACE_GOAL", str(exc)) from exc
     context_path = _validate_context_path(context.get("path"))
     content = _context_bytes(context.get("content"))
-    if context_path != _context_path_for_contract(contract):
+    derived_path = _context_path_for_contract(contract)
+    if context_path != derived_path:
         raise GoalWorkspaceError(
             "WORKSPACE_CONTEXT_PATH",
-            "context.path must use the safe slug derived from 结果",
+            "context.path must use the safe slug derived from 结果; expected "
+            + derived_path.as_posix(),
         )
     _require_contract_reference(contract, context_path)
     return CreateRequest(contract, context_path, content)
+
+
+def validate_create_request(raw_input: bytes) -> dict[str, Any]:
+    """Validate an exact creator payload without inspecting or writing a worktree."""
+
+    request = _load_create_request(raw_input)
+    return _workspace_view(request.contract, request.context_path)
 
 
 def _require_contract_reference(
@@ -505,7 +514,8 @@ def _require_contract_reference(
     if context_path != derived_path:
         raise GoalWorkspaceError(
             "WORKSPACE_CONTEXT_PATH",
-            "GOAL context path must use the safe slug derived from 结果",
+            "GOAL context path must use the safe slug derived from 结果; expected "
+            + derived_path.as_posix(),
         )
     evidence = next(
         item.value for item in contract.fields if item.key == "evidenceAndContext"
@@ -740,7 +750,8 @@ def _usage_error() -> GoalWorkspaceError:
     return GoalWorkspaceError(
         "WORKSPACE_USAGE",
         "usage: goal_workspace.py ensure-root <target-worktree-root> | "
-        "create <target-worktree-root> - | view <target-worktree-root>",
+        "validate-create - | create <target-worktree-root> - | "
+        "view <target-worktree-root>",
     )
 
 
@@ -749,6 +760,12 @@ def main(argv: list[str] | None = None) -> int:
     try:
         if len(arguments) == 2 and arguments[0] == "ensure-root":
             output = ensure_workspace_root(arguments[1])
+        elif (
+            len(arguments) == 2
+            and arguments[0] == "validate-create"
+            and arguments[1] == "-"
+        ):
+            output = validate_create_request(_read_stdin())
         elif len(arguments) == 3 and arguments[0] == "create" and arguments[2] == "-":
             output = create_goal_workspace(arguments[1], _read_stdin())
         elif len(arguments) == 2 and arguments[0] == "view":
