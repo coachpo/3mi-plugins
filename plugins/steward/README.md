@@ -4,9 +4,9 @@ Steward 为 Codex 与 Claude Code 提供六个共享技能，组成三条彼此�
 
 1. 维护 canonical 项目文档与 `AGENTS.md` 层级；
 2. 执行只读仓库调研与变更请求分析；
-3. 起草持久 GOAL，并在手动实施完成后按 `repairPolicy` 修补、执行完整回归和 audit。
+3. 起草持久 GOAL，并在手动实施完成后根据当前工作树逐项验收、原地修补和复验。
 
-两个宿主加载同一个 `skills/` 目录。仓库事实、用户已接受的决定、七行 GOAL 和工作树本地验证证据各有明确职责；技能不会把搜索结果、聊天摘要或一次测试通过直接当作完成证明。
+两个宿主加载同一个 `skills/` 目录。仓库事实、用户已接受的决定、七行 GOAL 和当前工作树证据各有明确职责；技能不会把搜索结果、聊天摘要或一次无关测试通过直接当作完成证明。
 
 ## 安装
 
@@ -70,9 +70,9 @@ $steward:<skill-name>
 
 若首次持久化在写入前因宿主 stdin transport 中断，可再次显式调用该技能，并提供同一绝对 worktree 与可读取的先前 task/session。技能恢复精确 payload 和已接受决定，重新复验绑定及 workspace 状态，再幂等重传一次；摘要不能替代 payload，partial 或冲突状态仍会停止。无法恢复精确 payload 时 replay 停止；只有从已接受决定重新完成事实核实与完整验证，才能作为 fresh authoring 继续。仅能通过 PTY 延迟注入长输入的宿主使用内置 raw-mode 内存桥，creator 本身始终从关闭的 pipe 读取。
 
-用户或执行代理随后按 GOAL 手动完成实现。声明完成后，`run-closed-loop-verification` 从同一 worktree 的 GOAL 和 context 开始验收：缺少 adapter 时根据 `C*`、项目原生命令和可观察证据创建 adapter，缺少 campaign 时初始化一次；已有损坏、漂移或部分初始化的控制产物会使流程停止，不会被静默替换。
+用户或执行代理随后按 GOAL 手动完成实现。声明完成后，`run-closed-loop-verification` 验证同一 worktree 的 canonical GOAL 和 context，检查当前源码、diff、测试、配置与交付物，并在内存中把每个 `C*` 映射到直接可观察证据。它使用项目原生命令，不创建 adapter、campaign、journal、source snapshot 或 audit 产物。
 
-验收开始前冻结 `repairPolicy`：`within-goal` 允许在明确授权的 GOAL 范围内进行有证据支持的源码修补，`verify-only` 禁止源码写入。每次修补后执行定向复测；只有获得新的诊断证据或可观察进展时才继续。相同失败在没有新证据时再次出现、修补不再产生实质进展或下一步将超出 GOAL 时停止。随后执行同源完整回归和 audit；只有当前 `C*` 全部得到 required case 的最终通过证据且 `audit.ok` 时，才能报告完成。
+除非用户明确要求 `verify-only`，该调用允许在 GOAL 范围内原地修补已证明根因的源码问题，并在每次修补后执行定向复测。验证命令、参数、fixture 或环境假设错误时，修正验证方式而不是修改项目来迁就它；缺少必要权限、平台、凭据或不可替代外部状态时才报告 blocker。最后一次源码变化后执行一次相关的现有验证集合；同一完整验证若已针对当前源码被直接观察为通过，不为制造额外阶段而重复执行。
 
 ```text
 使用 $steward:draft-consensus-goal 消费主会话解析的唯一目标 worktree 根，保存 canonical GOAL 和一份 context；不要开始执行。
@@ -83,7 +83,7 @@ $steward:<skill-name>
 ```
 
 ```text
-使用 $steward:run-closed-loop-verification 验收当前 worktree 中已声称完成的 .steward/goal.txt；读取 context，使用 repairPolicy=within-goal，按需创建 adapter 和 campaign，修补有进展的问题并完成完整回归与 audit。
+使用 $steward:run-closed-loop-verification 根据当前 worktree 验收已声称完成的 .steward/goal.txt；读取 context，逐项核实 C*，在 GOAL 范围内原地修补问题并复验。
 ```
 
 ## 技能一览
@@ -95,31 +95,31 @@ $steward:<skill-name>
 | `parallel-repository-research` | 至少两个独立检索 lane 才能有效回答的仓库问题 | 主会话复核的路径或符号证据、冲突、未搜索范围和缺口 |
 | `analyze-change-request` | 需要项目事实与外部证据的软件变更请求 | 带来源和验收标准、尚未接受的候选需求 |
 | `draft-consensus-goal` | 已收敛讨论需要可评审或可执行合同 | `.steward/goal.txt`、一份 goal context、同一七行 GOAL 文本 |
-| `run-closed-loop-verification` | GOAL 已声称完成，需要验收、修补与最终证明 | adapter、可恢复 campaign、定向复测、完整回归和 audit |
+| `run-closed-loop-verification` | GOAL 已声称完成，需要验收、修补与复验 | 每项 C* 的当前证据、原地修补、项目原生验证结果与剩余缺口 |
 
 Codex 可隐式选择 `write-agent-guides` 和 `parallel-repository-research`。`write-project-docs`、`analyze-change-request`、`draft-consensus-goal` 与 `run-closed-loop-verification` 只在明确请求相应工作流时调用。
 
 ## 工作树本地状态
 
-Steward 的 GOAL 与验证控制产物位于目标 worktree 的 `.steward/` 中。整个目录由其自身的 ignore 规则挡在 Git 状态与项目源码指纹之外，因此不同 worktree 具有各自独立的目标、context、adapter、campaign 和证据。
+Steward 的 canonical GOAL 与 context 位于目标 worktree 的 `.steward/` 中。整个目录由其自身的 ignore 规则挡在 Git 状态之外，因此不同 worktree 具有各自独立的目标和 context。
 
-`.steward/` 是恢复事实源，不是普通缓存。Steward 在 GOAL 执行、阻塞、恢复、验收成功或 Git merge 后都保留它；创建新 GOAL 时使用新的 worktree。删除整个 worktree 会一并移除其中的本地控制状态。
+`.steward/goal.txt` 和唯一的 `goal-context` 是验收输入，不是临时缓存。旧版本留下的 `.steward/project-adapter.json` 与 `.steward/verification/` 会被验收技能忽略并保留，不构成当前验收状态；创建新 GOAL 时仍使用新的 worktree。
 
 ## 权限与停止边界
 
 - 只读调研不会运行项目代码、修改文件或连接私人账户。
 - 文档技能只修改当前请求授权的项目文档或 `AGENTS.md`；不会创建或改写 `CLAUDE.md`。
 - GOAL 起草只写标准 `.steward/` GOAL 与 context，不实施源码变化。
-- GOAL 验收只执行经过审查的本地 case；`within-goal` 只修补明确授权的 GOAL 范围，`verify-only` 保持源码只读。
-- adapter 中的 executable、完整 `argv`、`cwd`、fixture、timeout、外部能力和副作用必须在执行前审查。
+- GOAL 验收只执行经过审查的项目原生命令；默认只修补明确授权的 GOAL 范围，`verify-only` 保持源码只读。
+- 验收命令的完整 `argv`、工作目录、前置条件和副作用必须在执行前审查。
 - 缺少可信 runner、必要平台、权限、证据或安全的本地替代时，技能报告准确 blocker 与最小下一步，不虚构命令或降低完成标准。
 - 提交、推送、发布、部署、真实服务或设备访问、凭据、购买、破坏性操作及其他外部写入始终需要单独授权。
 
 ## 恢复与完成
 
-恢复时重新绑定目标 worktree，校验 `.steward/goal.txt`、context、adapter 和 journal，再从第一个不完整状态继续。持久 workspace 仍是恢复与完成权威；当 workspace 尚未建立且当前用户明确引用先前 task/session 时，该来源只可用于恢复精确 authoring payload、绑定证据与已接受决定，宿主任务状态和助手摘要本身不构成权威。
+恢复验收时重新校验 `.steward/goal.txt` 和 context，再根据当前工作树重新判断每个 `C*`；不恢复或维护独立验证状态。已经落盘的源码修补仍在工作树中，先前命令输出和任务摘要只作为需要重新核实的线索。GOAL workspace 尚未建立且当前用户明确引用先前 task/session 时，该来源仍只用于 `draft-consensus-goal` 恢复精确 authoring payload、绑定证据与已接受决定。
 
-快速检查和定向复测只能证明局部反馈。最终完成要求一轮独立的同源完整回归覆盖声明的 runnable case，并由当前 audit 验证 GOAL digest、`C*` 映射、source/catalog identity、journal、artifact 与最终结果保持一致。
+只有每个 `C*` 都在当前工作树上获得充分证据、适用的必要检查通过且交付物存在时，才能报告 `accepted`。仍有 GOAL 内缺陷或证据缺口时报告 `not-accepted`；只有缺少必要授权、访问、平台、凭据或外部状态时报告 `blocked`。
 
 ## 运行要求
 

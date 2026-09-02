@@ -32,7 +32,7 @@ sibling worktree 重新选根。实际创建前必须复验冻结绑定。
 - 足以支持该关系的简短摘要。
 
 结果、范围、约束与授权、完成标准、正当阻塞项和最终交付留在 GOAL 中。
-上下文不写 `C*`、验证 case ID、adapter 路径、digest，也不使用授权、停止或
+上下文不写 `C*`、验收命令、临时证据路径或 digest，也不使用授权、停止或
 完成判定措辞。执行方读不到上下文时，按 GOAL 中保留的来源自行核实，在
 最终交付说明缺口，不推测文件内容。
 
@@ -62,7 +62,7 @@ payload 后再次预检。
 
 ## Workspace 合同
 
-整个 `.steward/` 是 worktree-local 运行控制目录。根
+整个 `.steward/` 是 worktree-local GOAL 控制目录。根
 `.steward/.gitignore` 的内容必须是精确字节 `*\n`，因此 `goal.txt`、
 `goal-context/` 和其他控制产物都不进入 Git status。不得修改项目根
 `.gitignore`、`.git/info/exclude` 或共享 Git 配置。已有的无关、未跟踪
@@ -71,7 +71,7 @@ Steward 控制文件必须原样保留。
 使用 `goal_workspace.py create <target-worktree-root> -` 和
 `goal-authoring.md` 定义的严格 JSON 输入一次性创建 workspace。创建器必须：
 
-1. 验证精确 worktree 绑定、`.steward` 未被跟踪且所有既有路径均非符号链接；
+1. 验证精确 worktree 绑定、`.steward` 未被跟踪且本流程拥有的 GOAL 路径均非符号链接；
 2. 在内存中验证七行 GOAL、唯一 context 引用、context 路径与内容；
 3. 建立或验证根忽略规则，创建 sole context，再把 `goal.txt` 作为完整
    workspace 标记最后写入；
@@ -80,6 +80,6 @@ Steward 控制文件必须原样保留。
 5. 对相同完整 GOAL、相同路径和相同 context 内容幂等返回；任何差异、
    tracked 路径、错误忽略规则、额外 context、损坏或部分初始化都停止。
 
-一个 worktree 只承载一个 GOAL。执行、失败、恢复、merge、验收和 audit
+一个 worktree 只承载一个 GOAL。执行、失败、恢复、merge 和验收
 期间都保留 `.steward/`；只有整个 worktree 被用户移除时才随之消失。新
 GOAL 使用新 worktree，不覆盖、迁移或清理现有 workspace。

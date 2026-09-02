@@ -1,6 +1,6 @@
 interface:
-  display_name: "Closed-loop GOAL Verification"
-  short_description: "Accept completed GOALs with durable repair and audit evidence"
-  default_prompt: "使用 $steward:run-closed-loop-verification 验收当前工作树中已声称完成的 .steward/goal.txt；读取 goal-context，按需创建 Adapter 和 Campaign，逐项验证 C*，在 GOAL 范围内依据证据修补，最后完成同源回归与 audit。"
+  display_name: "GOAL Verification and Repair"
+  short_description: "Verify completed GOALs and repair scoped defects"
+  default_prompt: "使用 $steward:run-closed-loop-verification 根据当前工作树验收 .steward/goal.txt，在 GOAL 范围内原地修补问题并复验。"
 policy:
   allow_implicit_invocation: false

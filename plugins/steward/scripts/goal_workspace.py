@@ -38,7 +38,6 @@ IGNORE_BYTES = b"*\n"
 MAX_IGNORE_BYTES = 4_096
 MAX_CREATE_INPUT_BYTES = 1_100_000
 MAX_CONTEXT_BYTES = 1_048_576
-MAX_CONTROL_ENTRIES = 100_000
 _SAFE_CONTEXT_NAME = re.compile(r"[a-z0-9]+(?:-[a-z0-9]+)*\.md")
 _CONTEXT_REFERENCE = re.compile(
     r"(?<![A-Za-z0-9._/-])"
@@ -144,43 +143,6 @@ def _require_real_directory(path: Path, label: str) -> None:
         raise GoalWorkspaceError(
             "WORKSPACE_PATH", f"{label} must be a real, non-symbolic directory"
         )
-
-
-def _require_safe_control_tree(steward: Path) -> None:
-    pending = [steward]
-    entries_seen = 0
-    while pending:
-        directory = pending.pop()
-        try:
-            entries = list(os.scandir(directory))
-        except OSError as exc:
-            raise GoalWorkspaceError(
-                "WORKSPACE_IO", f"cannot inspect Steward control tree: {exc}"
-            ) from exc
-        for entry in entries:
-            entries_seen += 1
-            if entries_seen > MAX_CONTROL_ENTRIES:
-                raise GoalWorkspaceError(
-                    "WORKSPACE_SIZE", "Steward control tree has too many entries"
-                )
-            try:
-                metadata = entry.stat(follow_symlinks=False)
-            except OSError as exc:
-                raise GoalWorkspaceError(
-                    "WORKSPACE_IO", f"cannot inspect Steward control path: {entry.path}"
-                ) from exc
-            if entry.is_symlink() or _is_reparse(metadata):
-                raise GoalWorkspaceError(
-                    "WORKSPACE_PATH",
-                    f"Steward control path must not be symbolic: {entry.path}",
-                )
-            if stat.S_ISDIR(metadata.st_mode):
-                pending.append(Path(entry.path))
-            elif not stat.S_ISREG(metadata.st_mode):
-                raise GoalWorkspaceError(
-                    "WORKSPACE_PATH",
-                    f"Steward control path must be a regular file or directory: {entry.path}",
-                )
 
 
 def _read_regular_file(path: Path, *, max_bytes: int) -> bytes:
@@ -345,8 +307,6 @@ def _ensure_root(binding: WorktreeBinding, transaction: _Transaction) -> Path:
             raise GoalWorkspaceError(
                 "WORKSPACE_PATH", ".steward must be a real, non-symbolic directory"
             )
-
-    _require_safe_control_tree(steward)
 
     try:
         ignore_bytes = _read_regular_file(ignore, max_bytes=MAX_IGNORE_BYTES)
@@ -563,7 +523,6 @@ def _inspect_workspace(
     _require_untracked_steward(root)
     steward = root / ".steward"
     _require_real_directory(steward, ".steward")
-    _require_safe_control_tree(steward)
     ignore = _read_regular_file(steward / ".gitignore", max_bytes=MAX_IGNORE_BYTES)
     if ignore != IGNORE_BYTES:
         raise GoalWorkspaceError(

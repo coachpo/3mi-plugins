@@ -2,8 +2,8 @@
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "steward",
   "displayName": "Steward",
-  "version": "0.1.2",
-  "description": "面向 Codex 与 Claude Code 的六技能工程工作流，覆盖项目文档维护、只读需求调研，以及 GOAL 起草与闭环验收。",
+  "version": "0.2.0",
+  "description": "面向 Codex 与 Claude Code 的六技能工程工作流，覆盖项目文档维护、只读需求调研，以及 GOAL 起草、验收与原地修补。",
   "author": {
     "name": "coachpo",
     "url": "https://github.com/coachpo"

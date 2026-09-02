@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 import tempfile
 import unittest
 from pathlib import Path
-
 
 PLUGIN_ROOT = Path(__file__).resolve().parents[1]
 WORKSPACE_SCRIPT = PLUGIN_ROOT / "scripts" / "goal_workspace.py"
@@ -84,6 +84,39 @@ class GoalWorkspacePreflightTests(unittest.TestCase):
             result_line = view["goalContract"]["objective"].split("\n")[0]
             self.assertEqual(self.result, result_line[3:])
             self.assertFalse((Path(temporary) / ".steward").exists())
+
+    @unittest.skipIf(os.name == "nt", "creating symlinks requires extra Windows privileges")
+    def test_view_ignores_legacy_verification_controls(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            base = Path(temporary)
+            root = base / "project"
+            subprocess.run(
+                ["git", "init", "-q", str(root)],
+                check=True,
+                capture_output=True,
+            )
+            created = subprocess.run(
+                [sys.executable, str(WORKSPACE_SCRIPT), "create", str(root), "-"],
+                input=self._payload(self.expected_path),
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(0, created.returncode, created.stderr.decode())
+
+            legacy_root = root / ".steward" / "verification" / "campaign"
+            legacy_root.mkdir(parents=True)
+            legacy_target = base / "legacy-state.json"
+            legacy_target.write_text("{}\n", encoding="utf-8")
+            (legacy_root / "state.json").symlink_to(legacy_target)
+
+            viewed = subprocess.run(
+                [sys.executable, str(WORKSPACE_SCRIPT), "view", str(root)],
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(0, viewed.returncode, viewed.stderr.decode())
+            self.assertEqual(json.loads(created.stdout), json.loads(viewed.stdout))
 
 
 if __name__ == "__main__":
