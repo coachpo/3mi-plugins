@@ -724,6 +724,12 @@ def view_goal_workspace(raw_target: str) -> dict[str, Any]:
 
 
 def _read_stdin() -> bytes:
+    if sys.stdin.buffer.isatty():
+        raise GoalWorkspaceError(
+            "WORKSPACE_INPUT_TRANSPORT",
+            "create input must arrive through a finite non-TTY pipe; use "
+            "pty_stdin_bridge.py when the host only exposes delayed PTY input",
+        )
     data = sys.stdin.buffer.read(MAX_CREATE_INPUT_BYTES + 1)
     if len(data) > MAX_CREATE_INPUT_BYTES:
         raise GoalWorkspaceError("WORKSPACE_INPUT", "create input is too large")

@@ -1,47 +1,38 @@
 ---
 name: draft-consensus-goal
-description: Author and persist Steward's machine-validated seven-line Chinese GOAL from accepted decisions and verified facts in one caller-provided worktree. Use only when explicitly invoked to create the canonical .steward/goal.txt and its sole context file for later manual execution; do not start implementation.
+description: Create or resume Steward's machine-validated seven-line Chinese GOAL and sole context in one caller-provided worktree. Use only when explicitly asked to persist a new contract or continue a named interrupted invocation.
 ---
 
 # Draft Consensus Goal
 
-Create the single reviewable GOAL contract that a user will execute manually and
-`run-closed-loop-verification` can later accept. This skill alone authors that
-GOAL and owns its 4,000-code-point, context, and workspace contracts.
+Persist one reviewable GOAL contract for later manual execution and
+`run-closed-loop-verification`. This is the only Steward skill that authors it.
 
-Explicit invocation authorizes only the project-local control writes described
-here. It does not authorize implementation, verification, external effects, or
-changes outside `.steward/`.
+## Authority and target
 
-## Bind the target worktree
+Explicit invocation authorizes read-only fact checking in the supplied worktree
+and the `.steward/` control writes defined by the referenced contracts. It does
+not authorize implementing or verifying the GOAL, external effects, or changes
+outside `.steward/`.
 
 Require the main session or caller to provide exactly one already-resolved
 `<target-worktree-root>`. Never derive it from the plugin directory, shell cwd,
 repository discovery, or a sibling worktree.
 
-Read and apply [`goal-authoring.md`](../../references/goal-authoring.md). It owns
-worktree binding, evidence, strategy authority, uncertainty, the seven-line
-format, and bounded validation. Read and apply
-[`goal-context.md`](../../references/goal-context.md) while assembling the sole
-context file and the project-relative reference embedded in the GOAL.
+## Workflow
 
-## Persist the canonical workspace
-
-After the candidate and context are complete in memory, invoke the shared
-workspace creator exactly once as described by `goal-authoring.md`. It validates
-the input, creates or validates the exact root self-ignore, writes the context,
-and writes `.steward/goal.txt` last.
-
-The allowed result is one complete workspace: canonical `goal.txt`, exactly one
-referenced context file, and any unrelated untracked Steward controls that were
-already present. An identical complete workspace may be reused idempotently. A
-different GOAL, tracked control path, symbolic path, invalid ignore rule, or
-partial workspace blocks; do not overwrite, clean, convert, or choose another
-worktree.
+Read and apply [`goal-authoring.md`](../../references/goal-authoring.md) for
+binding, accepted evidence, new or resumed invocation handling, seven-line
+format, validation, transport, and persistence. Read and apply
+[`goal-context.md`](../../references/goal-context.md) for the sole context file
+and its project-relative GOAL reference.
 
 ## Output
 
-On success, return exactly `goalContract.objective` from the creator's canonical
+On success, return exactly `goalContract.objective` from the canonical workspace
 view, with no JSON, digest, introduction, or text after the seventh line. On a
-blocker, return only the actual blocker and smallest next action. Never start
-executing the GOAL.
+resumable blocker, name `$steward:draft-consensus-goal`, the absolute target,
+observed workspace state, exact recovery source, and payload SHA-256/UTF-8 byte
+count when an exact payload was recovered, followed by the smallest next action;
+do not print the payload. For other blockers, return only the actual blocker and
+smallest next action.

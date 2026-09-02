@@ -68,12 +68,18 @@ $steward:<skill-name>
 
 `draft-consensus-goal` 把已收敛的决定写成机器校验的七行中文 GOAL。调用方必须提供唯一、已解析的目标 worktree 根；技能将 canonical GOAL 保存为 `.steward/goal.txt`，并保存一份由 GOAL 引用的 `.steward/goal-context/<name>.md`。它不开始执行 GOAL。
 
+若首次持久化在写入前因宿主 stdin transport 中断，可再次显式调用该技能，并提供同一绝对 worktree 与可读取的先前 task/session。技能恢复精确 payload 和已接受决定，重新复验绑定及 workspace 状态，再幂等重传一次；摘要不能替代 payload，partial 或冲突状态仍会停止。无法恢复精确 payload 时 replay 停止；只有从已接受决定重新完成事实核实与完整验证，才能作为 fresh authoring 继续。仅能通过 PTY 延迟注入长输入的宿主使用内置 raw-mode 内存桥，creator 本身始终从关闭的 pipe 读取。
+
 用户或执行代理随后按 GOAL 手动完成实现。声明完成后，`run-closed-loop-verification` 从同一 worktree 的 GOAL 和 context 开始验收：缺少 adapter 时根据 `C*`、项目原生命令和可观察证据创建 adapter，缺少 campaign 时初始化一次；已有损坏、漂移或部分初始化的控制产物会使流程停止，不会被静默替换。
 
 验收开始前冻结 `repairPolicy`：`within-goal` 允许在明确授权的 GOAL 范围内进行有证据支持的源码修补，`verify-only` 禁止源码写入。每次修补后执行定向复测；只有获得新的诊断证据或可观察进展时才继续。相同失败在没有新证据时再次出现、修补不再产生实质进展或下一步将超出 GOAL 时停止。随后执行同源完整回归和 audit；只有当前 `C*` 全部得到 required case 的最终通过证据且 `audit.ok` 时，才能报告完成。
 
 ```text
 使用 $steward:draft-consensus-goal 消费主会话解析的唯一目标 worktree 根，保存 canonical GOAL 和一份 context；不要开始执行。
+```
+
+```text
+重新使用 $steward:draft-consensus-goal 恢复明确引用的先前 task/session；继续绑定其中点名的同一绝对 worktree，只重放可精确恢复并重新校验的 payload，通过安全 stdin transport 完成持久化，不执行 GOAL。
 ```
 
 ```text
@@ -111,7 +117,7 @@ Steward 的 GOAL 与验证控制产物位于目标 worktree 的 `.steward/` 中�
 
 ## 恢复与完成
 
-恢复时重新绑定目标 worktree，校验 `.steward/goal.txt`、context、adapter 和 journal，再从第一个不完整状态继续。宿主任务状态和聊天记忆只改善使用体验，不是恢复或完成权威。
+恢复时重新绑定目标 worktree，校验 `.steward/goal.txt`、context、adapter 和 journal，再从第一个不完整状态继续。持久 workspace 仍是恢复与完成权威；当 workspace 尚未建立且当前用户明确引用先前 task/session 时，该来源只可用于恢复精确 authoring payload、绑定证据与已接受决定，宿主任务状态和助手摘要本身不构成权威。
 
 快速检查和定向复测只能证明局部反馈。最终完成要求一轮独立的同源完整回归覆盖声明的 runnable case，并由当前 audit 验证 GOAL digest、`C*` 映射、source/catalog identity、journal、artifact 与最终结果保持一致。
 
@@ -119,6 +125,7 @@ Steward 的 GOAL 与验证控制产物位于目标 worktree 的 `.steward/` 中�
 
 - 技能脚本需要 PATH 中可用的 `python3`。
 - worktree 绑定、源码观察和本地状态隔离需要 Git。
+- 仅能通过 PTY 延迟输入的宿主需要 POSIX `termios` 运行内存 stdin bridge；能直接提供有限 pipe 的宿主不需要该兼容路径。
 - 项目 case 使用项目已有工具与依赖；Steward 不替项目安装依赖或配置远程 runner。
 - 安装后若技能入口没有出现，请新建宿主任务或会话再试。
 

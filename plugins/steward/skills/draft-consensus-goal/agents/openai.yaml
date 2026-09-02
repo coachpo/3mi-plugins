@@ -1,7 +1,7 @@
 interface:
   display_name: "Draft Consensus Goal"
-  short_description: "起草并保存七行中文 GOAL"
-  default_prompt: "使用 $steward:draft-consensus-goal 消费主会话解析的唯一目标 worktree 根，根据已接受决定生成并校验七行 GOAL；在该工作树的 .steward/ 中保存 canonical goal.txt 和一份 goal-context，返回同一 GOAL，不开始执行。"
+  short_description: "从已接受决定起草、恢复并安全保存七行中文 GOAL"
+  default_prompt: "使用 $steward:draft-consensus-goal 在指定 worktree 创建或恢复 canonical 七行 GOAL。"
 
 policy:
   allow_implicit_invocation: false

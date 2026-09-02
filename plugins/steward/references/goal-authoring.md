@@ -1,8 +1,8 @@
 # Consensus GOAL authoring
 
-This is the single authoring contract for a new seven-line GOAL, and
-`draft-consensus-goal` is its sole owner. Other skills consume the persisted
-GOAL; they do not independently draft, compress, or externalize one.
+This is the single contract for authoring and persisting a seven-line GOAL,
+including interrupted-persistence recovery. `draft-consensus-goal` is its sole
+owner; other skills consume the persisted GOAL rather than drafting one.
 
 ## Bind the target worktree
 
@@ -33,6 +33,25 @@ different from the supplied root, a sibling worktree, or binding drift blocks
 delivery. The binding does not attest to conversation state or prove that a
 repository recreated at identical filesystem paths is the same repository.
 Keep absolute paths out of the GOAL and context; use project-relative paths.
+
+## Resume an interrupted invocation
+
+A later explicit invocation may replay the same logical GOAL only for the same
+absolute target and exact prior creator payload, supplied directly or recovered
+read-only from a named task, session, or blocker handoff. Accepted user
+decisions define consensus. Prior validator and creator outputs are evidence to
+recheck; assistant summaries, host status, and remembered drafts are leads only.
+
+Revalidate the frozen binding and candidate, then inspect the target workspace.
+Make at most one creator call per invocation: replay the exact payload when the
+workspace is absent or complete and identical; block on partial, unsafe, or
+conflicting state. Never retry within the same invocation, run concurrent
+attempts, change replay bytes, or switch worktrees.
+
+If exact payload recovery fails, the replay path stops. Fresh authoring may
+restart from accessible accepted decisions and current verified facts, with the
+full validation path rerun; treat it as a new candidate and block if result,
+scope, or authority is unclear.
 
 ## Establish source facts
 
@@ -117,6 +136,24 @@ or a temporary file:
 python3 -B "<skill-dir>/../../scripts/goal_workspace.py" create "<target-worktree-root>" -
 ```
 
+Every `-` input above must be a finite non-TTY pipe whose writer closes after the
+payload. Merely setting a command tool to non-TTY does not work when it closes
+stdin immediately and has no input field.
+
+When a host can inject delayed input only through a PTY, use the bundled
+in-memory bridge. Serialize the creator request as compact single-line JSON and
+start this command in a PTY:
+
+```text
+python3 -B "<skill-dir>/../../scripts/pty_stdin_bridge.py" --line -- python3 -B "<skill-dir>/../../scripts/goal_workspace.py" create "<target-worktree-root>" -
+```
+
+After `READY STEWARD_PTY_STDIN`, send the compact JSON plus one LF, without
+Ctrl-D. For input containing literal LF, replace `--line` with its exact UTF-8
+byte count and send exactly those bytes without a delimiter. The bridge relays
+input in memory, restores the terminal, and puts no content in argv or a file.
+Never connect a `-` input directly to a PTY; canonical buffering can truncate it.
+
 The creator accepts exactly those fields. It validates the GOAL and its sole
 context reference, establishes `.steward/.gitignore` with the exact bytes `*\n`,
 creates the context, and writes canonical `.steward/goal.txt` last. An identical
@@ -125,7 +162,3 @@ tracked, symbolic, malformed, or partial workspace fails closed and remains in
 place. Existing unrelated untracked controls are retained. Do not clean,
 convert, relocate, or retry in another worktree; a new GOAL requires a new
 worktree.
-
-The creator returns the canonical goal-workspace v1 view. Return exactly its
-`goalContract.objective`. If creation or rollback reports a blocker, do not
-return a GOAL with a missing or dangling context reference.
