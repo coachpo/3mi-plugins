@@ -12,11 +12,14 @@ alias matching lowercase ASCII letters/digits joined by single hyphens, at most
 
 Explicit invocation authorizes repository fact checking and creation of the
 selected ignored GOAL bundle. It does not authorize implementing the GOAL,
-running acceptance cases, or touching external state.
+running acceptance cases, touching external state, or creating, starting, or
+activating a host-managed GOAL.
 
 Read and apply [goal-authoring.md](../../references/goal-authoring.md). Read
 [goal-context.md](../../references/goal-context.md) when composing the context.
 
-On success, return the alias, `.steward/goals/<alias>/`, and the canonical
-seven-line GOAL. Do not expose creator JSON, digests, or internal verification
-state. On failure, report the exact blocker and smallest recovery action.
+On success, return only the canonical seven-line GOAL, with no introduction or
+text after the seventh line. In particular, do not say that a GOAL was created,
+started, or activated. Do not expose the alias, bundle path, creator JSON,
+digests, or internal verification state. On failure, report the exact blocker
+and smallest recovery action.
