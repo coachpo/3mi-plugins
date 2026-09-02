@@ -66,24 +66,22 @@ $steward:<skill-name>
 
 ### GOAL 交付
 
-`draft-consensus-goal` 把已收敛的决定写成机器校验的七行中文 GOAL。调用方必须提供唯一、已解析的目标 worktree 根；技能将 canonical GOAL 保存为 `.steward/goal.txt`，并保存一份由 GOAL 引用的 `.steward/goal-context/<name>.md`。它不开始执行 GOAL。
+`draft-consensus-goal` 从当前会话 cwd 绑定精确 Git worktree，并把已收敛决定保存到 `.steward/goals/<alias>/`。不可变 bundle 包含 canonical 七行中文 `goal.txt`、唯一 `context.md`、Draft 冻结的 `acceptance-plan.json` 和摘要 manifest。alias 使用小写字母、数字及单连字符；目录协议允许多个 alias，但一个 worktree 只起草一个 GOAL 是调用方约定。
 
-若首次持久化在写入前因宿主 stdin transport 中断，可再次显式调用该技能，并提供同一绝对 worktree 与可读取的先前 task/session。技能恢复精确 payload 和已接受决定，重新复验绑定及 workspace 状态，再幂等重传一次；摘要不能替代 payload，partial 或冲突状态仍会停止。无法恢复精确 payload 时 replay 停止；只有从已接受决定重新完成事实核实与完整验证，才能作为 fresh authoring 继续。仅能通过 PTY 延迟注入长输入的宿主使用内置 raw-mode 内存桥，creator 本身始终从关闭的 pipe 读取。
+用户或执行代理随后按 GOAL 实施。声明完成后，`run-closed-loop-verification` 用同一 alias 和同一物理目录验收：它把 acceptance intent 解析成不可变的精确 execution plan，捕获 Git 可见源码基线，并维护 hash-linked journal、attempt 和 artifacts。旧平铺 GOAL、context、Adapter 与 Campaign 路径完全不参与新流程。
 
-用户或执行代理随后按 GOAL 手动完成实现。声明完成后，`run-closed-loop-verification` 从同一 worktree 的 GOAL 和 context 开始验收：缺少 adapter 时根据 `C*`、项目原生命令和可观察证据创建 adapter，缺少 campaign 时初始化一次；已有损坏、漂移、不兼容或部分初始化的控制产物会使流程停止，不会被静默替换。
-
-该技能始终修补有明确证据且处于 GOAL 范围内的源码问题，并在每次修补后执行定向复测。只有获得新的机器绑定证据或可观察进展时才继续；相同失败在没有新证据时再次出现、根因无法证明、修补不再产生实质进展或下一步将超出 GOAL 时停止。没有发生修补的一次同源完整初验可直接作为最终回归；发生修补后只再执行一次从首个 case 开始的完整回归，然后 audit。只有当前 `C*` 全部得到 required case 的最终通过证据且 `audit.ok` 时，才能报告完成。
+项目源码失败只能在 repair 窗口内凭失败快照、根因位置和真实 delta 接受修补；随后先定向复测失败 case，再从 case 1 完整回归。非 repair 阶段源码漂移会阻塞并要求手动恢复。只有所有 required `C*` 获得同源最终 PASS 且 audit 当前有效时才报告完成。
 
 ```text
-使用 $steward:draft-consensus-goal 消费主会话解析的唯一目标 worktree 根，保存 canonical GOAL 和一份 context；不要开始执行。
+使用 $steward:draft-consensus-goal 在当前工作树以 goal-a 别名保存 canonical GOAL、context 和 acceptance plan；不要开始执行。
 ```
 
 ```text
-重新使用 $steward:draft-consensus-goal 恢复明确引用的先前 task/session；继续绑定其中点名的同一绝对 worktree，只重放可精确恢复并重新校验的 payload，通过安全 stdin transport 完成持久化，不执行 GOAL。
+重新使用 $steward:draft-consensus-goal 恢复 goal-a；只重放同一 worktree 中可精确恢复并重新校验的 payload，不执行 GOAL。
 ```
 
 ```text
-使用 $steward:run-closed-loop-verification 验收当前 worktree 中已声称完成的 .steward/goal.txt；读取 context，维护可恢复的 campaign，在 GOAL 范围内依据证据修补并定向复测，最后完成完整回归与 audit。
+使用 $steward:run-closed-loop-verification 验收当前工作树中的 goal-a；绑定其 acceptance plan，在 GOAL 范围内依据证据修补并定向复测，最后完成完整回归与 audit。
 ```
 
 ## 技能一览
@@ -94,14 +92,14 @@ $steward:<skill-name>
 | `write-project-docs` | 审查或维护 canonical 项目文档 | 单一事实权威、同步的索引与链接、范围内文档更新 |
 | `parallel-repository-research` | 至少两个独立检索 lane 才能有效回答的仓库问题 | 主会话复核的路径或符号证据、冲突、未搜索范围和缺口 |
 | `analyze-change-request` | 需要项目事实与外部证据的软件变更请求 | 带来源和验收标准、尚未接受的候选需求 |
-| `draft-consensus-goal` | 已收敛讨论需要可评审或可执行合同 | `.steward/goal.txt`、一份 goal context、同一七行 GOAL 文本 |
-| `run-closed-loop-verification` | GOAL 已声称完成，需要闭环验收、修补与最终证明 | adapter、可恢复 campaign、定向复测、完整回归和 audit |
+| `draft-consensus-goal` | 已收敛讨论需要可评审或可执行合同 | alias-scoped GOAL、context、acceptance plan 与 manifest |
+| `run-closed-loop-verification` | GOAL 已声称完成，需要闭环验收、修补与最终证明 | execution plan、可恢复 campaign、定向复测、完整回归和 audit |
 
 Codex 可隐式选择 `write-agent-guides` 和 `parallel-repository-research`。`write-project-docs`、`analyze-change-request`、`draft-consensus-goal` 与 `run-closed-loop-verification` 只在明确请求相应工作流时调用。
 
 ## 工作树本地状态
 
-Steward 的 GOAL 与验证控制产物位于目标 worktree 的 `.steward/` 中。整个目录由其自身的 ignore 规则挡在 Git 状态与项目源码指纹之外，因此不同 worktree 具有各自独立的目标、context、adapter、campaign 和证据。
+Steward 的 GOAL 与验证控制产物位于当前 worktree 的 `.steward/goals/<alias>/` 中。整个 `.steward/` 由自身 ignore 规则挡在 Git 状态与源码指纹之外；bundle 绑定其创建时的精确 worktree，不支持复制、移动或重新绑定。
 
 `.steward/` 是恢复事实源，不是普通缓存。Steward 在 GOAL 执行、阻塞、恢复、验收成功或 Git merge 后都保留它；创建新 GOAL 时使用新的 worktree。删除整个 worktree 会一并移除其中的本地控制状态。
 
@@ -109,17 +107,17 @@ Steward 的 GOAL 与验证控制产物位于目标 worktree 的 `.steward/` 中�
 
 - 只读调研不会运行项目代码、修改文件或连接私人账户。
 - 文档技能只修改当前请求授权的项目文档或 `AGENTS.md`；不会创建或改写 `CLAUDE.md`。
-- GOAL 起草只写标准 `.steward/` GOAL 与 context，不实施源码变化。
+- GOAL 起草只写 alias-scoped GOAL、context 和 acceptance plan，不实施源码变化。
 - GOAL 验收只执行经过审查的本地 case，并只修补有证据支持且明确处于 GOAL 范围内的问题。
-- adapter 中的 executable、完整 `argv`、`cwd`、timeout、环境需求和副作用必须在执行前审查。
+- execution plan 中的 executable、完整 `argv`、`cwd`、timeout、环境需求和副作用必须在执行前审查。
 - 缺少可信 runner、必要平台、权限、证据或安全的本地替代时，技能报告准确 blocker 与最小下一步，不虚构命令或降低完成标准。
 - 提交、推送、发布、部署、真实服务或设备访问、凭据、购买、破坏性操作及其他外部写入始终需要单独授权。
 
 ## 恢复与完成
 
-恢复时重新绑定目标 worktree，校验 `.steward/goal.txt`、context、adapter 和 journal，再从第一个不完整状态继续。持久 workspace 仍是恢复与完成权威；当 workspace 尚未建立且当前用户明确引用先前 task/session 时，该来源只可用于恢复精确 authoring payload、绑定证据与已接受决定，宿主任务状态和助手摘要本身不构成权威。
+恢复时从 cwd 重新绑定 worktree，按 alias 校验 manifest、GOAL、context、两个 plan 和 journal，再从未闭合阶段继续。持久 bundle 与 journal 是恢复和完成权威；聊天摘要不能替代精确 payload 或机器证据。
 
-快速检查和定向复测只能证明局部反馈。最终完成要求一轮同源完整回归覆盖声明的 runnable case；没有修补时完整初验即为该回归，发生修补后重新执行一次。当前 audit 验证 GOAL digest、`C*` 映射、source/catalog identity、journal 与最终 artifact。
+快速检查和定向复测只能证明局部反馈。最终完成要求一轮同源完整回归覆盖全部 runnable case；没有修补时完整初验即为该回归。当前 audit 验证 bundle、两个 plan、`C*` 映射、source identity、journal 与最终 artifact。
 
 ## 运行要求
 

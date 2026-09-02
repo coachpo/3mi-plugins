@@ -1,62 +1,29 @@
-# Campaign state and evidence
+# Campaign state and evidence v1
 
-The Campaign root is fixed at `.steward/verification/campaign`. The kernel owns
-its journal, lock, attempts, and artifacts.
+All verification state lives below
+`.steward/goals/<alias>/verification/`. The execution plan is immutable after
+initialization. `campaign/events.jsonl` is the sole durable state authority;
+each canonical event has a contiguous sequence, previous hash, content hash,
+payload, and replayable state. A per-GOAL lock protects journal mutations.
 
-## Durable state
+Initial execution is fail-stop. A complete unrepaired initial pass is the final
+regression. A failed case opens the only repair window. `record-repair` proves
+the root-cause location against the failed snapshot, records the exact source
+delta, accepts the new baseline, and schedules only the failed case. A passing
+targeted retest requires a fresh full regression from case one. Repeated
+machine-bound failures without a new source/evidence fingerprint stop.
 
-`events.jsonl` is the sole durable authority. Each event has a contiguous
-sequence and previous-event/content digest. Current state and summaries are
-derived by replay; no separate persisted projections are maintained.
+Source identity defaults to HEAD, index, tracked files, and non-ignored
+untracked files; `.steward` and ignored build products are excluded. Explicit
+file-set plans bind only the declared files plus HEAD/index. Cases must not
+change protected source. Drift outside the repair window blocks and requires
+manual restoration; the verifier never discards user changes.
 
-Initialization records the Adapter digest, ordered cases, GOAL and worktree
-bindings, runtime platform, and source baseline. A load revalidates those
-bindings. Copying Campaign files to another worktree cannot transfer completion.
+Cases run without a shell, with bounded time/output, reduced environment,
+process-group cleanup, secret redaction, and a private evidence directory.
+Artifacts, results, and their manifest are write-once and digest-bound.
 
-## Lifecycle
-
-Initial cases run in order and stop at the first `FAILED` or `BLOCKED` result.
-When every case passes without a repair, that same-source complete pass is the
-final regression. A repair records the kernel-derived failure binding and source
-delta, runs only the failed case as a targeted retest, then requires one fresh
-full regression.
-
-The repair note contains only:
-
-- `rootCause`;
-- `rootCauseSource.path`, `lineStart`, `lineEnd`, and optional `symbol`;
-- `fixSummary`.
-
-The kernel derives and journals all identifiers, fingerprints, affected
-criteria, failed-file digest, and changed paths. Rewording cannot bypass a
-repeated failure with the same signature, source path/range, and failed digest.
-
-A source change during final regression invalidates that attempt but not the
-whole Campaign. Restore the recorded repair baseline and run `advance` to start
-a fresh regression.
-
-## Runner and artifacts
-
-Cases use `shell=false`, a bounded timeout, reduced environment, bounded output,
-secret redaction, process-tree cleanup, and a per-run evidence directory.
-Execution failure, timeout, or missing declared evidence is `FAILED`; an unsafe
-execution boundary is `BLOCKED`.
-
-The final audit validates the current GOAL, worktree, platform, Adapter, source,
-criterion coverage, final regression, and final artifacts. Earlier failed-run
-artifacts remain diagnostic history but do not independently invalidate current
-completion.
-
-## Completion
-
-Completion requires:
-
-```text
-all required and runnable optional cases PASS in one same-source full regression
-AND every GOAL C* has a required final-PASS case
-AND the current final audit succeeds
-```
-
-A successful audit appends one idempotent completion event. Later GOAL, source,
-Adapter, worktree, or final-artifact drift makes current completion incomplete
-without rewriting the historical event.
+Audit revalidates the GOAL bundle, both plans, journal, source, final ordered
+case pass, required `C*` coverage, and artifacts. Completion is current only
+while those bindings remain valid. Restoring exact bytes/source restores current
+completion without creating a new campaign epoch.

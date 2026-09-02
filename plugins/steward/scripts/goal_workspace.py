@@ -1,186 +1,78 @@
 #!/usr/bin/env python3
-"""Create and inspect one self-ignored Steward GOAL workspace per worktree."""
+"""Create and inspect immutable, alias-scoped Steward GOAL bundles."""
 
 from __future__ import annotations
 
+import argparse
+import hashlib
 import json
 import os
 import re
+import shutil
 import stat
 import subprocess
 import sys
+import tempfile
 from collections.abc import Mapping
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
 from typing import Any
 
-from goal_contract import (
-    GoalContract,
-    GoalContractError,
-    goal_contract_sha256,
-    validate_goal_text,
-)
-from worktree_binding import (
-    GIT_REPOSITORY_ENVIRONMENT,
-    WorktreeBinding,
-    WorktreeBindingError,
-    bind_target_worktree,
-)
+from goal_contract import GoalContract, GoalContractError, goal_contract_sha256, validate_goal_text
+from worktree_binding import GIT_REPOSITORY_ENVIRONMENT, WorktreeBinding, WorktreeBindingError, bind_target_worktree
 
-SCHEMA_ID = "steward.goal-workspace"
-SCHEMA_VERSION = 1
-ROOT_SCHEMA_ID = "steward.goal-workspace-root"
+BUNDLE_SCHEMA_ID = "steward.goal-bundle"
+BUNDLE_SCHEMA_VERSION = 1
+VIEW_SCHEMA_ID = "steward.goal-bundle-view"
+VIEW_SCHEMA_VERSION = 1
+ROOT_SCHEMA_ID = "steward.workspace-root"
 ROOT_SCHEMA_VERSION = 1
-GOAL_PATH = PurePosixPath(".steward/goal.txt")
-CONTEXT_DIRECTORY = PurePosixPath(".steward/goal-context")
-IGNORE_PATH = PurePosixPath(".steward/.gitignore")
+ACCEPTANCE_SCHEMA_VERSION = 1
 IGNORE_BYTES = b"*\n"
-MAX_IGNORE_BYTES = 4_096
-MAX_CREATE_INPUT_BYTES = 1_100_000
-MAX_CONTEXT_BYTES = 1_048_576
-_SAFE_CONTEXT_NAME = re.compile(r"[a-z0-9]+(?:-[a-z0-9]+)*\.md")
-_CONTEXT_REFERENCE = re.compile(
-    r"(?<![A-Za-z0-9._/-])"
-    r"(\.steward/goal-context/[a-z0-9](?:[a-z0-9-]{0,63})?\.md)"
-    r"(?![A-Za-z0-9._/-])"
-)
+MAX_INPUT_BYTES = 2 * 1024 * 1024
+MAX_CONTEXT_BYTES = 1024 * 1024
+MAX_PLAN_BYTES = 1024 * 1024
+MAX_IGNORE_BYTES = 4096
+ALIAS_PATTERN = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
+CASE_ID_PATTERN = re.compile(r"^[A-Za-z0-9._-]+$")
+CRITERION_ID_PATTERN = re.compile(r"^C[1-9][0-9]*$")
+SUPPORTED_PLATFORMS = {"any", "linux", "darwin", "windows", "posix"}
 
 
 class GoalWorkspaceError(Exception):
-    """A GOAL workspace is invalid, unsafe, incomplete, or conflicting."""
-
     def __init__(self, code: str, message: str) -> None:
         super().__init__(message)
         self.code = code
         self.message = message
 
     def __str__(self) -> str:
-        return self.code + ": " + self.message
+        return f"{self.code}: {self.message}"
 
 
 @dataclass(frozen=True)
 class CreateRequest:
     contract: GoalContract
-    context_path: PurePosixPath
+    goal_bytes: bytes
     context_bytes: bytes
+    plan: dict[str, Any]
+    plan_bytes: bytes
 
 
-@dataclass
-class _CreatedFile:
-    path: Path
-    content: bytes
-    device: int
-    inode: int
-
-
-@dataclass
-class _Transaction:
-    files: list[_CreatedFile] = field(default_factory=list)
-    directories: list[Path] = field(default_factory=list)
-    committed: bool = False
-
-    def record_file(self, path: Path, content: bytes, opened: os.stat_result) -> None:
-        self.files.append(
-            _CreatedFile(
-                path=path,
-                content=content,
-                device=opened.st_dev,
-                inode=opened.st_ino,
-            )
-        )
-
-    def rollback(self) -> list[str]:
-        if self.committed:
-            return []
-        residuals: list[str] = []
-        for created in reversed(self.files):
-            try:
-                observed = created.path.lstat()
-                if (
-                    stat.S_ISREG(observed.st_mode)
-                    and not _is_reparse(observed)
-                    and observed.st_dev == created.device
-                    and observed.st_ino == created.inode
-                    and _read_regular_file(
-                        created.path, max_bytes=max(len(created.content), 1)
-                    )
-                    == created.content
-                ):
-                    created.path.unlink()
-                else:
-                    residuals.append(str(created.path))
-            except FileNotFoundError:
-                pass
-            except (GoalWorkspaceError, OSError):
-                residuals.append(str(created.path))
-        for directory in reversed(self.directories):
-            try:
-                directory.rmdir()
-            except FileNotFoundError:
-                pass
-            except OSError:
-                residuals.append(str(directory))
-        return residuals
-
-
-def _is_reparse(observed: os.stat_result) -> bool:
-    return bool(
-        getattr(observed, "st_file_attributes", 0)
-        & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0)
-    )
-
-
-def _require_real_directory(path: Path, label: str) -> None:
+def canonical_json_bytes(value: Any) -> bytes:
     try:
-        observed = path.lstat()
-    except FileNotFoundError as exc:
-        raise GoalWorkspaceError("WORKSPACE_MISSING", f"{label} does not exist") from exc
-    except OSError as exc:
-        raise GoalWorkspaceError("WORKSPACE_IO", f"cannot inspect {label}: {exc}") from exc
-    if stat.S_ISLNK(observed.st_mode) or _is_reparse(observed) or not stat.S_ISDIR(
-        observed.st_mode
-    ):
-        raise GoalWorkspaceError(
-            "WORKSPACE_PATH", f"{label} must be a real, non-symbolic directory"
-        )
+        return json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False).encode("utf-8")
+    except (TypeError, ValueError, UnicodeError) as exc:
+        raise GoalWorkspaceError("WORKSPACE_JSON", "value is not canonical JSON") from exc
 
 
-def _read_regular_file(path: Path, *, max_bytes: int) -> bytes:
-    descriptor: int | None = None
-    try:
-        initial = path.lstat()
-        if stat.S_ISLNK(initial.st_mode) or _is_reparse(initial) or not stat.S_ISREG(
-            initial.st_mode
-        ):
-            raise GoalWorkspaceError(
-                "WORKSPACE_PATH", f"{path} must be a regular non-symbolic file"
-            )
-        if initial.st_size > max_bytes:
-            raise GoalWorkspaceError("WORKSPACE_SIZE", f"{path} is too large")
-        flags = os.O_RDONLY
-        for optional in ("O_BINARY", "O_CLOEXEC", "O_NOFOLLOW", "O_NONBLOCK"):
-            flags |= getattr(os, optional, 0)
-        descriptor = os.open(path, flags)
-        opened = os.fstat(descriptor)
-        if not stat.S_ISREG(opened.st_mode) or not os.path.samestat(initial, opened):
-            raise GoalWorkspaceError(
-                "WORKSPACE_RACE", f"{path} changed while it was opened"
-            )
-        with os.fdopen(descriptor, "rb", closefd=True) as handle:
-            descriptor = None
-            data = handle.read(max_bytes + 1)
-        if len(data) > max_bytes:
-            raise GoalWorkspaceError("WORKSPACE_SIZE", f"{path} is too large")
-        return data
-    except GoalWorkspaceError:
-        raise
-    except FileNotFoundError:
-        raise
-    except OSError as exc:
-        raise GoalWorkspaceError("WORKSPACE_IO", f"cannot read {path}: {exc}") from exc
-    finally:
-        if descriptor is not None:
-            os.close(descriptor)
+def sha256_bytes(value: bytes) -> str:
+    return "sha256:" + hashlib.sha256(value).hexdigest()
+
+
+def validate_alias(alias: str) -> str:
+    if not isinstance(alias, str) or len(alias) > 64 or ALIAS_PATTERN.fullmatch(alias) is None:
+        raise GoalWorkspaceError("WORKSPACE_ALIAS", "goal alias must be 1-64 lowercase ASCII letters/digits joined by single hyphens")
+    return alias
 
 
 def _clean_git_environment() -> dict[str, str]:
@@ -190,555 +82,448 @@ def _clean_git_environment() -> dict[str, str]:
     return environment
 
 
-def _git(root: Path, *arguments: str) -> subprocess.CompletedProcess[bytes]:
+def _git(cwd: Path, *arguments: str) -> subprocess.CompletedProcess[bytes]:
     try:
-        return subprocess.run(
-            ["git", "-C", str(root), *arguments],
-            check=False,
-            capture_output=True,
-            env=_clean_git_environment(),
-        )
+        return subprocess.run(["git", "-C", str(cwd), *arguments], check=False, capture_output=True, env=_clean_git_environment())
     except OSError as exc:
         raise GoalWorkspaceError("WORKSPACE_GIT", f"cannot execute git: {exc}") from exc
 
 
-def _require_untracked_steward(root: Path) -> None:
-    result = _git(root, "ls-files", "-z", "--", ".steward")
+def resolve_current_binding(cwd: str | Path | None = None) -> WorktreeBinding:
+    supplied = Path.cwd() if cwd is None else Path(cwd)
+    try:
+        supplied = supplied.resolve(strict=True)
+    except OSError as exc:
+        raise GoalWorkspaceError("WORKSPACE_BINDING", f"cannot resolve cwd: {exc}") from exc
+    result = _git(supplied, "rev-parse", "--show-toplevel")
     if result.returncode != 0:
-        detail = result.stderr.decode("utf-8", "replace").strip() or "git ls-files failed"
-        raise GoalWorkspaceError("WORKSPACE_GIT", detail)
-    if result.stdout:
-        raise GoalWorkspaceError(
-            "WORKSPACE_TRACKED", ".steward must not contain tracked paths"
-        )
+        detail = result.stderr.decode("utf-8", "replace").strip() or "not in a Git worktree"
+        raise GoalWorkspaceError("WORKSPACE_BINDING", detail)
+    try:
+        root = Path(result.stdout.decode("utf-8").strip()).resolve(strict=True)
+        return bind_target_worktree(str(root))
+    except (UnicodeError, OSError, WorktreeBindingError) as exc:
+        raise GoalWorkspaceError("WORKSPACE_BINDING", str(exc)) from exc
 
 
-def _require_ignored(root: Path, relative_path: PurePosixPath) -> None:
-    result = _git(root, "check-ignore", "-q", "--", relative_path.as_posix())
-    if result.returncode != 0:
-        detail = result.stderr.decode("utf-8", "replace").strip()
-        if not detail:
-            detail = f"{relative_path.as_posix()} is not ignored by .steward/.gitignore"
-        raise GoalWorkspaceError("WORKSPACE_IGNORE", detail)
+def _is_reparse(observed: os.stat_result) -> bool:
+    return bool(getattr(observed, "st_file_attributes", 0) & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0))
 
 
-def _write_new_regular(path: Path, content: bytes, transaction: _Transaction) -> None:
+def _require_real_directory(path: Path, label: str) -> None:
+    try:
+        observed = path.lstat()
+    except FileNotFoundError as exc:
+        raise GoalWorkspaceError("WORKSPACE_MISSING", f"{label} does not exist") from exc
+    except OSError as exc:
+        raise GoalWorkspaceError("WORKSPACE_IO", f"cannot inspect {label}: {exc}") from exc
+    if stat.S_ISLNK(observed.st_mode) or _is_reparse(observed) or not stat.S_ISDIR(observed.st_mode):
+        raise GoalWorkspaceError("WORKSPACE_PATH", f"{label} must be a real directory")
+
+
+def read_regular_bytes(path: Path, *, label: str, max_bytes: int) -> bytes:
     descriptor: int | None = None
     try:
-        flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL
-        for optional in ("O_BINARY", "O_CLOEXEC", "O_NOFOLLOW"):
-            flags |= getattr(os, optional, 0)
-        descriptor = os.open(path, flags, 0o600)
+        before = path.lstat()
+        if stat.S_ISLNK(before.st_mode) or _is_reparse(before) or not stat.S_ISREG(before.st_mode):
+            raise GoalWorkspaceError("WORKSPACE_PATH", f"{label} must be a regular non-link file")
+        if before.st_size > max_bytes:
+            raise GoalWorkspaceError("WORKSPACE_SIZE", f"{label} exceeds the safe size limit")
+        flags = os.O_RDONLY
+        for name in ("O_BINARY", "O_CLOEXEC", "O_NOFOLLOW", "O_NONBLOCK"):
+            flags |= getattr(os, name, 0)
+        descriptor = os.open(path, flags)
         opened = os.fstat(descriptor)
-        transaction.record_file(path, content, opened)
-        written = 0
-        while written < len(content):
-            count = os.write(descriptor, content[written:])
-            if count <= 0:
-                raise OSError("short write")
-            written += count
-        os.fsync(descriptor)
-    except FileExistsError as exc:
-        raise GoalWorkspaceError(
-            "WORKSPACE_EXISTS", f"refusing to overwrite existing path {path}"
-        ) from exc
+        if not stat.S_ISREG(opened.st_mode) or not os.path.samestat(before, opened):
+            raise GoalWorkspaceError("WORKSPACE_RACE", f"{label} changed while opened")
+        data = bytearray()
+        while True:
+            chunk = os.read(descriptor, 65536)
+            if not chunk:
+                break
+            data.extend(chunk)
+            if len(data) > max_bytes:
+                raise GoalWorkspaceError("WORKSPACE_SIZE", f"{label} exceeds the safe size limit")
+        after = path.lstat()
+        final = os.fstat(descriptor)
+        if not os.path.samestat(before, final) or not os.path.samestat(before, after):
+            raise GoalWorkspaceError("WORKSPACE_RACE", f"{label} changed while read")
+        return bytes(data)
+    except GoalWorkspaceError:
+        raise
+    except FileNotFoundError as exc:
+        raise GoalWorkspaceError("WORKSPACE_MISSING", f"missing {label}") from exc
     except OSError as exc:
-        raise GoalWorkspaceError("WORKSPACE_IO", f"cannot create {path}: {exc}") from exc
+        raise GoalWorkspaceError("WORKSPACE_IO", f"cannot read {label}: {exc}") from exc
     finally:
         if descriptor is not None:
             os.close(descriptor)
 
 
-def _mkdir_new(path: Path, transaction: _Transaction) -> None:
-    try:
-        path.mkdir(mode=0o700)
-        transaction.directories.append(path)
-    except FileExistsError as exc:
-        raise GoalWorkspaceError(
-            "WORKSPACE_EXISTS", f"refusing to replace existing path {path}"
-        ) from exc
-    except OSError as exc:
-        raise GoalWorkspaceError("WORKSPACE_IO", f"cannot create {path}: {exc}") from exc
+def _require_untracked_steward(root: Path) -> None:
+    result = _git(root, "ls-files", "-z", "--", ".steward")
+    if result.returncode != 0:
+        raise GoalWorkspaceError("WORKSPACE_GIT", result.stderr.decode("utf-8", "replace").strip())
+    if result.stdout:
+        raise GoalWorkspaceError("WORKSPACE_TRACKED", ".steward must not contain tracked paths")
 
 
-def _has_goal_artifacts(root: Path) -> bool:
-    steward = root / ".steward"
-    try:
-        observed = steward.lstat()
-    except FileNotFoundError:
-        return False
-    if stat.S_ISLNK(observed.st_mode) or _is_reparse(observed) or not stat.S_ISDIR(
-        observed.st_mode
-    ):
-        return False
-    return _lexists(steward / "goal.txt") or _lexists(steward / "goal-context")
-
-
-def _lexists(path: Path) -> bool:
-    try:
-        path.lstat()
-    except FileNotFoundError:
-        return False
-    except OSError as exc:
-        raise GoalWorkspaceError(
-            "WORKSPACE_IO", f"cannot inspect {path}: {exc}"
-        ) from exc
-    return True
-
-
-def _ensure_root(binding: WorktreeBinding, transaction: _Transaction) -> Path:
+def _ensure_root(binding: WorktreeBinding) -> Path:
     root = Path(binding.target_worktree_root)
     _require_untracked_steward(root)
     steward = root / ".steward"
+    try:
+        steward.mkdir(mode=0o700)
+    except FileExistsError:
+        _require_real_directory(steward, ".steward")
     ignore = steward / ".gitignore"
-
     try:
-        observed = steward.lstat()
-    except FileNotFoundError:
-        _mkdir_new(steward, transaction)
-    except OSError as exc:
-        raise GoalWorkspaceError(
-            "WORKSPACE_IO", f"cannot inspect .steward: {exc}"
-        ) from exc
+        fd = os.open(ignore, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+    except FileExistsError:
+        if read_regular_bytes(ignore, label=".steward/.gitignore", max_bytes=MAX_IGNORE_BYTES) != IGNORE_BYTES:
+            raise GoalWorkspaceError("WORKSPACE_IGNORE", ".steward/.gitignore must contain exactly '*\\n'")
     else:
-        if stat.S_ISLNK(observed.st_mode) or _is_reparse(observed) or not stat.S_ISDIR(
-            observed.st_mode
-        ):
-            raise GoalWorkspaceError(
-                "WORKSPACE_PATH", ".steward must be a real, non-symbolic directory"
-            )
-
+        with os.fdopen(fd, "wb") as handle:
+            handle.write(IGNORE_BYTES)
+            handle.flush()
+            os.fsync(handle.fileno())
+    goals = steward / "goals"
     try:
-        ignore_bytes = _read_regular_file(ignore, max_bytes=MAX_IGNORE_BYTES)
-    except FileNotFoundError:
-        _write_new_regular(ignore, IGNORE_BYTES, transaction)
-    else:
-        if ignore_bytes != IGNORE_BYTES:
-            raise GoalWorkspaceError(
-                "WORKSPACE_IGNORE",
-                ".steward/.gitignore must contain exactly the bytes '*\\n'",
-            )
-
+        goals.mkdir(mode=0o700)
+    except FileExistsError:
+        _require_real_directory(goals, ".steward/goals")
     _require_untracked_steward(root)
-    _require_ignored(root, GOAL_PATH)
-    _require_ignored(root, IGNORE_PATH)
-    return steward
+    if _git(root, "check-ignore", "-q", "--", ".steward/goals").returncode != 0:
+        raise GoalWorkspaceError("WORKSPACE_IGNORE", ".steward/goals is not ignored")
+    return goals
 
 
-def _revalidate_binding(binding: WorktreeBinding) -> None:
+def ensure_workspace_root(raw_target: str) -> dict[str, Any]:
     try:
-        observed = bind_target_worktree(binding.target_worktree_root)
+        binding = bind_target_worktree(raw_target)
     except WorktreeBindingError as exc:
         raise GoalWorkspaceError("WORKSPACE_BINDING", str(exc)) from exc
-    if observed != binding:
-        raise GoalWorkspaceError(
-            "WORKSPACE_BINDING", "target worktree binding changed during the operation"
-        )
-
-
-def _validate_context_path(raw_path: str) -> PurePosixPath:
-    if not isinstance(raw_path, str) or not raw_path:
-        raise GoalWorkspaceError("WORKSPACE_INPUT", "context.path must be a string")
-    if "\\" in raw_path or "\x00" in raw_path:
-        raise GoalWorkspaceError(
-            "WORKSPACE_CONTEXT_PATH", "context.path must use a safe project-relative path"
-        )
-    path = PurePosixPath(raw_path)
-    parts = path.parts
-    if (
-        path.is_absolute()
-        or path.as_posix() != raw_path
-        or len(parts) != 3
-        or parts[:2] != CONTEXT_DIRECTORY.parts
-        or not _SAFE_CONTEXT_NAME.fullmatch(parts[2])
-        or len(parts[2][:-3]) > 64
-    ):
-        raise GoalWorkspaceError(
-            "WORKSPACE_CONTEXT_PATH",
-            "context.path must be .steward/goal-context/<safe-slug>.md",
-        )
-    return path
-
-
-def _context_path_for_contract(contract: GoalContract) -> PurePosixPath:
-    result = next(item.value for item in contract.fields if item.key == "result")
-    ascii_result = "".join(
-        chr(ord(character) + 32)
-        if "A" <= character <= "Z"
-        else character
-        if "a" <= character <= "z" or "0" <= character <= "9"
-        else "-"
-        for character in result
-    )
-    slug = re.sub(r"-+", "-", ascii_result).strip("-")
-    slug = slug[:64].rstrip("-") or "goal-context"
-    return CONTEXT_DIRECTORY / f"{slug}.md"
-
-
-def _context_bytes(raw_content: str) -> bytes:
-    if not isinstance(raw_content, str):
-        raise GoalWorkspaceError("WORKSPACE_INPUT", "context.content must be a string")
-    if raw_content.startswith("\ufeff") or "\x00" in raw_content or "\r" in raw_content:
-        raise GoalWorkspaceError(
-            "WORKSPACE_CONTEXT", "context.content must be UTF-8 text using LF without BOM or NUL"
-        )
-    if not raw_content.strip():
-        raise GoalWorkspaceError(
-            "WORKSPACE_CONTEXT", "context.content must contain verified source material"
-        )
-    if not raw_content.endswith("\n"):
-        raw_content += "\n"
-    try:
-        content = raw_content.encode("utf-8")
-    except UnicodeEncodeError as exc:
-        raise GoalWorkspaceError(
-            "WORKSPACE_CONTEXT", "context.content must be valid UTF-8"
-        ) from exc
-    if len(content) > MAX_CONTEXT_BYTES:
-        raise GoalWorkspaceError("WORKSPACE_CONTEXT", "context.content is too large")
-    return content
+    _ensure_root(binding)
+    return {"schemaId": ROOT_SCHEMA_ID, "schemaVersion": ROOT_SCHEMA_VERSION, "path": ".steward"}
 
 
 def _strict_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
-    value: dict[str, Any] = {}
-    for key, item in pairs:
-        if key in value:
-            raise GoalWorkspaceError(
-                "WORKSPACE_INPUT", f"duplicate JSON field: {key}"
-            )
-        value[key] = item
-    return value
+    result: dict[str, Any] = {}
+    for key, value in pairs:
+        if key in result:
+            raise GoalWorkspaceError("WORKSPACE_INPUT", f"duplicate JSON field: {key}")
+        result[key] = value
+    return result
 
 
-def _load_create_request(raw_input: bytes) -> CreateRequest:
-    if len(raw_input) > MAX_CREATE_INPUT_BYTES:
-        raise GoalWorkspaceError("WORKSPACE_INPUT", "create input is too large")
-    if raw_input.startswith(b"\xef\xbb\xbf"):
-        raise GoalWorkspaceError("WORKSPACE_INPUT", "create input must not contain a BOM")
+def _canonical_text(value: Any, label: str, max_bytes: int) -> bytes:
+    if not isinstance(value, str) or not value.strip():
+        raise GoalWorkspaceError("WORKSPACE_INPUT", f"{label} must be non-empty text")
+    if value.startswith("\ufeff") or "\x00" in value or "\r" in value:
+        raise GoalWorkspaceError("WORKSPACE_INPUT", f"{label} must use UTF-8 LF text without BOM/NUL")
+    if not value.endswith("\n"):
+        value += "\n"
+    data = value.encode("utf-8")
+    if len(data) > max_bytes:
+        raise GoalWorkspaceError("WORKSPACE_SIZE", f"{label} is too large")
+    return data
+
+
+def _unique_strings(value: Any, label: str, pattern: re.Pattern[str] | None = None) -> list[str]:
+    if not isinstance(value, list) or any(not isinstance(item, str) or not item for item in value):
+        raise GoalWorkspaceError("WORKSPACE_PLAN", f"{label} must be a string array")
+    if len(set(value)) != len(value):
+        raise GoalWorkspaceError("WORKSPACE_PLAN", f"{label} contains duplicates")
+    if pattern is not None and any(pattern.fullmatch(item) is None for item in value):
+        raise GoalWorkspaceError("WORKSPACE_PLAN", f"{label} contains an invalid value")
+    return list(value)
+
+
+def validate_acceptance_plan(value: Any, criteria_ids: list[str]) -> dict[str, Any]:
+    if not isinstance(value, dict) or set(value) != {"schemaVersion", "sourcePolicy", "cases"}:
+        raise GoalWorkspaceError("WORKSPACE_PLAN", "acceptance plan has invalid top-level fields")
+    if value.get("schemaVersion") != ACCEPTANCE_SCHEMA_VERSION or type(value.get("schemaVersion")) is not int:
+        raise GoalWorkspaceError("WORKSPACE_PLAN", "acceptance plan schemaVersion must be 1")
+    source = value.get("sourcePolicy")
+    if not isinstance(source, dict):
+        raise GoalWorkspaceError("WORKSPACE_PLAN", "sourcePolicy must be an object")
+    mode = source.get("mode")
+    if mode == "git-visible":
+        if set(source) != {"mode"}:
+            raise GoalWorkspaceError("WORKSPACE_PLAN", "git-visible sourcePolicy only accepts mode")
+    elif mode == "files":
+        if set(source) != {"mode", "files"}:
+            raise GoalWorkspaceError("WORKSPACE_PLAN", "files sourcePolicy requires mode and files")
+        files = _unique_strings(source.get("files"), "sourcePolicy.files")
+        if not files:
+            raise GoalWorkspaceError("WORKSPACE_PLAN", "sourcePolicy.files must not be empty")
+        for item in files:
+            path = PurePosixPath(item)
+            if path.is_absolute() or path.as_posix() != item or ".." in path.parts or item.startswith(".steward/"):
+                raise GoalWorkspaceError("WORKSPACE_PLAN", "sourcePolicy.files contains an unsafe path")
+    else:
+        raise GoalWorkspaceError("WORKSPACE_PLAN", "sourcePolicy.mode must be git-visible or files")
+    cases = value.get("cases")
+    if not isinstance(cases, list) or not cases:
+        raise GoalWorkspaceError("WORKSPACE_PLAN", "cases must be a non-empty array")
+    expected = {"id", "required", "platform", "coversCriteria", "assertion", "runnerHint", "evidence"}
+    seen: set[str] = set()
+    criteria = set(criteria_ids)
+    normalized_cases: list[dict[str, Any]] = []
+    for index, case in enumerate(cases):
+        if not isinstance(case, dict) or set(case) != expected:
+            raise GoalWorkspaceError("WORKSPACE_PLAN", f"case {index} has invalid fields")
+        case_id = case.get("id")
+        if not isinstance(case_id, str) or CASE_ID_PATTERN.fullmatch(case_id) is None or case_id in seen:
+            raise GoalWorkspaceError("WORKSPACE_PLAN", f"case {index} has invalid or duplicate id")
+        seen.add(case_id)
+        if type(case.get("required")) is not bool or case.get("platform") not in SUPPORTED_PLATFORMS:
+            raise GoalWorkspaceError("WORKSPACE_PLAN", f"case {case_id} has invalid required/platform")
+        covers = _unique_strings(case.get("coversCriteria"), f"case {case_id} coversCriteria", CRITERION_ID_PATTERN)
+        if not covers or not set(covers).issubset(criteria):
+            raise GoalWorkspaceError("WORKSPACE_PLAN", f"case {case_id} references unknown criteria")
+        for name in ("assertion", "runnerHint"):
+            item = case.get(name)
+            if not isinstance(item, str) or not item.strip() or "replace-with" in item.lower() or "placeholder" in item.lower():
+                raise GoalWorkspaceError("WORKSPACE_PLAN", f"case {case_id} {name} is empty or placeholder")
+        evidence = case.get("evidence")
+        if not isinstance(evidence, dict) or set(evidence) != {"requiredFiles", "nonEmptyFiles"}:
+            raise GoalWorkspaceError("WORKSPACE_PLAN", f"case {case_id} evidence has invalid fields")
+        required_files = _unique_strings(evidence.get("requiredFiles"), f"case {case_id} requiredFiles")
+        nonempty = _unique_strings(evidence.get("nonEmptyFiles"), f"case {case_id} nonEmptyFiles")
+        if not set(nonempty).issubset(set(required_files)):
+            raise GoalWorkspaceError("WORKSPACE_PLAN", f"case {case_id} nonEmptyFiles must be required")
+        for item in required_files:
+            path = PurePosixPath(item)
+            if path.is_absolute() or path.as_posix() != item or ".." in path.parts or item in {"", "."}:
+                raise GoalWorkspaceError("WORKSPACE_PLAN", f"case {case_id} evidence path is unsafe")
+        normalized_cases.append(dict(case))
+    uncovered = [criterion for criterion in criteria_ids if not any(c["required"] and criterion in c["coversCriteria"] for c in normalized_cases)]
+    if uncovered:
+        raise GoalWorkspaceError("WORKSPACE_PLAN", "criteria lack required coverage: " + ", ".join(uncovered))
+    normalized = {"schemaVersion": 1, "sourcePolicy": dict(source), "cases": normalized_cases}
+    if len(canonical_json_bytes(normalized)) > MAX_PLAN_BYTES:
+        raise GoalWorkspaceError("WORKSPACE_SIZE", "acceptance plan is too large")
+    return normalized
+
+
+def _context_reference(alias: str) -> str:
+    return f".steward/goals/{alias}/context.md"
+
+
+def _validate_context_reference(contract: GoalContract, alias: str) -> None:
+    reference = _context_reference(alias)
+    if contract.objective.count(reference) != 1:
+        raise GoalWorkspaceError("WORKSPACE_CONTEXT_REFERENCE", f"GOAL must reference {reference} exactly once")
+    evidence = next(field.value for field in contract.fields if field.key == "evidenceAndContext")
+    if reference not in evidence:
+        raise GoalWorkspaceError("WORKSPACE_CONTEXT_REFERENCE", "context reference must be in 证据与上下文")
+
+
+def _load_create_request(raw: bytes, alias: str) -> CreateRequest:
+    if len(raw) > MAX_INPUT_BYTES or raw.startswith(b"\xef\xbb\xbf"):
+        raise GoalWorkspaceError("WORKSPACE_INPUT", "create payload is too large or has a BOM")
     try:
-        value = json.loads(raw_input.decode("utf-8"), object_pairs_hook=_strict_object)
+        value = json.loads(raw.decode("utf-8"), object_pairs_hook=_strict_object)
     except GoalWorkspaceError:
         raise
-    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
-        raise GoalWorkspaceError(
-            "WORKSPACE_INPUT", "create input must be valid UTF-8 JSON"
-        ) from exc
-    if not isinstance(value, Mapping) or set(value) != {"objective", "context"}:
-        raise GoalWorkspaceError(
-            "WORKSPACE_INPUT", "create input fields must be exactly objective and context"
-        )
-    context = value.get("context")
-    if not isinstance(context, Mapping) or set(context) != {"path", "content"}:
-        raise GoalWorkspaceError(
-            "WORKSPACE_INPUT", "context fields must be exactly path and content"
-        )
-    objective = value.get("objective")
-    if not isinstance(objective, str):
-        raise GoalWorkspaceError("WORKSPACE_INPUT", "objective must be a string")
+    except (UnicodeError, json.JSONDecodeError) as exc:
+        raise GoalWorkspaceError("WORKSPACE_INPUT", "create payload must be UTF-8 JSON") from exc
+    if not isinstance(value, Mapping) or set(value) != {"objective", "context", "acceptancePlan"}:
+        raise GoalWorkspaceError("WORKSPACE_INPUT", "payload fields must be objective, context, acceptancePlan")
     try:
-        contract = validate_goal_text(objective)
+        contract = validate_goal_text(value.get("objective"))
     except GoalContractError as exc:
         raise GoalWorkspaceError("WORKSPACE_GOAL", str(exc)) from exc
-    context_path = _validate_context_path(context.get("path"))
-    content = _context_bytes(context.get("content"))
-    derived_path = _context_path_for_contract(contract)
-    if context_path != derived_path:
-        raise GoalWorkspaceError(
-            "WORKSPACE_CONTEXT_PATH",
-            "context.path must use the safe slug derived from 结果; expected "
-            + derived_path.as_posix(),
-        )
-    _require_contract_reference(contract, context_path)
-    return CreateRequest(contract, context_path, content)
+    _validate_context_reference(contract, alias)
+    context_bytes = _canonical_text(value.get("context"), "context", MAX_CONTEXT_BYTES)
+    criteria_ids = [criterion.id for criterion in contract.completion_criteria]
+    plan = validate_acceptance_plan(value.get("acceptancePlan"), criteria_ids)
+    goal_bytes = contract.objective.encode("utf-8") + b"\n"
+    return CreateRequest(contract, goal_bytes, context_bytes, plan, canonical_json_bytes(plan) + b"\n")
 
 
-def validate_create_request(raw_input: bytes) -> dict[str, Any]:
-    """Validate an exact creator payload without inspecting or writing a worktree."""
-
-    request = _load_create_request(raw_input)
-    return _workspace_view(request.contract, request.context_path)
-
-
-def _require_contract_reference(
-    contract: GoalContract, expected_path: PurePosixPath | None = None
-) -> PurePosixPath:
-    prefix = CONTEXT_DIRECTORY.as_posix() + "/"
-    matches = _CONTEXT_REFERENCE.findall(contract.objective)
-    if contract.objective.count(prefix) != 1 or len(matches) != 1:
-        raise GoalWorkspaceError(
-            "WORKSPACE_CONTEXT_REFERENCE",
-            "GOAL must contain exactly one safe .steward/goal-context/*.md reference",
-        )
-    context_path = _validate_context_path(matches[0])
-    derived_path = _context_path_for_contract(contract)
-    if context_path != derived_path:
-        raise GoalWorkspaceError(
-            "WORKSPACE_CONTEXT_PATH",
-            "GOAL context path must use the safe slug derived from 结果; expected "
-            + derived_path.as_posix(),
-        )
-    evidence = next(
-        item.value for item in contract.fields if item.key == "evidenceAndContext"
-    )
-    if context_path.as_posix() not in evidence:
-        raise GoalWorkspaceError(
-            "WORKSPACE_CONTEXT_REFERENCE", "the context reference must be in 证据与上下文"
-        )
-    if expected_path is not None and context_path != expected_path:
-        raise GoalWorkspaceError(
-            "WORKSPACE_CONTEXT_REFERENCE", "GOAL context reference differs from context.path"
-        )
-    return context_path
-
-
-def _workspace_view(contract: GoalContract, context_path: PurePosixPath) -> dict[str, Any]:
+def _manifest(alias: str, binding: WorktreeBinding, request: CreateRequest) -> dict[str, Any]:
     return {
-        "schemaId": SCHEMA_ID,
-        "schemaVersion": SCHEMA_VERSION,
-        "goalContract": {
-            "path": GOAL_PATH.as_posix(),
-            "contractVersion": 1,
-            "sha256": goal_contract_sha256(contract),
-            "objective": contract.objective,
-            "criteriaIds": [criterion.id for criterion in contract.completion_criteria],
-        },
-        "context": {"path": context_path.as_posix()},
+        "schemaId": BUNDLE_SCHEMA_ID, "schemaVersion": BUNDLE_SCHEMA_VERSION, "alias": alias,
+        "worktreeBinding": binding.view(),
+        "goal": {"path": "goal.txt", "contractVersion": 1, "sha256": goal_contract_sha256(request.contract)},
+        "context": {"path": "context.md", "sha256": sha256_bytes(request.context_bytes), "bytes": len(request.context_bytes)},
+        "acceptancePlan": {"path": "acceptance-plan.json", "schemaVersion": 1, "sha256": sha256_bytes(request.plan_bytes)},
     }
 
 
-def _canonical_json(value: Mapping[str, Any]) -> bytes:
-    return json.dumps(
-        value,
-        ensure_ascii=False,
-        sort_keys=True,
-        separators=(",", ":"),
-        allow_nan=False,
-    ).encode("utf-8")
+def _bundle_view(alias: str, relative: str, manifest: dict[str, Any], contract: GoalContract, plan: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "schemaId": VIEW_SCHEMA_ID, "schemaVersion": VIEW_SCHEMA_VERSION, "alias": alias, "path": relative,
+        "manifestSha256": sha256_bytes(canonical_json_bytes(manifest) + b"\n"),
+        "goalContract": {"path": f"{relative}/goal.txt", "contractVersion": 1, "sha256": goal_contract_sha256(contract), "objective": contract.objective, "criteriaIds": [item.id for item in contract.completion_criteria]},
+        "context": {"path": f"{relative}/context.md", "sha256": manifest["context"]["sha256"]},
+        "acceptancePlan": {"path": f"{relative}/acceptance-plan.json", "sha256": manifest["acceptancePlan"]["sha256"], "caseIds": [case["id"] for case in plan["cases"]]},
+        "worktreeBinding": manifest["worktreeBinding"],
+    }
 
 
-def _inspect_workspace(
-    binding: WorktreeBinding, *, allow_absent: bool
-) -> tuple[dict[str, Any], bytes] | None:
+def _validate_manifest(value: Any, alias: str, binding: WorktreeBinding) -> dict[str, Any]:
+    expected = {"schemaId", "schemaVersion", "alias", "worktreeBinding", "goal", "context", "acceptancePlan"}
+    if not isinstance(value, dict) or set(value) != expected or value.get("schemaId") != BUNDLE_SCHEMA_ID or value.get("schemaVersion") != 1 or value.get("alias") != alias:
+        raise GoalWorkspaceError("WORKSPACE_MANIFEST", "manifest identity or fields are invalid")
+    if value.get("worktreeBinding") != binding.view():
+        raise GoalWorkspaceError("WORKSPACE_BINDING", "goal bundle belongs to a different worktree")
+    if not isinstance(value.get("goal"), dict) or set(value["goal"]) != {"path", "contractVersion", "sha256"} or value["goal"].get("path") != "goal.txt" or value["goal"].get("contractVersion") != 1:
+        raise GoalWorkspaceError("WORKSPACE_MANIFEST", "manifest goal binding is invalid")
+    if not isinstance(value.get("context"), dict) or set(value["context"]) != {"path", "sha256", "bytes"} or value["context"].get("path") != "context.md":
+        raise GoalWorkspaceError("WORKSPACE_MANIFEST", "manifest context binding is invalid")
+    if not isinstance(value.get("acceptancePlan"), dict) or set(value["acceptancePlan"]) != {"path", "schemaVersion", "sha256"} or value["acceptancePlan"].get("path") != "acceptance-plan.json" or value["acceptancePlan"].get("schemaVersion") != 1:
+        raise GoalWorkspaceError("WORKSPACE_MANIFEST", "manifest acceptance plan binding is invalid")
+    return value
+
+
+def view_goal_bundle(alias: str, cwd: str | Path | None = None) -> dict[str, Any]:
+    alias = validate_alias(alias)
+    binding = resolve_current_binding(cwd)
     root = Path(binding.target_worktree_root)
-    _require_untracked_steward(root)
-    steward = root / ".steward"
-    _require_real_directory(steward, ".steward")
-    ignore = _read_regular_file(steward / ".gitignore", max_bytes=MAX_IGNORE_BYTES)
-    if ignore != IGNORE_BYTES:
-        raise GoalWorkspaceError(
-            "WORKSPACE_IGNORE", ".steward/.gitignore must contain exactly the bytes '*\\n'"
-        )
-    _require_ignored(root, GOAL_PATH)
-
-    goal_path = root / GOAL_PATH
-    context_directory = root / CONTEXT_DIRECTORY
-    goal_exists = goal_path.exists() or goal_path.is_symlink()
-    context_exists = context_directory.exists() or context_directory.is_symlink()
-    if not goal_exists and not context_exists:
-        if allow_absent:
-            return None
-        raise GoalWorkspaceError("WORKSPACE_MISSING", "no GOAL workspace exists")
-    if not goal_exists or not context_exists:
-        raise GoalWorkspaceError(
-            "WORKSPACE_PARTIAL", "GOAL workspace is partially initialized"
-        )
-
-    goal_bytes = _read_regular_file(goal_path, max_bytes=16_001)
+    bundle = root / ".steward" / "goals" / alias
+    _require_real_directory(bundle, f"goal bundle {alias}")
+    names = {item.name for item in bundle.iterdir()}
+    required = {"manifest.json", "goal.txt", "context.md", "acceptance-plan.json"}
+    if not required.issubset(names) or any(name not in required | {"verification"} for name in names):
+        raise GoalWorkspaceError("WORKSPACE_LAYOUT", "goal bundle is partial or contains unexpected entries")
+    if "verification" in names:
+        _require_real_directory(bundle / "verification", "goal verification directory")
+    manifest_bytes = read_regular_bytes(bundle / "manifest.json", label="goal manifest", max_bytes=MAX_PLAN_BYTES)
+    try:
+        manifest = _validate_manifest(json.loads(manifest_bytes.decode("utf-8"), object_pairs_hook=_strict_object), alias, binding)
+    except (UnicodeError, json.JSONDecodeError) as exc:
+        raise GoalWorkspaceError("WORKSPACE_MANIFEST", "manifest is not UTF-8 JSON") from exc
+    if manifest_bytes != canonical_json_bytes(manifest) + b"\n":
+        raise GoalWorkspaceError("WORKSPACE_MANIFEST", "manifest is not canonical JSON")
+    goal_bytes = read_regular_bytes(bundle / "goal.txt", label="goal.txt", max_bytes=20000)
     try:
         contract = validate_goal_text(goal_bytes)
     except GoalContractError as exc:
         raise GoalWorkspaceError("WORKSPACE_GOAL", str(exc)) from exc
-    canonical_goal = contract.objective.encode("utf-8") + b"\n"
-    if goal_bytes != canonical_goal:
-        raise GoalWorkspaceError(
-            "WORKSPACE_GOAL", ".steward/goal.txt is not canonical UTF-8 with one final LF"
-        )
-
-    _require_real_directory(context_directory, ".steward/goal-context")
+    if goal_bytes != contract.objective.encode("utf-8") + b"\n" or goal_contract_sha256(contract) != manifest["goal"]["sha256"]:
+        raise GoalWorkspaceError("WORKSPACE_GOAL", "goal.txt differs from its manifest")
+    _validate_context_reference(contract, alias)
+    context = read_regular_bytes(bundle / "context.md", label="context.md", max_bytes=MAX_CONTEXT_BYTES)
     try:
-        entries = sorted(context_directory.iterdir(), key=lambda item: item.name)
-    except OSError as exc:
-        raise GoalWorkspaceError(
-            "WORKSPACE_IO", f"cannot list .steward/goal-context: {exc}"
-        ) from exc
-    if len(entries) != 1:
-        raise GoalWorkspaceError(
-            "WORKSPACE_CONTEXT", "GOAL workspace must contain exactly one context file"
-        )
-    context_path = _require_contract_reference(contract)
-    expected = root / context_path
-    if entries[0] != expected:
-        raise GoalWorkspaceError(
-            "WORKSPACE_CONTEXT", "the sole context file differs from the GOAL reference"
-        )
-    context_bytes = _read_regular_file(expected, max_bytes=MAX_CONTEXT_BYTES)
+        canonical_context = _canonical_text(context.decode("utf-8"), "context", MAX_CONTEXT_BYTES)
+    except UnicodeError as exc:
+        raise GoalWorkspaceError("WORKSPACE_CONTEXT", "context.md is not UTF-8") from exc
+    if sha256_bytes(context) != manifest["context"]["sha256"] or len(context) != manifest["context"]["bytes"] or canonical_context != context:
+        raise GoalWorkspaceError("WORKSPACE_CONTEXT", "context.md differs from its manifest")
+    plan_bytes = read_regular_bytes(bundle / "acceptance-plan.json", label="acceptance-plan.json", max_bytes=MAX_PLAN_BYTES)
     try:
-        decoded = context_bytes.decode("utf-8")
-    except UnicodeDecodeError as exc:
-        raise GoalWorkspaceError(
-            "WORKSPACE_CONTEXT", "context file must be valid UTF-8"
-        ) from exc
-    if _context_bytes(decoded) != context_bytes:
-        raise GoalWorkspaceError(
-            "WORKSPACE_CONTEXT", "context file is not canonical UTF-8 text"
-        )
-    return _workspace_view(contract, context_path), context_bytes
+        raw_plan = json.loads(plan_bytes.decode("utf-8"), object_pairs_hook=_strict_object)
+    except (UnicodeError, json.JSONDecodeError) as exc:
+        raise GoalWorkspaceError("WORKSPACE_PLAN", "acceptance plan is not UTF-8 JSON") from exc
+    plan = validate_acceptance_plan(raw_plan, [item.id for item in contract.completion_criteria])
+    if plan_bytes != canonical_json_bytes(plan) + b"\n" or sha256_bytes(plan_bytes) != manifest["acceptancePlan"]["sha256"]:
+        raise GoalWorkspaceError("WORKSPACE_PLAN", "acceptance plan differs from its manifest")
+    return _bundle_view(alias, f".steward/goals/{alias}", manifest, contract, plan)
 
 
-def ensure_workspace_root(raw_target: str) -> dict[str, Any]:
-    """Create or validate the self-ignored .steward root without replacing content."""
+def validate_create_request(alias: str, raw: bytes, cwd: str | Path | None = None) -> dict[str, Any]:
+    alias = validate_alias(alias)
+    binding = resolve_current_binding(cwd)
+    request = _load_create_request(raw, alias)
+    return _bundle_view(alias, f".steward/goals/{alias}", _manifest(alias, binding, request), request.contract, request.plan)
 
-    try:
-        binding = bind_target_worktree(raw_target)
-    except WorktreeBindingError as exc:
-        raise GoalWorkspaceError("WORKSPACE_BINDING", str(exc)) from exc
+
+def create_goal_bundle(alias: str, raw: bytes, cwd: str | Path | None = None) -> dict[str, Any]:
+    alias = validate_alias(alias)
+    binding = resolve_current_binding(cwd)
+    request = _load_create_request(raw, alias)
     root = Path(binding.target_worktree_root)
-    ignore = root / IGNORE_PATH
-    if _has_goal_artifacts(root) and not _lexists(ignore):
-        raise GoalWorkspaceError(
-            "WORKSPACE_LAYOUT", "existing GOAL artifacts lack the required root ignore contract"
-        )
-    transaction = _Transaction()
+    goals = _ensure_root(binding)
+    target = goals / alias
+    expected = _bundle_view(alias, f".steward/goals/{alias}", _manifest(alias, binding, request), request.contract, request.plan)
+    if target.exists() or target.is_symlink():
+        observed = view_goal_bundle(alias, root)
+        if observed != expected:
+            raise GoalWorkspaceError("WORKSPACE_CONFLICT", "goal alias already contains different content")
+        return observed
+    temporary = Path(tempfile.mkdtemp(prefix=f".{alias}.", dir=goals))
     try:
-        _ensure_root(binding, transaction)
-        _revalidate_binding(binding)
-        _inspect_workspace(binding, allow_absent=True)
-        transaction.committed = True
-    except Exception as exc:
-        residuals = transaction.rollback()
-        if residuals:
-            raise GoalWorkspaceError(
-                "WORKSPACE_ROLLBACK",
-                f"{exc}; rollback left: {', '.join(residuals)}",
-            ) from exc
-        raise
-    return {
-        "schemaId": ROOT_SCHEMA_ID,
-        "schemaVersion": ROOT_SCHEMA_VERSION,
-        "path": ".steward",
-    }
+        files = {
+            "goal.txt": request.goal_bytes,
+            "context.md": request.context_bytes,
+            "acceptance-plan.json": request.plan_bytes,
+            "manifest.json": canonical_json_bytes(_manifest(alias, binding, request)) + b"\n",
+        }
+        for name, data in files.items():
+            with (temporary / name).open("xb") as handle:
+                handle.write(data)
+                handle.flush()
+                os.fsync(handle.fileno())
+        if resolve_current_binding(root) != binding:
+            raise GoalWorkspaceError("WORKSPACE_BINDING", "worktree binding changed during create")
+        if target.exists() or target.is_symlink():
+            raise GoalWorkspaceError("WORKSPACE_CONFLICT", "goal alias appeared during create")
+        os.rename(temporary, target)
+        return view_goal_bundle(alias, root)
+    finally:
+        if temporary.exists():
+            shutil.rmtree(temporary, ignore_errors=True)
 
 
-def create_goal_workspace(raw_target: str, raw_input: bytes) -> dict[str, Any]:
-    """Create the sole GOAL and context, or reuse an identical complete workspace."""
-
-    request = _load_create_request(raw_input)
-    try:
-        binding = bind_target_worktree(raw_target)
-    except WorktreeBindingError as exc:
-        raise GoalWorkspaceError("WORKSPACE_BINDING", str(exc)) from exc
-    root = Path(binding.target_worktree_root)
-    ignore = root / IGNORE_PATH
-    if _has_goal_artifacts(root) and not _lexists(ignore):
-        raise GoalWorkspaceError(
-            "WORKSPACE_LAYOUT", "existing GOAL artifacts lack the required root ignore contract"
-        )
-
-    transaction = _Transaction()
-    try:
-        steward = _ensure_root(binding, transaction)
-        existing = _inspect_workspace(binding, allow_absent=True)
-        expected_view = _workspace_view(request.contract, request.context_path)
-        if existing is not None:
-            existing_view, existing_context = existing
-            if existing_view != expected_view or existing_context != request.context_bytes:
-                raise GoalWorkspaceError(
-                    "WORKSPACE_CONFLICT",
-                    "this worktree already contains a different GOAL workspace",
-                )
-            transaction.committed = True
-            return existing_view
-
-        context_directory = steward / "goal-context"
-        _mkdir_new(context_directory, transaction)
-        _revalidate_binding(binding)
-        _write_new_regular(
-            root / request.context_path, request.context_bytes, transaction
-        )
-        _revalidate_binding(binding)
-        _write_new_regular(
-            root / GOAL_PATH,
-            request.contract.objective.encode("utf-8") + b"\n",
-            transaction,
-        )
-        inspected = _inspect_workspace(binding, allow_absent=False)
-        assert inspected is not None
-        observed_view, observed_context = inspected
-        if observed_view != expected_view or observed_context != request.context_bytes:
-            raise GoalWorkspaceError(
-                "WORKSPACE_RACE", "created GOAL workspace differs from requested content"
-            )
-        transaction.committed = True
-        return observed_view
-    except Exception as exc:
-        residuals = transaction.rollback()
-        if residuals:
-            raise GoalWorkspaceError(
-                "WORKSPACE_ROLLBACK",
-                f"{exc}; rollback left: {', '.join(residuals)}",
-            ) from exc
-        raise
-
-
-def view_goal_workspace(raw_target: str) -> dict[str, Any]:
-    """Validate and return the canonical view of an existing GOAL workspace."""
-
-    try:
-        binding = bind_target_worktree(raw_target)
-    except WorktreeBindingError as exc:
-        raise GoalWorkspaceError("WORKSPACE_BINDING", str(exc)) from exc
-    inspected = _inspect_workspace(binding, allow_absent=False)
-    assert inspected is not None
-    return inspected[0]
+def list_goal_bundles(cwd: str | Path | None = None) -> dict[str, Any]:
+    binding = resolve_current_binding(cwd)
+    goals = Path(binding.target_worktree_root) / ".steward" / "goals"
+    if not goals.exists():
+        aliases: list[str] = []
+    else:
+        _require_real_directory(goals, ".steward/goals")
+        aliases = sorted(item.name for item in goals.iterdir() if ALIAS_PATTERN.fullmatch(item.name) and item.is_dir() and not item.is_symlink())
+    return {"schemaId": "steward.goal-list", "schemaVersion": 1, "aliases": aliases}
 
 
 def _read_stdin() -> bytes:
     if sys.stdin.buffer.isatty():
-        raise GoalWorkspaceError(
-            "WORKSPACE_INPUT_TRANSPORT",
-            "create input must arrive through a finite non-TTY pipe; use "
-            "pty_stdin_bridge.py when the host only exposes delayed PTY input",
-        )
-    data = sys.stdin.buffer.read(MAX_CREATE_INPUT_BYTES + 1)
-    if len(data) > MAX_CREATE_INPUT_BYTES:
-        raise GoalWorkspaceError("WORKSPACE_INPUT", "create input is too large")
+        raise GoalWorkspaceError("WORKSPACE_INPUT_TRANSPORT", "input must arrive through a finite non-TTY pipe")
+    data = sys.stdin.buffer.read(MAX_INPUT_BYTES + 1)
+    if len(data) > MAX_INPUT_BYTES:
+        raise GoalWorkspaceError("WORKSPACE_SIZE", "stdin input is too large")
     return data
 
 
-def _usage_error() -> GoalWorkspaceError:
-    return GoalWorkspaceError(
-        "WORKSPACE_USAGE",
-        "usage: goal_workspace.py ensure-root <target-worktree-root> | "
-        "validate-create - | create <target-worktree-root> - | "
-        "view <target-worktree-root>",
-    )
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description="Manage alias-scoped Steward GOAL bundles in the current worktree.")
+    sub = parser.add_subparsers(dest="command", required=True)
+    ensure = sub.add_parser("ensure-root")
+    ensure.add_argument("target")
+    for name in ("validate-create", "create"):
+        command = sub.add_parser(name)
+        command.add_argument("--goal", required=True)
+        command.add_argument("input", choices=["-"])
+    view = sub.add_parser("view")
+    view.add_argument("--goal", required=True)
+    sub.add_parser("list")
+    return parser
 
 
 def main(argv: list[str] | None = None) -> int:
-    arguments = list(sys.argv[1:] if argv is None else argv)
+    args = build_parser().parse_args(argv)
     try:
-        if len(arguments) == 2 and arguments[0] == "ensure-root":
-            output = ensure_workspace_root(arguments[1])
-        elif (
-            len(arguments) == 2
-            and arguments[0] == "validate-create"
-            and arguments[1] == "-"
-        ):
-            output = validate_create_request(_read_stdin())
-        elif len(arguments) == 3 and arguments[0] == "create" and arguments[2] == "-":
-            output = create_goal_workspace(arguments[1], _read_stdin())
-        elif len(arguments) == 2 and arguments[0] == "view":
-            output = view_goal_workspace(arguments[1])
+        if args.command == "ensure-root":
+            output = ensure_workspace_root(args.target)
+        elif args.command == "validate-create":
+            output = validate_create_request(args.goal, _read_stdin())
+        elif args.command == "create":
+            output = create_goal_bundle(args.goal, _read_stdin())
+        elif args.command == "view":
+            output = view_goal_bundle(args.goal)
         else:
-            raise _usage_error()
-        sys.stdout.buffer.write(_canonical_json(output) + b"\n")
+            output = list_goal_bundles()
+        sys.stdout.buffer.write(canonical_json_bytes(output) + b"\n")
         return 0
     except GoalWorkspaceError as exc:
         print("ERROR GOAL_WORKSPACE: " + str(exc), file=sys.stderr)
-        return 1
-    except OSError as exc:
-        print("ERROR GOAL_WORKSPACE: WORKSPACE_IO: " + str(exc), file=sys.stderr)
         return 2
+    except KeyboardInterrupt:
+        print("ERROR GOAL_WORKSPACE: interrupted", file=sys.stderr)
+        return 130
 
 
 if __name__ == "__main__":

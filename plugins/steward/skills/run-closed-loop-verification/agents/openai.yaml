@@ -1,6 +1,6 @@
 interface:
   display_name: "Closed-loop GOAL Verification"
-  short_description: "用轻量可恢复 Campaign 修补并验收 GOAL"
-  default_prompt: "使用 $steward:run-closed-loop-verification 验收当前工作树中已声称完成的 .steward/goal.txt；维护单一 journal 权威，在 GOAL 范围内修补并定向复测，只执行一次最终完整回归和 audit。"
+  short_description: "按别名绑定验收计划并闭环验证当前工作树 GOAL"
+  default_prompt: "使用 $steward:run-closed-loop-verification 验收当前工作树中指定别名的 GOAL，冻结执行绑定并完成修补、复测、完整回归和 audit。"
 policy:
   allow_implicit_invocation: false

@@ -9,7 +9,7 @@ import subprocess
 import sys
 from types import FrameType
 
-MAX_FRAME_BYTES = 1_100_000
+MAX_FRAME_BYTES = 2 * 1024 * 1024
 READY_LINE = "READY STEWARD_PTY_STDIN"
 
 

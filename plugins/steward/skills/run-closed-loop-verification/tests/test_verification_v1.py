@@ -1,0 +1,258 @@
+from __future__ import annotations
+
+import json
+import hashlib
+import subprocess
+import sys
+import tempfile
+import unittest
+from pathlib import Path
+
+SKILL_ROOT = Path(__file__).resolve().parents[1]
+SCRIPTS = SKILL_ROOT / "scripts"
+PLUGIN_SCRIPTS = SKILL_ROOT.parents[1] / "scripts"
+for path in (SCRIPTS, PLUGIN_SCRIPTS):
+    if str(path) not in sys.path:
+        sys.path.insert(0, str(path))
+
+import goal_workspace
+from verifier import Campaign, VerificationError, advance, campaign_lock, record_repair, status_report
+
+CAMPAIGN_CLI = SCRIPTS / "campaign.py"
+
+
+def goal_text(alias: str) -> str:
+    return "\n".join(
+        [
+            "结果：交付经过验证的本地实现",
+            f"证据与上下文：仓库文件；补充背景见 .steward/goals/{alias}/context.md",
+            "范围：当前测试项目",
+            "约束与授权：仅执行本地确定性命令",
+            "完成标准：(C1) 命令通过并产生证明",
+            "正当阻塞项：缺少本地运行环境",
+            "最终交付：实现、回归结果和审计证据",
+        ]
+    )
+
+
+def acceptance() -> dict:
+    return {
+        "schemaVersion": 1,
+        "sourcePolicy": {"mode": "git-visible"},
+        "cases": [
+            {
+                "id": "acceptance",
+                "required": True,
+                "platform": "any",
+                "coversCriteria": ["C1"],
+                "assertion": "app.txt 为 good 时命令成功并生成 proof.txt",
+                "runnerHint": "运行读取 app.txt 的项目本地验收入口",
+                "evidence": {"requiredFiles": ["proof.txt"], "nonEmptyFiles": ["proof.txt"]},
+            }
+        ],
+    }
+
+
+def marker_command() -> list[str]:
+    return [
+        sys.executable,
+        "-c",
+        (
+            "import os,pathlib,sys; "
+            "ok=pathlib.Path('app.txt').read_text(encoding='utf-8').strip()=='good'; "
+            "pathlib.Path(os.environ['CLOSED_LOOP_EVIDENCE_DIR'],'proof.txt').write_text('ok',encoding='utf-8') if ok else None; "
+            "sys.exit(0 if ok else 1)"
+        ),
+    ]
+
+
+def execution(command: list[str] | None = None) -> bytes:
+    value = {
+        "schemaVersion": 1,
+        "cases": [
+            {
+                "id": "acceptance",
+                "argv": command or marker_command(),
+                "cwd": ".",
+                "timeoutSeconds": 30,
+                "bindingRationale": "该命令直接检查 app.txt 并生成 acceptance plan 要求的 proof.txt",
+            }
+        ],
+    }
+    return json.dumps(value, ensure_ascii=False, separators=(",", ":")).encode()
+
+
+class VerificationV1Tests(unittest.TestCase):
+    def setUp(self) -> None:
+        self.temporary = tempfile.TemporaryDirectory()
+        self.root = Path(self.temporary.name)
+        subprocess.run(["git", "init", "-q", str(self.root)], check=True)
+        subprocess.run(["git", "-C", str(self.root), "config", "user.name", "Verifier Tests"], check=True)
+        subprocess.run(["git", "-C", str(self.root), "config", "user.email", "verify@example.invalid"], check=True)
+        (self.root / "app.txt").write_text("good\n", encoding="utf-8")
+        (self.root / ".gitignore").write_text("build/\n", encoding="utf-8")
+        subprocess.run(["git", "-C", str(self.root), "add", "app.txt", ".gitignore"], check=True)
+        subprocess.run(["git", "-C", str(self.root), "commit", "-qm", "fixture"], check=True)
+        payload = {
+            "objective": goal_text("goal-a"),
+            "context": "# 已核实背景\n\n- 当前测试请求与 app.txt。\n",
+            "acceptancePlan": acceptance(),
+        }
+        goal_workspace.create_goal_bundle("goal-a", json.dumps(payload, ensure_ascii=False).encode(), self.root)
+        self.previous = Path.cwd()
+        os_chdir(self.root)
+
+    def tearDown(self) -> None:
+        os_chdir(self.previous)
+        self.temporary.cleanup()
+
+    def test_initial_regression_and_audit_complete(self) -> None:
+        campaign = Campaign.initialize("goal-a", execution())
+        with campaign_lock(campaign):
+            report, code = advance(Campaign.load("goal-a"))
+        self.assertEqual(0, code)
+        self.assertEqual("AUDIT_REQUIRED", report["executionStatus"])
+        with campaign_lock(Campaign.load("goal-a")):
+            report, code = advance(Campaign.load("goal-a"))
+        self.assertEqual(0, code)
+        self.assertEqual("COMPLETE", report["completionStatus"])
+        self.assertEqual("COMPLETE", status_report(Campaign.load("goal-a"))["completionStatus"])
+
+    def test_failed_case_repair_retest_regression_and_audit(self) -> None:
+        (self.root / "app.txt").write_text("bad\n", encoding="utf-8")
+        campaign = Campaign.initialize("goal-a", execution())
+        with campaign_lock(campaign):
+            report, code = advance(Campaign.load("goal-a"))
+        self.assertEqual(1, code)
+        self.assertEqual("REPAIR_REQUIRED", report["executionStatus"])
+        (self.root / "app.txt").write_text("good\n", encoding="utf-8")
+        repair = json.dumps(
+            {
+                "rootCause": "app.txt 使用了失败标记",
+                "rootCauseSource": {"path": "app.txt", "lineStart": 1, "lineEnd": 1},
+                "fixSummary": "将失败标记改为 good",
+            },
+            ensure_ascii=False,
+        ).encode()
+        with campaign_lock(Campaign.load("goal-a")):
+            report = record_repair(Campaign.load("goal-a"), repair)
+        self.assertEqual("RETEST_REQUIRED", report["executionStatus"])
+        expected = ["REGRESSION_REQUIRED", "AUDIT_REQUIRED", "COMPLETE"]
+        for state in expected:
+            with campaign_lock(Campaign.load("goal-a")):
+                report, code = advance(Campaign.load("goal-a"))
+            self.assertEqual(0, code)
+            self.assertEqual(state, report["executionStatus"])
+        self.assertEqual(1, len(report["repairs"]))
+        self.assertEqual("COMPLETE", report["completionStatus"])
+
+    def test_source_drift_blocks_until_manual_restore(self) -> None:
+        Campaign.initialize("goal-a", execution())
+        baseline = (self.root / "app.txt").read_bytes()
+        (self.root / "app.txt").write_text("changed\n", encoding="utf-8")
+        with campaign_lock(Campaign.load("goal-a")):
+            report, code = advance(Campaign.load("goal-a"))
+        self.assertEqual(1, code)
+        self.assertEqual("BLOCKED", report["executionStatus"])
+        (self.root / "app.txt").write_bytes(baseline)
+        with campaign_lock(Campaign.load("goal-a")):
+            report, code = advance(Campaign.load("goal-a"))
+        self.assertEqual(0, code)
+        self.assertEqual("AUDIT_REQUIRED", report["executionStatus"])
+
+    def test_index_drift_blocks_even_when_worktree_bytes_are_restored(self) -> None:
+        Campaign.initialize("goal-a", execution())
+        (self.root / "app.txt").write_text("staged\n", encoding="utf-8")
+        subprocess.run(["git", "-C", str(self.root), "add", "app.txt"], check=True)
+        (self.root / "app.txt").write_text("good\n", encoding="utf-8")
+        with campaign_lock(Campaign.load("goal-a")):
+            report, code = advance(Campaign.load("goal-a"))
+        self.assertEqual(1, code)
+        self.assertEqual("BLOCKED", report["executionStatus"])
+
+    def test_ignored_build_outputs_do_not_drift_source(self) -> None:
+        Campaign.initialize("goal-a", execution())
+        build = self.root / "build"
+        build.mkdir()
+        (build / "cache.bin").write_bytes(b"ignored")
+        with campaign_lock(Campaign.load("goal-a")):
+            report, code = advance(Campaign.load("goal-a"))
+        self.assertEqual(0, code)
+        self.assertEqual("AUDIT_REQUIRED", report["executionStatus"])
+
+    def test_execution_plan_cannot_change_case_identity_or_use_bad_cwd(self) -> None:
+        value = json.loads(execution())
+        value["cases"][0]["id"] = "other"
+        with self.assertRaisesRegex(VerificationError, "order"):
+            Campaign.initialize("goal-a", json.dumps(value).encode())
+        value = json.loads(execution())
+        value["cases"][0]["cwd"] = "../outside"
+        with self.assertRaises(VerificationError):
+            Campaign.initialize("goal-a", json.dumps(value).encode())
+
+    def test_artifact_tamper_makes_completion_incomplete(self) -> None:
+        campaign = Campaign.initialize("goal-a", execution())
+        for _ in range(2):
+            with campaign_lock(Campaign.load("goal-a")):
+                _, code = advance(Campaign.load("goal-a"))
+            self.assertEqual(0, code)
+        complete = Campaign.load("goal-a")
+        run = complete.state["attempts"][0]["runs"][0]
+        artifact = complete.campaign_root / run["artifactDir"] / "stdout.txt"
+        artifact.write_text("tampered\n", encoding="utf-8")
+        self.assertEqual("INCOMPLETE", status_report(Campaign.load("goal-a"))["completionStatus"])
+
+    def test_bundle_or_execution_plan_tamper_blocks_loading(self) -> None:
+        Campaign.initialize("goal-a", execution())
+        path = self.root / ".steward" / "goals" / "goal-a" / "execution-plan.json"
+        path.write_text("{}\n", encoding="utf-8")
+        with self.assertRaises(VerificationError):
+            Campaign.load("goal-a")
+
+    def test_rehashed_but_semantically_invalid_journal_is_rejected(self) -> None:
+        campaign = Campaign.initialize("goal-a", execution())
+        event = json.loads(campaign.events_path.read_text(encoding="utf-8"))
+        event["state"]["status"] = "COMPLETE"
+        event.pop("hash")
+        raw = json.dumps(event, ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False).encode()
+        event["hash"] = "sha256:" + hashlib.sha256(raw).hexdigest()
+        campaign.events_path.write_text(json.dumps(event, ensure_ascii=False, sort_keys=True, separators=(",", ":")) + "\n", encoding="utf-8")
+        with self.assertRaisesRegex(VerificationError, "start"):
+            Campaign.load("goal-a")
+
+    def test_public_cli_completes_the_no_repair_flow(self) -> None:
+        initialized = subprocess.run(
+            [sys.executable, "-B", str(CAMPAIGN_CLI), "init", "--goal", "goal-a", "--execution-plan", "-"],
+            cwd=self.root,
+            input=execution(),
+            capture_output=True,
+            check=False,
+        )
+        self.assertEqual(0, initialized.returncode, initialized.stderr.decode())
+        for expected in ("AUDIT_REQUIRED", "COMPLETE"):
+            result = subprocess.run(
+                [sys.executable, "-B", str(CAMPAIGN_CLI), "advance", "--goal", "goal-a"],
+                cwd=self.root,
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(0, result.returncode, result.stderr.decode())
+            self.assertEqual(expected, json.loads(result.stdout)["executionStatus"])
+
+    def test_stale_per_goal_lock_is_recovered(self) -> None:
+        campaign = Campaign.initialize("goal-a", execution())
+        lock = campaign.campaign_root / "campaign.lock"
+        lock.write_text(json.dumps({"pid": 99_999_999, "createdAt": "stale"}) + "\n", encoding="utf-8")
+        with campaign_lock(campaign):
+            self.assertTrue(lock.exists())
+        self.assertFalse(lock.exists())
+
+
+def os_chdir(path: Path) -> None:
+    import os
+
+    os.chdir(path)
+
+
+if __name__ == "__main__":
+    unittest.main()

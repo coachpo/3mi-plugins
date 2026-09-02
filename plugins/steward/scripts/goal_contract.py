@@ -383,7 +383,7 @@ def canonical_goal_contract_bytes(contract: GoalContract) -> bytes:
 
 
 def goal_contract_sha256(contract: GoalContract) -> str:
-    """Return the canonical v1 view digest used by traceability.goalContract."""
+    """Return the canonical v1 view digest used by GOAL bundle manifests."""
 
     return "sha256:" + hashlib.sha256(canonical_goal_contract_bytes(contract)).hexdigest()
 
