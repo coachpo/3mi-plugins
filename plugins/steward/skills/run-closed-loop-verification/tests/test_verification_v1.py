@@ -183,10 +183,6 @@ class VerificationV1Tests(unittest.TestCase):
         with campaign_lock(campaign):
             report, code = advance(Campaign.load("goal-a"))
         self.assertEqual(0, code)
-        self.assertEqual("AUDIT_REQUIRED", report["executionStatus"])
-        with campaign_lock(Campaign.load("goal-a")):
-            report, code = advance(Campaign.load("goal-a"))
-        self.assertEqual(0, code)
         self.assertEqual("COMPLETE", report["completionStatus"])
         self.assertEqual(
             "COMPLETE", status_report(Campaign.load("goal-a"))["completionStatus"]
@@ -211,12 +207,9 @@ class VerificationV1Tests(unittest.TestCase):
         with campaign_lock(Campaign.load("goal-a")):
             report = record_repair(Campaign.load("goal-a"), repair)
         self.assertEqual("RETEST_REQUIRED", report["executionStatus"])
-        expected = ["REGRESSION_REQUIRED", "AUDIT_REQUIRED", "COMPLETE"]
-        for state in expected:
-            with campaign_lock(Campaign.load("goal-a")):
-                report, code = advance(Campaign.load("goal-a"))
-            self.assertEqual(0, code)
-            self.assertEqual(state, report["executionStatus"])
+        with campaign_lock(Campaign.load("goal-a")):
+            report, code = advance(Campaign.load("goal-a"))
+        self.assertEqual(0, code)
         self.assertEqual(1, len(report["repairs"]))
         self.assertEqual("COMPLETE", report["completionStatus"])
 
@@ -232,7 +225,7 @@ class VerificationV1Tests(unittest.TestCase):
         with campaign_lock(Campaign.load("goal-a")):
             report, code = advance(Campaign.load("goal-a"))
         self.assertEqual(0, code)
-        self.assertEqual("AUDIT_REQUIRED", report["executionStatus"])
+        self.assertEqual("COMPLETE", report["completionStatus"])
 
     def test_index_drift_blocks_even_when_worktree_bytes_are_restored(self) -> None:
         Campaign.initialize("goal-a", execution())
@@ -252,7 +245,7 @@ class VerificationV1Tests(unittest.TestCase):
         with campaign_lock(Campaign.load("goal-a")):
             report, code = advance(Campaign.load("goal-a"))
         self.assertEqual(0, code)
-        self.assertEqual("AUDIT_REQUIRED", report["executionStatus"])
+        self.assertEqual("COMPLETE", report["completionStatus"])
 
     def test_execution_plan_cannot_change_case_identity_or_use_bad_cwd(self) -> None:
         value = json.loads(execution())
@@ -266,10 +259,9 @@ class VerificationV1Tests(unittest.TestCase):
 
     def test_artifact_tamper_makes_completion_incomplete(self) -> None:
         Campaign.initialize("goal-a", execution())
-        for _ in range(2):
-            with campaign_lock(Campaign.load("goal-a")):
-                _, code = advance(Campaign.load("goal-a"))
-            self.assertEqual(0, code)
+        with campaign_lock(Campaign.load("goal-a")):
+            _, code = advance(Campaign.load("goal-a"))
+        self.assertEqual(0, code)
         complete = Campaign.load("goal-a")
         run = complete.state["attempts"][0]["runs"][0]
         artifact = complete.campaign_root / run["artifactDir"] / "stdout.txt"
@@ -324,22 +316,21 @@ class VerificationV1Tests(unittest.TestCase):
             check=False,
         )
         self.assertEqual(0, initialized.returncode, initialized.stderr.decode())
-        for expected in ("AUDIT_REQUIRED", "COMPLETE"):
-            result = subprocess.run(
-                [
-                    sys.executable,
-                    "-B",
-                    str(CAMPAIGN_CLI),
-                    "advance",
-                    "--goal",
-                    "goal-a",
-                ],
-                cwd=self.root,
-                capture_output=True,
-                check=False,
-            )
-            self.assertEqual(0, result.returncode, result.stderr.decode())
-            self.assertEqual(expected, json.loads(result.stdout)["executionStatus"])
+        result = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                str(CAMPAIGN_CLI),
+                "advance",
+                "--goal",
+                "goal-a",
+            ],
+            cwd=self.root,
+            capture_output=True,
+            check=False,
+        )
+        self.assertEqual(0, result.returncode, result.stderr.decode())
+        self.assertEqual("COMPLETE", json.loads(result.stdout)["completionStatus"])
 
     def test_stale_per_goal_lock_is_recovered(self) -> None:
         campaign = Campaign.initialize("goal-a", execution())
@@ -369,16 +360,12 @@ class VerificationV1Tests(unittest.TestCase):
         with campaign_lock(Campaign.load("goal-a")):
             report, code = advance(Campaign.load("goal-a"))
         self.assertEqual(0, code)
-        self.assertEqual("AUDIT_REQUIRED", report["executionStatus"])
+        self.assertEqual("COMPLETE", report["completionStatus"])
         attempt = report["attempts"][0]
         self.assertEqual("WAIVED", attempt["status"])
         self.assertEqual(["probe"], attempt["waivedCaseIds"])
         probe_run = next(run for run in attempt["runs"] if run["caseId"] == "probe")
         self.assertEqual("FAILED", probe_run["status"])
-        with campaign_lock(Campaign.load("goal-a")):
-            report, code = advance(Campaign.load("goal-a"))
-        self.assertEqual(0, code)
-        self.assertEqual("COMPLETE", report["completionStatus"])
         self.assertEqual(["probe"], report["waivedCaseIds"])
 
     def test_waived_failure_in_retest_rewaives_in_final_regression(self) -> None:
@@ -402,12 +389,7 @@ class VerificationV1Tests(unittest.TestCase):
             record_repair(Campaign.load("goal-a"), repair)
         with campaign_lock(Campaign.load("goal-a")):
             report, code = advance(Campaign.load("goal-a"))
-        self.assertEqual("REGRESSION_REQUIRED", report["executionStatus"])
-        with campaign_lock(Campaign.load("goal-a")):
-            report, code = advance(Campaign.load("goal-a"))
-        self.assertEqual("AUDIT_REQUIRED", report["executionStatus"])
-        with campaign_lock(Campaign.load("goal-a")):
-            report, code = advance(Campaign.load("goal-a"))
+        self.assertEqual(0, code)
         self.assertEqual("COMPLETE", report["completionStatus"])
         final_attempt = next(
             a
@@ -463,7 +445,8 @@ class VerificationV1Tests(unittest.TestCase):
         Campaign.initialize("goal-b", json.dumps(value, ensure_ascii=False).encode())
         with campaign_lock(Campaign.load("goal-b")):
             report, code = advance(Campaign.load("goal-b"))
-        self.assertEqual("AUDIT_REQUIRED", report["executionStatus"])
+        self.assertEqual(0, code)
+        self.assertEqual("COMPLETE", report["completionStatus"])
         run = report["attempts"][0]["runs"][0]
         actions = {item["path"]: item["action"] for item in run["writableMutations"]}
         self.assertEqual(
@@ -486,10 +469,6 @@ class VerificationV1Tests(unittest.TestCase):
         self.assertEqual(
             ["coverage.lcov", "fresh-artifact.txt", "notes.txt"], capture["captured"]
         )
-        with campaign_lock(Campaign.load("goal-b")):
-            report, code = advance(Campaign.load("goal-b"))
-        self.assertEqual(0, code)
-        self.assertEqual("COMPLETE", report["completionStatus"])
 
     def test_case_writing_undeclared_source_still_blocks(self) -> None:
         runner = [
@@ -514,10 +493,9 @@ class VerificationV1Tests(unittest.TestCase):
             for line in campaign.events_path.read_text(encoding="utf-8").splitlines()
         ]
         last = events[-1]
-        self.assertEqual("attempt_finished", last["type"])
+        self.assertEqual("audit_succeeded", last["type"])
         last["state"]["attempts"][-1]["status"] = "WAIVED"
         last["state"]["attempts"][-1]["waivedCaseIds"] = ["acceptance"]
-        last["state"]["status"] = "AUDIT_REQUIRED"
         unhashed = {key: value for key, value in last.items() if key != "hash"}
         last["hash"] = "sha256:" + hashlib.sha256(canonical_bytes(unhashed)).hexdigest()
         campaign.events_path.write_text(

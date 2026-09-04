@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -57,6 +58,25 @@ def payload(alias: str, *, acceptance: dict | None = None) -> bytes:
         ensure_ascii=False,
         separators=(",", ":"),
     ).encode()
+
+
+def staged_files(alias: str, *, acceptance: dict | None = None) -> dict[str, bytes]:
+    """The same bundle content as payload(), laid out for the staged transport."""
+    return {
+        "goal.txt": (objective(alias) + "\n").encode("utf-8"),
+        "context.md": "# 已核实背景\n\n- 当前用户请求与仓库文件。\n".encode(),
+        "acceptance-plan.json": json.dumps(
+            acceptance or plan(), ensure_ascii=False, separators=(",", ":")
+        ).encode("utf-8"),
+    }
+
+
+def write_staging(root: Path, alias: str, **kwargs) -> Path:
+    staging = root / ".staging"
+    staging.mkdir(exist_ok=True)
+    for name, data in staged_files(alias, **kwargs).items():
+        (staging / name).write_bytes(data)
+    return staging
 
 
 class GoalBundleV1Tests(unittest.TestCase):
@@ -257,6 +277,89 @@ class GoalBundleV1Tests(unittest.TestCase):
             [sys.executable, "-B", str(script), "create", "--goal", "goal-a", "-"],
             cwd=self.root,
             input=payload("goal-a"),
+            capture_output=True,
+            check=False,
+        )
+        self.assertEqual(0, created.returncode, created.stderr.decode())
+        self.assertEqual("goal-a", json.loads(created.stdout)["alias"])
+
+    def test_create_from_staged_files_matches_json_transport(self) -> None:
+        staging = write_staging(self.root, "goal-a")
+        from_staged = goal_workspace.create_goal_bundle("goal-a", staging, self.root)
+        shutil.rmtree(self.root / ".steward")
+        from_json = goal_workspace.create_goal_bundle(
+            "goal-a", payload("goal-a"), self.root
+        )
+        self.assertEqual(from_json, from_staged)
+
+    def test_staged_create_is_idempotent_and_conflict_checked(self) -> None:
+        staging = write_staging(self.root, "goal-a")
+        first = goal_workspace.create_goal_bundle("goal-a", staging, self.root)
+        self.assertEqual(
+            first, goal_workspace.create_goal_bundle("goal-a", staging, self.root)
+        )
+        (staging / "context.md").write_bytes(b"different\n")
+        with self.assertRaisesRegex(goal_workspace.GoalWorkspaceError, "CONFLICT"):
+            goal_workspace.create_goal_bundle("goal-a", staging, self.root)
+
+    def test_staged_create_validates_the_file_contract(self) -> None:
+        staging = write_staging(self.root, "goal-a")
+        (staging / "context.md").unlink()
+        with self.assertRaisesRegex(goal_workspace.GoalWorkspaceError, "missing"):
+            goal_workspace.validate_create_request("goal-a", staging, self.root)
+        (staging / "context.md").write_bytes("# 无结尾 LF".encode())
+        with self.assertRaisesRegex(goal_workspace.GoalWorkspaceError, "final LF"):
+            goal_workspace.validate_create_request("goal-a", staging, self.root)
+        (staging / "context.md").unlink()
+        (staging / "context.md").symlink_to(self.root / "app.py")
+        with self.assertRaises(goal_workspace.GoalWorkspaceError):
+            goal_workspace.validate_create_request("goal-a", staging, self.root)
+
+    def test_staged_goal_and_plan_stay_strict(self) -> None:
+        staging = write_staging(self.root, "goal-a")
+        (staging / "goal.txt").write_bytes((objective("goal-a") + "\nextra\n").encode())
+        with self.assertRaises(goal_workspace.GoalWorkspaceError):
+            goal_workspace.create_goal_bundle("goal-a", staging, self.root)
+        (staging / "goal.txt").write_bytes((objective("goal-a") + "\n").encode())
+        bad_plan = json.loads(staged_files("goal-a")["acceptance-plan.json"])
+        bad_plan["cases"][0]["required"] = False
+        (staging / "acceptance-plan.json").write_bytes(
+            json.dumps(bad_plan, ensure_ascii=False).encode()
+        )
+        with self.assertRaisesRegex(goal_workspace.GoalWorkspaceError, "coverage"):
+            goal_workspace.create_goal_bundle("goal-a", staging, self.root)
+
+    def test_public_cli_create_from_staged_directory(self) -> None:
+        script = SCRIPTS / "goal_workspace.py"
+        staging = write_staging(self.root, "goal-a")
+        preview = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                str(script),
+                "validate-create-from",
+                "--goal",
+                "goal-a",
+                str(staging),
+            ],
+            cwd=self.root,
+            capture_output=True,
+            check=False,
+        )
+        self.assertEqual(0, preview.returncode, preview.stderr.decode())
+        self.assertEqual("goal-a", json.loads(preview.stdout)["alias"])
+        self.assertFalse((self.root / ".steward" / "goals" / "goal-a").exists())
+        created = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                str(script),
+                "create-from",
+                "--goal",
+                "goal-a",
+                str(staging),
+            ],
+            cwd=self.root,
             capture_output=True,
             check=False,
         )

@@ -577,6 +577,66 @@ def _load_create_request(raw: bytes, alias: str) -> CreateRequest:
     )
 
 
+def _require_canonical_context_bytes(name: str, data: bytes) -> bytes:
+    """File-borne text must already be canonical; JSON strings are normalized instead."""
+    if data.startswith(b"\xef\xbb\xbf") or b"\x00" in data or b"\r" in data:
+        raise GoalWorkspaceError(
+            "WORKSPACE_INPUT",
+            f"staged {name} must use UTF-8 LF text without BOM/NUL/CR",
+        )
+    if not data.endswith(b"\n"):
+        raise GoalWorkspaceError(
+            "WORKSPACE_INPUT", f"staged {name} must end with one final LF"
+        )
+    try:
+        data.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise GoalWorkspaceError(
+            "WORKSPACE_INPUT", f"staged {name} is not UTF-8"
+        ) from exc
+    return data
+
+
+def _load_staged_create_request(staging: Path, alias: str) -> CreateRequest:
+    files: dict[str, bytes] = {}
+    limits = {
+        "goal.txt": MAX_PLAN_BYTES,
+        "context.md": MAX_CONTEXT_BYTES,
+        "acceptance-plan.json": MAX_PLAN_BYTES,
+    }
+    for name, limit in limits.items():
+        path = staging / name
+        if not path.is_file():
+            raise GoalWorkspaceError(
+                "WORKSPACE_INPUT", f"staged create is missing {name} in {staging}"
+            )
+        files[name] = read_regular_bytes(path, label=f"staged {name}", max_bytes=limit)
+    context = _require_canonical_context_bytes("context.md", files["context.md"])
+    try:
+        contract = validate_goal_text(files["goal.txt"])
+    except GoalContractError as exc:
+        raise GoalWorkspaceError("WORKSPACE_GOAL", str(exc)) from exc
+    _validate_context_reference(contract, alias)
+    try:
+        plan_value = json.loads(
+            files["acceptance-plan.json"].decode("utf-8"),
+            object_pairs_hook=_strict_object,
+        )
+    except (UnicodeError, json.JSONDecodeError) as exc:
+        raise GoalWorkspaceError(
+            "WORKSPACE_INPUT", "staged acceptance plan must be UTF-8 JSON"
+        ) from exc
+    criteria_ids = [criterion.id for criterion in contract.completion_criteria]
+    plan = validate_acceptance_plan(plan_value, criteria_ids)
+    return CreateRequest(
+        contract,
+        contract.objective.encode("utf-8") + b"\n",
+        context,
+        plan,
+        canonical_json_bytes(plan) + b"\n",
+    )
+
+
 def _manifest(
     alias: str, binding: WorktreeBinding, request: CreateRequest
 ) -> dict[str, Any]:
@@ -783,11 +843,20 @@ def view_goal_bundle(alias: str, cwd: str | Path | None = None) -> dict[str, Any
 
 
 def validate_create_request(
-    alias: str, raw: bytes, cwd: str | Path | None = None
+    alias: str,
+    raw: bytes | Path,
+    cwd: str | Path | None = None,
 ) -> dict[str, Any]:
+    """Validate from strict stdin JSON (bytes) or a staged file directory (Path)."""
     alias = validate_alias(alias)
     binding = resolve_current_binding(cwd)
-    request = _load_create_request(raw, alias)
+    if isinstance(raw, Path):
+        staging = (
+            raw if raw.is_absolute() else (Path(binding.target_worktree_root) / raw)
+        )
+        request = _load_staged_create_request(staging, alias)
+    else:
+        request = _load_create_request(raw, alias)
     return _bundle_view(
         alias,
         f".steward/goals/{alias}",
@@ -798,11 +867,20 @@ def validate_create_request(
 
 
 def create_goal_bundle(
-    alias: str, raw: bytes, cwd: str | Path | None = None
+    alias: str,
+    raw: bytes | Path,
+    cwd: str | Path | None = None,
 ) -> dict[str, Any]:
+    """Create from strict stdin JSON (bytes) or a staged file directory (Path)."""
     alias = validate_alias(alias)
     binding = resolve_current_binding(cwd)
-    request = _load_create_request(raw, alias)
+    if isinstance(raw, Path):
+        staging = (
+            raw if raw.is_absolute() else (Path(binding.target_worktree_root) / raw)
+        )
+        request = _load_staged_create_request(staging, alias)
+    else:
+        request = _load_create_request(raw, alias)
     root = Path(binding.target_worktree_root)
     goals = _ensure_root(binding)
     target = goals / alias
@@ -878,6 +956,11 @@ def _read_stdin() -> bytes:
     return data
 
 
+def _staging_arg(args: argparse.Namespace) -> Path:
+    staging = Path(args.staging)
+    return staging if staging.is_absolute() else Path.cwd() / staging
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Manage alias-scoped Steward GOAL bundles in the current worktree."
@@ -889,6 +972,13 @@ def build_parser() -> argparse.ArgumentParser:
         command = sub.add_parser(name)
         command.add_argument("--goal", required=True)
         command.add_argument("input", choices=["-"])
+    for name in ("validate-create-from", "create-from"):
+        command = sub.add_parser(name)
+        command.add_argument("--goal", required=True)
+        command.add_argument(
+            "staging",
+            help="Directory holding goal.txt, context.md, and acceptance-plan.json",
+        )
     view = sub.add_parser("view")
     view.add_argument("--goal", required=True)
     sub.add_parser("list")
@@ -900,10 +990,16 @@ def main(argv: list[str] | None = None) -> int:
     try:
         if args.command == "ensure-root":
             output = ensure_workspace_root(args.target)
-        elif args.command == "validate-create":
-            output = validate_create_request(args.goal, _read_stdin())
-        elif args.command == "create":
-            output = create_goal_bundle(args.goal, _read_stdin())
+        elif args.command in {"validate-create", "validate-create-from"}:
+            payload: bytes | Path = (
+                _staging_arg(args) if args.command.endswith("-from") else _read_stdin()
+            )
+            output = validate_create_request(args.goal, payload)
+        elif args.command in {"create", "create-from"}:
+            payload = (
+                _staging_arg(args) if args.command.endswith("-from") else _read_stdin()
+            )
+            output = create_goal_bundle(args.goal, payload)
         elif args.command == "view":
             output = view_goal_bundle(args.goal)
         else:

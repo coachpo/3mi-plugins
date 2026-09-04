@@ -5,6 +5,10 @@ All verification state lives below
 initialization. `campaign/events.jsonl` is the sole durable state authority;
 each canonical event has a contiguous sequence, previous hash, content hash,
 payload, and replayable state. A per-GOAL lock protects journal mutations.
+One `advance` chains the mechanical phases and stops only at human decision
+points: `REPAIR_REQUIRED`, `BLOCKED`, a rejected audit, or `COMPLETE`;
+each phase still commits its own event, and interruption resumes exactly
+where it stopped.
 
 Initial execution is fail-stop. A complete unrepaired initial pass is the final
 regression. A failed case opens the only repair window. `record-repair` proves

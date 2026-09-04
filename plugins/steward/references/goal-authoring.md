@@ -2,10 +2,12 @@
 
 ## Bind and establish consensus
 
-Operate in the Git worktree containing the current session cwd. Freeze and
-revalidate its canonical root, Git directory, and common directory through
-`worktree_binding.py`. Repository evidence constrains the contract but does not
-expand the user's result, scope, authorization, or completion criteria.
+Operate in the Git worktree containing the current session cwd. Every
+`goal_workspace.py` command re-resolves and revalidates its canonical root,
+Git directory, and common directory at invocation time, so a separate
+binding precheck is never needed. Repository evidence constrains the contract
+but does not expand the user's result, scope, authorization, or completion
+criteria.
 
 Use only current and explicitly accepted decisions as consensus. Ask when a
 missing decision can materially change outcome, scope, authority, cost, or
@@ -58,16 +60,36 @@ Serialize one strict payload in memory:
 {"objective":"<seven lines>","context":"<verified Markdown>","acceptancePlan":{"schemaVersion":1,"sourcePolicy":{"mode":"git-visible"},"cases":[]}}
 ```
 
-Preflight and create with the current worktree as command cwd:
+The GOAL must stay within 4,000 Unicode code points and follow the canonical
+seven-line template. The JSON transport normalizes the context string.
+
+Preflight and create with the current worktree as command cwd, choosing one
+transport for the whole flow:
 
 ```text
-python3 -B "<plugin-dir>/scripts/goal_workspace.py" validate-create --goal <alias> -
 python3 -B "<plugin-dir>/scripts/goal_workspace.py" create --goal <alias> -
 ```
 
-Use a finite non-TTY pipe, or `pty_stdin_bridge.py` when delayed PTY input is
-the only transport. Freeze the exact successfully preflighted bytes before the
-single create call. Identical content is idempotent; any conflicting, partial,
+or the staged-file transport, which needs no JSON quoting at all. Write the
+canonical GOAL, context, and plan as three plain files, then create:
+
+```text
+<staging-dir>/goal.txt
+<staging-dir>/context.md
+<staging-dir>/acceptance-plan.json
+python3 -B "<plugin-dir>/scripts/goal_workspace.py" create-from --goal <alias> <staging-dir>
+```
+
+`create-from` stages exactly what lands in the bundle: `goal.txt` is parsed
+with the same 4,000-code-point seven-line contract, `acceptance-plan.json` is
+parsed strictly, and `context.md` must already be canonical (UTF-8, LF only,
+no BOM/NUL/CR, one final LF). Relative staging paths resolve against the
+worktree root; keep the staged files until create confirms success.
+
+Use `validate-create` or `validate-create-from` with the same payload for an
+optional dry run that returns the canonical manifest view without writing
+anything. Freeze the exact successfully preflighted input before the single
+create call. Identical content is idempotent; any conflicting, partial,
 tracked, linked, moved, or tampered bundle blocks without replacement.
 
 The new implementation ignores legacy flat GOAL, context, Adapter, and

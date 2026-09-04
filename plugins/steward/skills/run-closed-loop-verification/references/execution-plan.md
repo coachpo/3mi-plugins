@@ -15,7 +15,9 @@ array. Every case contains exactly:
   assertion.
 
 Inspect the executable, full argv, working directory, platform, environment
-needs, side effects, and evidence before initialization. If a trustworthy runner
+needs, side effects, and evidence before initialization. Initialization
+already revalidates everything `init` needs, so no separate preflight command
+is required. If a trustworthy runner
 does not exist after implementation, report the blocker rather than weakening
 the acceptance plan or inventing a placeholder.
 

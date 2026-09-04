@@ -70,7 +70,7 @@ $steward:<skill-name>
 
 用户或执行代理随后按 GOAL 实施。声明完成后，`run-closed-loop-verification` 用同一 alias 和同一物理目录验收：它把 acceptance intent 解析成不可变的精确 execution plan，捕获 Git 可见源码基线，并维护 hash-linked journal、attempt 和 artifacts。被 Draft 声明 waive 的非必需 case 失败会以 `WAIVED` attempt 记录并在完成报告中列为未满足的可选意图；其余失败照旧进入修补闭环。旧平铺 GOAL、context、Adapter 与 Campaign 路径完全不参与新流程。
 
-项目源码失败只能在 repair 窗口内凭失败快照、根因位置和真实 delta 接受修补；随后先定向复测失败 case，再从 case 1 完整回归。非 repair 阶段源码漂移会阻塞并要求手动恢复。只有所有 required `C*` 获得同源最终 PASS 且 audit 当前有效时才报告完成。
+项目源码失败只能在 repair 窗口内凭失败快照、根因位置和真实 delta 接受修补；随后先定向复测失败 case，再从 case 1 完整回归。一条 `advance` 会连续执行全部机械阶段（case、定向复测、完整回归、audit、完成检查），只在需要执行方介入或决策的停点返回：`REPAIR_REQUIRED`、`BLOCKED`、audit 拒绝或 `COMPLETE`；每个阶段仍各自提交 journal 事件，中断后原地续跑。非 repair 阶段源码漂移会阻塞并要求手动恢复。只有所有 required `C*` 获得同源最终 PASS 且 audit 当前有效时才报告完成。
 
 ```text
 使用 $steward:draft-consensus-goal 在当前工作树以 goal-a 别名保存 canonical GOAL、context 和 acceptance plan；不要开始执行。

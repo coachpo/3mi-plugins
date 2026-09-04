@@ -18,13 +18,22 @@ initialize with a finite stdin pipe:
 python3 -B "<skill-dir>/scripts/campaign.py" init --goal <alias> --execution-plan -
 ```
 
-Use `advance --goal <alias>` for the next journal-directed phase and
-`status --goal <alias>` for read-only inspection. On a proven project-source
-failure, make the smallest authorized repair and record its structured evidence:
+Use `advance --goal <alias>` to drive the campaign and `status --goal <alias>`
+for read-only inspection. One `advance` runs every mechanical phase in
+sequence (cases, targeted retest, full regression, audit, completion) and
+stops only where the verifier must act or decide: a proven project-source
+failure (`REPAIR_REQUIRED`), a blocker (`BLOCKED`), a rejected audit, or
+`COMPLETE`. On a proven project-source failure, make the smallest authorized
+repair and record its structured evidence:
 
 ```text
 python3 -B "<skill-dir>/scripts/campaign.py" record-repair --goal <alias> --repair -
 ```
+
+Journal events and state transitions are unchanged: each phase still commits
+its own event, and a crash mid-advance resumes exactly where it stopped.
+A happy path is `init` plus one `advance`; a repair cycle is `record-repair`
+plus one `advance`.
 
 Read [state-and-evidence.md](references/state-and-evidence.md) when diagnosing
 failure, interruption, source drift, artifact integrity, or audit rejection.

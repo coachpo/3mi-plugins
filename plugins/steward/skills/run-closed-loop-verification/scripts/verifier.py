@@ -1608,38 +1608,59 @@ def status_report(
 
 
 def advance(campaign: Campaign) -> tuple[dict[str, Any], int]:
-    status = campaign.state["status"]
-    if status == "COMPLETE":
-        report = status_report(campaign)
-        return report, 0 if report["completionStatus"] == "COMPLETE" else 1
-    if status == "AUDIT_REQUIRED":
-        return audit(campaign)
-    if status == "BLOCKED":
-        current = observe_source(campaign.root, campaign.acceptance["sourcePolicy"])
-        if current["fingerprint"] != campaign.state["sourceBaseline"]["fingerprint"]:
+    """Run the campaign until it needs a human decision or reaches completion.
+
+    Journal and state transitions are unchanged: each phase still commits its
+    own event. Chaining only removes the per-phase re-invocation between
+    mechanical steps (retest -> regression -> audit -> completion). advance
+    stops before the states where the verifier must act or decide:
+    REPAIR_REQUIRED, BLOCKED, or a rejected audit.
+    """
+    while True:
+        status = campaign.state["status"]
+        if status == "COMPLETE":
+            report = status_report(campaign)
+            return report, 0 if report["completionStatus"] == "COMPLETE" else 1
+        if status == "REPAIR_REQUIRED":
             return status_report(campaign), 1
-        resume = campaign.state.get("resumeStatus")
-        state = _copy_state(campaign.state)
-        state["status"] = resume or "PENDING"
-        state["resumeStatus"] = None
-        campaign.commit("blocker_cleared", state, {"resumeStatus": resume})
-        return advance(campaign)
-    if status == "REPAIR_REQUIRED":
-        return status_report(campaign), 1
-    if status in {"PENDING", "RETEST_REQUIRED", "REGRESSION_REQUIRED", "RUNNING"}:
-        current = observe_source(campaign.root, campaign.acceptance["sourcePolicy"])
-        if current["fingerprint"] != campaign.state["sourceBaseline"]["fingerprint"]:
+        if status == "BLOCKED":
+            current = observe_source(campaign.root, campaign.acceptance["sourcePolicy"])
+            if (
+                current["fingerprint"]
+                != campaign.state["sourceBaseline"]["fingerprint"]
+            ):
+                return status_report(campaign), 1
+            resume = campaign.state.get("resumeStatus")
             state = _copy_state(campaign.state)
-            state["status"] = "BLOCKED"
-            state["resumeStatus"] = status
-            campaign.commit(
-                "source_drift_blocked",
-                state,
-                {"observedSourceFingerprint": current["fingerprint"]},
-            )
-            return status_report(campaign), 1
-        return run_phase(campaign)
-    raise VerificationError("INVALID_STATE", f"cannot advance state {status}")
+            state["status"] = resume or "PENDING"
+            state["resumeStatus"] = None
+            campaign.commit("blocker_cleared", state, {"resumeStatus": resume})
+            continue
+        if status == "AUDIT_REQUIRED":
+            report, code = audit(campaign)
+            if code != 0:
+                return report, code
+            continue
+        if status in {"PENDING", "RETEST_REQUIRED", "REGRESSION_REQUIRED", "RUNNING"}:
+            current = observe_source(campaign.root, campaign.acceptance["sourcePolicy"])
+            if (
+                current["fingerprint"]
+                != campaign.state["sourceBaseline"]["fingerprint"]
+            ):
+                state = _copy_state(campaign.state)
+                state["status"] = "BLOCKED"
+                state["resumeStatus"] = status
+                campaign.commit(
+                    "source_drift_blocked",
+                    state,
+                    {"observedSourceFingerprint": current["fingerprint"]},
+                )
+                return status_report(campaign), 1
+            report, code = run_phase(campaign)
+            if code != 0:
+                return report, code
+            continue
+        raise VerificationError("INVALID_STATE", f"cannot advance state {status}")
 
 
 __all__ = [
