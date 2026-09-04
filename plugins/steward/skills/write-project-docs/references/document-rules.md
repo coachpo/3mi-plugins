@@ -79,17 +79,3 @@
 ## ADR 例外
 
 只有用户明确要求 ADR 工作时，才创建、重写、移动或整理 ADR。保留现有 ADR，并从架构文档链接相关记录。新 ADR 记录状态、日期、上下文、备选方案、决定和后果；除非用户要求 ADR 审查，不报告未被记录的决定。
-
-## 项目不变量映射
-
-项目已有 `.steward/invariants.json` 或任务明确要求应用架构 profile/维护不变量时，对应的 canonical 项目文档仍是本地规则正文的唯一权威。每个 binding 的 `authority.path` 必须选中对应语言的 canonical 政策文档，`authority.anchor` 用独占一行的 `<a id="<lower-case-invariant-id>"></a>` 精确出现一次并紧邻其权威规则；不在 `AGENTS.md` 或 JSON 中复制正文。
-
-任何获授权的 `.steward/` 写入前，先运行 `goal_workspace.py ensure-root <project-root>`。该命令只建立或验证 worktree-local 的根自忽略合同；tracked、符号链接或错误 ignore 布局立即阻塞，不通过修改仓库根 `.gitignore`、`.git/info/exclude` 或共享 Git 配置绕过。
-
-Profile 映射先走插件的确定性编译器，不从文件名或依赖名称直接猜测。运行 `python3 <skill-dir>/../../scripts/architecture_profiles.py validate` 后，准备 schema v1 evidence：`components` 非空并按唯一 project-relative `scope` 组织，`signals` 使用 catalog token，`capabilities` 的 key 排序且值只用 `present`、`absent`、`unknown`。用同一脚本依次执行 `select --evidence ... --output ...` 固定 catalog/profile 选择，再执行 `compile --selection ... --output ...` 产生 digest-bound 的 scope、profile id/version/digest、不变量、检查、场景和 `applicabilityByScope`；两个命令只编译数据，不执行 profile 中的检查模板。选择与编译产物不匹配、digest 漂移或证据仍为 `unknown` 时不得手工修补输出。
-
-把 compiled 不变量投影到索引时，用 map-level `profileSelection.path` 指向 selector 产物，并令 `profileSelection.digest` 精确等于其已验证的 `contentDigest`；loader 会根据捆绑 catalog 重新编译，不信任另存的 compiled JSON。每个 compiled 硬不变量 ID 只保留一个 binding，精确保留 profile pin、合并后的 scopes 和排序的 `applicabilityByScope`。singular `applicability` 采用保守格：任一 scope 为 `applicable` 则整体为 `applicable`；否则任一 scope 为 `unverified` 则整体为 `unverified`；只有所有选中 scope 都是 `not_applicable` 且有技术证据与原因时，整体才能是 `not_applicable`。`status` 独立记录项目控制的审计结果，不从编译器适用性推导；路由只列 `applicable` 或 `unverified` 的触发 scope。
-
-Profile 来源绑定精确记录 catalog 的 profile id、profileVersion、profileDigest 和其中已有的稳定不变量 ID。Project 来源只用于本项目自身已确认的硬约束，记录本地版本与内容 digest；语义变化保留 ID 并推进版本/digest，不重新编号或复用旧 ID。一个 ID 的多个组件范围写入同一 binding 的 `scopes`，不复制 binding。
-
-`direct`、`equivalent`、`not_applicable`、`unverified`、`noncompliant`、`accepted_deviation` 和 `migrating` 是审计状态，不是规范强度。`equivalent` 必须记录等效控制，`not_applicable` 必须与 capability/scope 证据及原因同时成立；缺少证据是 `unverified`，不是自动合规或不合规。声称 `mechanical` enforcement 时必须提供仓库内可解析证据和非空 validation entry，否则按人工审查记录，不得虚构自动化。

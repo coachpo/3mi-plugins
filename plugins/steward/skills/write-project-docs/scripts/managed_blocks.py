@@ -263,17 +263,6 @@ def _markdown_lines(text: str) -> list[_MarkdownLine]:
     return lines
 
 
-def _asset_boundary_lines(asset: str, label: str) -> tuple[str, str]:
-    content_lines = [
-        line.rstrip("\r\n")
-        for line in asset.splitlines(keepends=True)
-        if line.rstrip("\r\n").strip()
-    ]
-    if not content_lines:
-        raise ManagedBlockError(f"{label} 不得为空")
-    return content_lines[0], content_lines[-1]
-
-
 def _visible_h2_title_positions(
     lines: list[_MarkdownLine], title: str
 ) -> list[tuple[int, str]]:
@@ -313,32 +302,10 @@ def visible_markdown_lines(text: str) -> tuple[str, ...]:
     return tuple(line.text for line in _markdown_lines(text) if line.visible)
 
 
-def visible_markdown_line_spans(text: str) -> tuple[BlockSpan, ...]:
-    """Return complete source-line spans exposed as ordinary Markdown text."""
-
-    return tuple(
-        BlockSpan(line.start, line.end)
-        for line in _markdown_lines(text)
-        if line.visible
-    )
-
-
 def markdown_line_spans(text: str) -> list[tuple[int, int, bool]]:
     """Return every physical Markdown line with its visibility state."""
 
     return [(line.start, line.end, line.visible) for line in _markdown_lines(text)]
-
-
-def visible_exact_line_spans(
-    text: str, candidates: frozenset[str]
-) -> tuple[BlockSpan, ...]:
-    """Return spans of visible source lines exactly matching ``candidates``."""
-
-    return tuple(
-        BlockSpan(line.start, line.end)
-        for line in _markdown_lines(text)
-        if line.visible and line.text in candidates
-    )
 
 
 def visible_atx_heading_positions(
@@ -364,128 +331,6 @@ def visible_atx_headings(text: str) -> tuple[tuple[int, str, int], ...]:
         if heading is not None:
             headings.append((heading[0], heading[1], line.start))
     return tuple(headings)
-
-
-def has_visible_h1_or_h2(text: str) -> bool:
-    """Return whether Markdown exposes an ATX or Setext H1/H2 heading."""
-
-    lines = _markdown_lines(text)
-    for index, line in enumerate(lines):
-        if not line.visible:
-            continue
-        heading = _atx_heading(line.text)
-        if heading is not None and heading[0] <= 2:
-            return True
-        indentation = len(line.text) - len(line.text.lstrip(" "))
-        candidate = line.text[indentation:]
-        if (
-            index > 0
-            and indentation <= 3
-            and re.fullmatch(r"(?:=+|-+)[ \t]*", candidate)
-        ):
-            previous = lines[index - 1]
-            if previous.visible and previous.text.strip(" \t"):
-                return True
-    return False
-
-
-def locate_visible_asset_block(
-    text: str,
-    asset: str,
-    section_titles: tuple[str, ...],
-    label: str,
-) -> BlockSpan | None:
-    """Locate one visible asset by stable first/last lines and ATX H2 titles."""
-
-    if not section_titles:
-        raise ValueError("section_titles 不得为空")
-    if len(set(section_titles)) != len(section_titles):
-        raise ValueError("section_titles 不得重复")
-    first_line, last_line = _asset_boundary_lines(asset, label)
-    lines = _markdown_lines(text)
-    all_first_matches = [line for line in lines if line.text == first_line]
-    all_last_matches = [line for line in lines if line.text == last_line]
-    first_matches = [line for line in all_first_matches if line.visible]
-    last_matches = [line for line in all_last_matches if line.visible]
-    hidden_first_matches = [line for line in all_first_matches if not line.visible]
-    hidden_last_matches = [line for line in all_last_matches if not line.visible]
-
-    if hidden_first_matches and hidden_last_matches:
-        raise ManagedBlockError(
-            f"{label} 的首尾边界同时出现在代码围栏或 HTML block 内"
-        )
-
-    raw_position_set: set[int] = set()
-    for asset_variant in {asset, asset.replace("\n", "\r\n")}:
-        cursor = 0
-        while True:
-            position = text.find(asset_variant, cursor)
-            if position < 0:
-                break
-            raw_position_set.add(position)
-            cursor = position + 1
-    raw_positions = sorted(raw_position_set)
-
-    if not first_matches and not last_matches:
-        if raw_positions:
-            raise ManagedBlockError(f"{label} 只出现在代码围栏或 HTML block 内")
-        return None
-    if len(first_matches) != 1 or len(last_matches) != 1:
-        raise ManagedBlockError(f"{label} 的可见首尾边界行必须各出现一次")
-
-    start_line = first_matches[0]
-    end_line = last_matches[0]
-    if end_line.start < start_line.start:
-        raise ManagedBlockError(f"{label} 的可见首尾边界行顺序错误")
-
-    title_positions: list[int] = []
-    for title in section_titles:
-        matching_positions = _visible_h2_title_positions(lines, title)
-        if len(matching_positions) != 1:
-            raise ManagedBlockError(
-                f"{label} 必须且只能包含一个“## {title}”标题"
-            )
-        title_position, title_style = matching_positions[0]
-        if not (
-            title_style == "atx"
-            and start_line.start <= title_position <= end_line.start
-        ):
-            raise ManagedBlockError(
-                f"{label} 的“## {title}”标题必须位于可见首尾边界内"
-            )
-        title_positions.append(title_position)
-
-    if title_positions != sorted(title_positions):
-        raise ManagedBlockError(f"{label} 的标题顺序错误")
-
-    allowed_title_positions = set(title_positions)
-    for line in lines:
-        if not (
-            line.visible and start_line.start <= line.start <= end_line.start
-        ):
-            continue
-        heading = _atx_heading(line.text)
-        indentation = len(line.text) - len(line.text.lstrip(" "))
-        if indentation <= 3 and re.fullmatch(
-            r"(?:=+|-+)[ \t]*", line.text[indentation:]
-        ):
-            raise ManagedBlockError(
-                f"{label} 的可见首尾边界之间不得出现 Setext 标题或歧义分隔线"
-            )
-        if (
-            heading is not None
-            and heading[0] <= 2
-            and line.start not in allowed_title_positions
-        ):
-            raise ManagedBlockError(
-                f"{label} 的可见首尾边界之间不得出现其他 H1/H2 标题"
-            )
-
-    if len(raw_positions) > 1 or (
-        raw_positions and raw_positions[0] != start_line.start
-    ):
-        raise ManagedBlockError(f"{label} 在不可见位置重复或边界冲突")
-    return BlockSpan(start=start_line.start, end=end_line.end)
 
 
 def _is_inside_hidden_markdown_block(data: TextData, position: int) -> bool:

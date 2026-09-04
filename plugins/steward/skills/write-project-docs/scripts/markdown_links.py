@@ -176,25 +176,6 @@ def _link_matches(
     return matches
 
 
-def extract_link_targets(text: str) -> list[str]:
-    """Return visible inline and reference link targets, as written."""
-
-    targets: list[str] = []
-    code_spans = _visible_inline_code_spans(text)
-    for start, end, visible in markdown_line_spans(text):
-        if not visible:
-            continue
-        line = text[start:end].rstrip("\r\n")
-        line_end = start + len(line)
-        targets.extend(
-            match.group("target")
-            for match in _link_matches(
-                line, _relative_spans(code_spans, start, line_end)
-            )
-        )
-    return targets
-
-
 @dataclass(frozen=True)
 class _TargetParts:
     """One link target split into the path and whatever trails it."""

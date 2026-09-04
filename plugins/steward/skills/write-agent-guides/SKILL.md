@@ -1,6 +1,6 @@
 ---
 name: write-agent-guides
-description: "Review or maintain an evidence-based AGENTS.md hierarchy for a code repository: shared root guidance, only material subtree differences, and a short managed engineering router when an invariant map exists. Use write-project-docs for canonical project documentation and invariant authority anchors."
+description: "Review or maintain an evidence-based AGENTS.md hierarchy for a code repository: shared root guidance and only material subtree differences. Use write-project-docs for canonical project documentation."
 ---
 
 # Write AGENTS.md Guides
@@ -10,17 +10,11 @@ work, which project-specific constraints apply, and how to validate changes.
 Root guidance carries shared rules; nested files contain only evidence-backed
 local deltas.
 
-Resolve this skill directory as `<skill-dir>`; bundled assets and scripts are
-relative to it.
-
 ## Outcome and authority
 
 Success means every written rule has repository evidence and a clear scope, the
 effective hierarchy has no harmful conflict or parent repetition, commands are
-verified, and changed files plus relevant checks are reported accurately. When
-`.steward/invariants.json` exists, root guidance also carries the managed short
-route `trigger → authority → INV IDs → validation entry` without copying the
-canonical rule text.
+verified, and changed files plus relevant checks are reported accurately.
 
 Review, explanation, diagnosis, report, and planning requests are read-only.
 Create, repair, refresh, or update requests authorize the affected local
@@ -59,16 +53,6 @@ high-risk constraints. Prefer structured code tools for symbols and boundaries;
 cross-check commands against manifests, task definitions, tests, and CI. Omit or
 label facts that remain uncertain after one meaningful alternative check.
 
-If `.steward/invariants.json` exists, read
-[`invariant-contract.md`](../../references/invariant-contract.md) and run:
-
-```text
-python3 -B "<skill-dir>/scripts/validate_engineering_router.py" "<project-root>"
-```
-
-The map is routing evidence, not authority. If it does not exist, do not create
-it or add an empty router.
-
 ## Choose hierarchy and language
 
 Create or keep a nested `AGENTS.md` only when all are true: the subtree has a
@@ -80,9 +64,7 @@ List obsolete nested files as removal candidates; deletion still needs authority
 Use the user's requested language. Otherwise preserve the effective root
 guidance language, then the established repository-document language. New nested
 files follow root. Never infer Simplified Chinese from a CJK percentage or use it
-as a fallback for another language. The bundled engineering-router assets support
-Simplified Chinese and English; for another root language, preserve existing
-content and report the unsupported managed block instead of silently translating.
+as a fallback for another language.
 
 ## Write and verify
 
@@ -93,17 +75,8 @@ commands, project-specific invariants, generated boundaries, and high-risk areas
 Omit generic software advice, timestamps, commits, exhaustive trees, and facts
 already obvious from names.
 
-Preserve all foreign managed blocks byte-for-byte. The engineering-router block
-is owned here but must be updated only through:
-
-```text
-python3 -B "<skill-dir>/scripts/update_engineering_router.py" "<project-root>"
-python3 -B "<skill-dir>/scripts/validate_engineering_router.py" "<project-root>"
-```
-
-The updater owns safe marker placement and drift detection; do not reproduce its
-locking, parser, or CAS implementation in the guide. It must fail without
-changing the file when markers, source bindings, or insertion context are unsafe.
+Preserve all foreign managed blocks byte-for-byte; this skill owns no managed
+block of its own.
 
 Re-read every changed file and verify hierarchy, evidence, commands, managed
 boundaries, nested-file value, and merged visibility. Run

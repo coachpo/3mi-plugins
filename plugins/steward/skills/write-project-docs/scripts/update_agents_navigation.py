@@ -19,10 +19,6 @@ from canonical_paths import (
     resolve_project_docs,
 )
 from doc_anchors import LanguageProfile, profile_for
-from invariant_contract import (  # noqa: E402
-    ROUTER_END_MARKER,
-    ROUTER_START_MARKER,
-)
 from managed_blocks import (
     ManagedBlockError,
     locate_all_managed_blocks,
@@ -126,31 +122,8 @@ def normalize_legacy_paths(
 
     try:
         managed_blocks = locate_all_managed_blocks(text)
-        router_span = locate_managed_block(
-            text,
-            ROUTER_START_MARKER,
-            ROUTER_END_MARKER,
-            "根 AGENTS.md 的工程路由区块",
-        )
     except ManagedBlockError as error:
         raise ValueError(str(error)) from error
-
-    try:
-        navigation_span = locate_managed_block(
-            text,
-            START_MARKER,
-            END_MARKER,
-            "根 AGENTS.md 的文档区块",
-        )
-    except ManagedBlockError as error:
-        raise ValueError(str(error)) from error
-    if router_span is not None and navigation_span is not None:
-        separated = (
-            router_span.end <= navigation_span.start
-            or navigation_span.end <= router_span.start
-        )
-        if not separated:
-            raise ValueError("根 AGENTS.md 的工程路由与文档导航区块不得嵌套")
 
     protected_spans = sorted(
         (span for _name, span in managed_blocks), key=lambda span: span.start

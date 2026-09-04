@@ -1,6 +1,6 @@
 interface:
   display_name: "Write AGENTS.md Guides"
-  short_description: "维护分层 AGENTS.md 与必要的工程导航"
+  short_description: "维护分层、有证据支撑的 AGENTS.md"
   default_prompt: "使用 $steward:write-agent-guides 基于仓库事实维护本次请求影响的 AGENTS.md 层级；根文件保留共享规则，子树只写真实差异，规范正文链接到 canonical 文档，并验证命令、链接和作用域。"
 
 policy:

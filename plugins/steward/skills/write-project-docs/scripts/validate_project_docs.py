@@ -7,23 +7,17 @@ import argparse
 import re
 import sys
 from pathlib import Path
-from urllib.parse import unquote, urlsplit
 
-GUIDE_SCRIPTS = Path(__file__).resolve().parents[2] / "write-agent-guides" / "scripts"
-if str(GUIDE_SCRIPTS) not in sys.path:
-    sys.path.insert(0, str(GUIDE_SCRIPTS))
-
-from canonical_paths import (  # noqa: E402
+from canonical_paths import (
     ALWAYS_REQUIRED_PATHS,
     CANONICAL_DOCUMENTS,
     ProjectDocsContext,
     add_language_argument,
-    canonical_path_mappings,
     render_template,
     requested_language,
     resolve_project_docs,
 )
-from contributing_blocks import (  # noqa: E402
+from contributing_blocks import (
     ContributingBlockError,
     DevelopmentTier,
     all_legacy_mvp_heading_positions,
@@ -34,18 +28,12 @@ from contributing_blocks import (  # noqa: E402
     render_contributing_assets,
     strategy_heading_positions,
 )
-from doc_anchors import profile_for  # noqa: E402
-from managed_blocks import (  # noqa: E402
+from doc_anchors import profile_for
+from managed_blocks import (
     ManagedBlockError,
     locate_managed_block,
     markdown_h1_lines,
 )
-from markdown_links import (  # noqa: E402
-    extract_link_targets,
-    replace_visible_link_targets,
-    visible_path_mentions,
-)
-from validate_engineering_router import validate_engineering_router  # noqa: E402
 
 COMPETING_PATHS = (
     "docs/INDEX.md",
@@ -79,9 +67,6 @@ DEVELOPMENT_START_MARKER = (
 DEVELOPMENT_END_MARKER = (
     "<!-- write-project-docs:development-source-size:end -->"
 )
-LEGACY_DOC_PATHS = (
-    "docs/INDEX.md",
-)
 
 _THRESHOLD_VALUE = r"(?<!\d)`?(?:240|300|50)`?(?!\d)"
 _THRESHOLD_UNIT = r"(?:行|lines?)"
@@ -104,7 +89,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
             "验证固定项目文档的中英文 canonical 路径、共享内容、"
-            "开发规范专项引用、根 AGENTS.md 文档区块和本地 Markdown 链接。"
+            "开发规范专项引用和根 AGENTS.md 文档区块。"
         )
     )
     parser.add_argument(
@@ -117,13 +102,9 @@ def parse_args() -> argparse.Namespace:
         "--strict",
         action="store_true",
         help=(
-            "把旧 canonical 路径、嵌套 AGENTS.md 引用、可能重复规则等迁移警告"
+            "把竞争/遗留 canonical 路径、可能重复的规模阈值等迁移警告"
             "视为失败；共享内容缺失、漂移或区块边界错误在普通模式也会失败。"
         ),
-    )
-    parser.add_argument(
-        "--profiles-root",
-        help="可选的架构 profile 包根目录；默认使用插件捆绑资源。",
     )
     add_language_argument(parser)
     return parser.parse_args()
@@ -147,37 +128,6 @@ def display_path(path: Path, root: Path) -> str:
         return str(path)
 
 
-def legacy_path_mappings(
-    selected: dict[str, str] | None,
-) -> tuple[tuple[str, str], ...]:
-    """Every stale path plus the selected path a rewrite would send it to."""
-
-    mappings = () if selected is None else canonical_path_mappings(selected)
-    return mappings + tuple(
-        (legacy, "docs/README.md") for legacy in LEGACY_DOC_PATHS
-    )
-
-
-def legacy_link_references(
-    text: str, selected: dict[str, str] | None
-) -> list[str]:
-    """Stale paths sitting in link targets, which the updater can fix."""
-
-    _, replacements = replace_visible_link_targets(
-        text, legacy_path_mappings(selected)
-    )
-    return replacements
-
-
-def legacy_prose_references(
-    text: str, selected: dict[str, str] | None
-) -> list[tuple[int, str]]:
-    """Stale paths outside links, which need a human decision."""
-
-    stale_paths = tuple(old for old, _ in legacy_path_mappings(selected))
-    return visible_path_mentions(text, stale_paths)
-
-
 def complete_managed_asset_issue(
     data: bytes, start_marker: str, end_marker: str, label: str
 ) -> str | None:
@@ -197,32 +147,6 @@ def complete_managed_asset_issue(
         return f"{label} 缺少 marker"
     if span.start != 0 or span.end != len(data):
         return f"{label} 的 marker 必须包围整个 asset"
-    return None
-
-
-def validate_link(source: Path, raw_target: str, root: Path) -> str | None:
-    target = raw_target.strip()
-    if target.startswith("<") and target.endswith(">"):
-        target = target[1:-1]
-    if not target or target.startswith("#"):
-        return None
-
-    parsed = urlsplit(target)
-    if parsed.scheme or target.startswith("//") or target.startswith("/"):
-        return None
-
-    relative_path = unquote(parsed.path)
-    if not relative_path:
-        return None
-
-    resolved = (source.parent / relative_path).resolve()
-    try:
-        resolved.relative_to(root)
-    except ValueError:
-        return f"{display_path(source, root)}: 链接越出项目根目录：{raw_target}"
-
-    if not resolved.exists():
-        return f"{display_path(source, root)}: 本地链接目标不存在：{raw_target}"
     return None
 
 
@@ -602,17 +526,6 @@ def check_language_anchors(
                             "根 AGENTS.md 的文档区块已漂移，"
                             "必须用 asset 完整替换"
                         )
-            for replacement in legacy_link_references(agents_text, selected):
-                errors.append(
-                    f"AGENTS.md: 链接仍指向旧 canonical 路径：{replacement}"
-                )
-            for line_number, legacy_path in legacy_prose_references(
-                agents_text, selected
-            ):
-                warnings.append(
-                    f"AGENTS.md:{line_number}: 正文提到旧 canonical 路径："
-                    f"{legacy_path}；不是链接目标，需人工确认是否为外部引用"
-                )
 
     return errors, warnings
 
@@ -649,16 +562,9 @@ def main() -> int:
         root, language=requested_language(args.language)
     )
     errors.extend(context.errors)
-    router_errors = validate_engineering_router(
-        root,
-        profiles_root=Path(args.profiles_root) if args.profiles_root else None,
-        language=args.language,
-    )
-    errors.extend(f"工程路由：{error}" for error in router_errors)
     # 语言未确定时，锚点和 asset 比对只会基于回退语言给出误导性结论；
     # 下面与语言无关的检查照常执行，一并报告。
     if context.language_resolved:
-        selected: dict[str, str] | None = context.selected
         anchor_errors, anchor_warnings = check_language_anchors(
             root, skill_root, context
         )
@@ -670,7 +576,6 @@ def main() -> int:
         }
         development_rules_path: str | None = context.selected["development_rules"]
     else:
-        selected = None
         size_rule_paths = {
             candidate
             for document in CANONICAL_DOCUMENTS
@@ -678,8 +583,6 @@ def main() -> int:
             for candidate in (document.chinese_path, document.english_path)
         }
         development_rules_path = None
-
-    root_agents = root / "AGENTS.md"
 
     docs = markdown_files(root)
     for path in docs:
@@ -694,10 +597,6 @@ def main() -> int:
         except UnicodeDecodeError:
             errors.append(f"{display_path(path, root)}: 不是有效 UTF-8 Markdown")
             continue
-        for target in extract_link_targets(text):
-            issue = validate_link(path, target, root)
-            if issue:
-                errors.append(issue)
 
         relative = path.relative_to(root).as_posix()
         if relative not in size_rule_paths:
@@ -711,35 +610,6 @@ def main() -> int:
                         errors.append(message)
                     else:
                         warnings.append(message)
-
-    for agents_path in sorted(root.rglob("AGENTS.md")):
-        relative_path = agents_path.relative_to(root)
-        if agents_path == root_agents or any(
-            part in IGNORED_PARTS for part in relative_path.parts
-        ):
-            continue
-        relative = relative_path.as_posix()
-        if agents_path.is_symlink():
-            warnings.append(f"{relative}: 嵌套 AGENTS.md 是符号链接，未检查旧路径")
-            continue
-        if not agents_path.is_file():
-            continue
-        try:
-            agents_text = agents_path.read_text(encoding="utf-8")
-        except UnicodeDecodeError:
-            continue
-        for replacement in legacy_link_references(agents_text, selected):
-            warnings.append(
-                f"{relative}: 嵌套 AGENTS.md 的链接仍指向旧 canonical 路径："
-                f"{replacement}"
-            )
-        for line_number, legacy_path in legacy_prose_references(
-            agents_text, selected
-        ):
-            warnings.append(
-                f"{relative}:{line_number}: 嵌套 AGENTS.md 的正文提到旧 canonical "
-                f"路径：{legacy_path}"
-            )
 
     if errors:
         print("错误：")

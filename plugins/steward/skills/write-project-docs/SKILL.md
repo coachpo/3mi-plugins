@@ -1,6 +1,6 @@
 ---
 name: write-project-docs
-description: Review or maintain a repository's canonical product, status, architecture, development, contributing, and source-responsibility documentation from verified project facts. Use for focused document work, full documentation initialization/migration, STATUS-controlled static development-tier strategies, or an existing/requested invariant map; use write-agent-guides for AGENTS.md hierarchy and engineering routing.
+description: Review or maintain a repository's canonical product, status, architecture, development, contributing, and source-responsibility documentation from verified project facts. Use for focused document work, full documentation initialization/migration, or STATUS-controlled static development-tier strategies; use write-agent-guides for AGENTS.md hierarchy.
 ---
 
 # Write Project Documentation
@@ -30,9 +30,8 @@ relative to it.
 | `docs/源代码规模与职责规则.md` or `docs/source-code-size-and-responsibility-rules.md` | Shared source responsibility policy rendered from bundled assets. |
 
 Root `AGENTS.md` is a navigation/agent-behavior surface, not a ninth canonical
-document. `.steward/invariants.json` is a machine map, not documentation; its
-write authority is defined below. `CLAUDE.md` is not a canonical document and is
-outside this skill's write and validation scope.
+document. `CLAUDE.md` is not a canonical document and is outside this skill's
+write and validation scope.
 
 ## Mode and authority
 
@@ -41,12 +40,6 @@ maintain, merge, standardize, repair, or migrate request authorizes local edits
 only to the documents and managed blocks affected by that request, plus relevant
 non-destructive validation. It does not authorize filling every missing canonical
 document.
-
-An authorized update to an existing invariant map, or an explicit
-profile/invariant request, also authorizes its named `.steward` files and
-`ensure-root` creation or validation of the real directory and exact `*\n`
-`.steward/.gitignore`. It authorizes no other Steward control artifact. Ordinary
-documentation work never runs `ensure-root`.
 
 File deletion, moves, archival, cleanup outside the authorized document or
 managed-block write set, external writes, source/configuration/CI edits, or
@@ -82,23 +75,15 @@ project between supported canonical language sets is an explicit migration.
    when the request creates, updates, validates, migrates, or consumes the
    required development tier or managed strategy. The exact `STATUS.md` tier
    selects one bundled static strategy and never creates new authority.
-5. Read the shared invariant and architecture-selection contracts only when the
-   invariant map exists or profile/invariant maintenance was requested. Then run
-   the deterministic `architecture_profiles.py validate → select → compile`
-   chain with evidence-based tri-state capabilities; never guess profiles,
-   execute profile checks, or create an index for ordinary document work. Before
-   an authorized write below `.steward/`, run
-   `python3 -B "<skill-dir>/../../scripts/goal_workspace.py" ensure-root "<project-root>"`;
-   stop if the root contract rejects the existing layout.
-6. Update only affected and authorized files. Use the bundled updaters for owned
+5. Update only affected and authorized files. Use the bundled updaters for owned
    marker blocks; do not hand-edit those regions or copy their implementation
    details into documentation.
-7. Validate, inspect the exact diff, and correct only in-scope errors.
+6. Validate, inspect the exact diff, and correct only in-scope errors.
 
 For a single-document request, steps concerning unrelated canonical documents,
-development tier/strategy, profile/invariants, language migration, and managed
-navigation are skipped. Full initialization/migration may traverse the whole
-route because that outcome was explicitly requested.
+development tier/strategy, language migration, and managed navigation are
+skipped. Full initialization/migration may traverse the whole route because
+that outcome was explicitly requested.
 
 ## Deterministic updates and validation
 
@@ -118,10 +103,9 @@ python3 -B "<skill-dir>/scripts/validate_project_docs.py" "<project-root>"
 Also run relevant repository documentation checks. Use strict diagnostics for an
 authorized migration, file removal, archival, or other destructive cleanup. A
 validator proves structure, the complete static tier catalog, selected-strategy
-consistency, managed-block consistency, and local link validity; it does not
-replace semantic review of the prose.
-If an invariant map changed, hand engineering-router synchronization explicitly
-to `write-agent-guides` before claiming the whole route is current.
+consistency, and managed-block consistency; it does not replace semantic review
+of the prose or check local link validity — report broken or stale links you
+notice while reading, but do not treat link-checking as automated.
 
 On resume, re-resolve the project, language, canonical paths, exact development
 tier, write set, managed boundaries, and affected asset snapshots. Preserve
@@ -131,12 +115,12 @@ change.
 ## Complete and report
 
 Complete a write task only when every affected required document has substantive
-content, owned blocks and links validate, applicable repository checks pass, and
-the diff contains no out-of-set change. For migration or destructive cleanup,
-strict diagnostics must pass or the remaining unauthorized cleanup must be
-reported exactly.
+content, owned blocks validate, applicable repository checks pass, and the diff
+contains no out-of-set change. For migration or destructive cleanup, strict
+diagnostics must pass or the remaining unauthorized cleanup must be reported
+exactly.
 
 Lead with the outcome, then list changed and deliberately preserved files,
 canonical evidence, language and development-tier decisions, validation results,
-cleanup candidates, unverified items, router follow-up, and the smallest
-remaining action. Omit routine process narration.
+cleanup candidates, unverified items, and the smallest remaining action. Omit
+routine process narration.
