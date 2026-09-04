@@ -1,7 +1,7 @@
 interface:
   display_name: "Analyze Change Request"
-  short_description: "基于项目事实与外部证据分析变更请求并生成候选需求"
-  default_prompt: "使用 $steward:analyze-change-request 分析当前明确的软件变更请求，按需核实仓库事实、精确版本官方资料、适用约束和独立实践，输出带来源、可验收但尚未接受的候选需求；不写文件、不生成 GOAL、不实施。"
+  short_description: "基于项目事实与外部证据分析变更请求并输出需求分析"
+  default_prompt: "使用 $steward:analyze-change-request 分析当前明确的软件变更请求，按需核实仓库事实、精确版本官方资料、适用约束和独立实践，输出带来源、可验收、并标明授权来源（用户要求/外部约束/建议）的需求分析；不写文件、不生成 GOAL、不实施。"
 
 policy:
   allow_implicit_invocation: false

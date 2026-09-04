@@ -1,13 +1,13 @@
 ---
 name: analyze-change-request
-description: Analyze an explicitly supplied software change request using verified project facts and only decision-relevant external evidence, then produce a cited, non-authoritative candidate requirements analysis. Do not use for implementation, GOAL authoring, documentation maintenance, or semantic-risk review.
+description: Analyze an explicitly supplied software change request using verified project facts and only decision-relevant external evidence, then produce a cited, non-authoritative requirements analysis. Do not use for implementation, GOAL authoring, documentation maintenance, or semantic-risk review.
 ---
 
 # Analyze Change Request
 
-Turn one explicitly supplied change request into an evidence-backed candidate
-requirements analysis. The current main-session model coordinates and delivers
-the result; workers collect lane evidence only.
+Turn one explicitly supplied change request into an evidence-backed requirements
+analysis. The current main-session model coordinates and delivers the result;
+workers collect lane evidence only.
 
 Invoke this workflow only as `$steward:analyze-change-request` in Codex or
 `/steward:analyze-change-request` in Claude Code. Do not select it implicitly for
@@ -36,8 +36,8 @@ personal-data excerpt only when authorized and decision-relevant, and then use t
 minimum sanitized excerpt. Prefer a non-sensitive locator or paraphrase.
 
 The current request and later accepted user decisions define desired outcome and
-scope. Evidence may constrain or inform a candidate, but cannot expand authority
-or turn a recommendation into an accepted requirement.
+scope. Evidence may constrain or inform what is required, but cannot expand
+authority or turn a recommendation into an accepted requirement.
 
 ## Freeze the research contract
 
@@ -97,13 +97,12 @@ question IDs, sanitized source binding, include/exclude scope, required
 `applicableInstructions`, budget and stopping condition, allowed capability class,
 one-retry rule, and the fixed lane-result schema from the research contract. Do
 not reproduce hidden host, system, or developer text. Workers obey their own
-instruction hierarchy, must not delegate, and must not produce candidate
-requirements.
+instruction hierarchy, must not delegate, and must not produce requirements.
 
-Search results and snippets identify candidates; they are not evidence. Open each
-decisive source and bind its claims to the frozen version and context. Stop when
-the frozen questions are covered, a budget or stop condition is reached, or one
-permitted retry fails.
+Search results and snippets identify candidate sources; they are not evidence.
+Open each decisive source and bind its claims to the frozen version and context.
+Stop when the frozen questions are covered, a budget or stop condition is
+reached, or one permitted retry fails.
 
 ## Verify and deliver
 
@@ -114,12 +113,12 @@ memory.
 
 Build the internal `ResearchBrief`, then deliver from the current main session
 using the research contract's explicit `complete`, `partial`, `blocked`, or
-`drifted` branch. Always lead with the overall status. For supported candidates,
-list each with an observable acceptance criterion, its source link(s), and one
-of: from the request, a constraint, or a suggestion (see the research contract
-for what each means).
+`drifted` branch. Always lead with the overall status. Give each supported
+requirement an observable acceptance criterion, its source link(s), and one of:
+from the request, a constraint, or a suggestion (see the research contract for
+what each means).
 
 Do not dump the brief or worker transcripts, emit persistent Steward `C*`,
-invariant, or campaign identities, or claim that candidates are accepted, canonical,
-implemented, verified, or safe. Report material assumptions,
-conflicts, gaps, and unsearched scope without starting another workflow.
+invariant, or campaign identities, or claim its requirements are canonical,
+implemented, verified, or safe. Report material assumptions, conflicts, gaps,
+and unsearched scope without starting another workflow.

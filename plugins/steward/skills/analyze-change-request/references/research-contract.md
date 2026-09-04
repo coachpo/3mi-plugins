@@ -76,7 +76,7 @@ there is no value. A prose summary or arbitrary subset is invalid.
 - `status`: `complete`, `partial`, `blocked`, or `drifted`;
 - `questionIds`, sanitized `sourceBinding`, and
   `applicableInstructionsApplied`;
-- `directAnswer`, without cross-lane judgment or candidate requirements;
+- `directAnswer`, without cross-lane judgment or requirements;
 - `sources`: the link/locator plus one-line takeaway from above, one per
   decisive source;
 - `searched`, `unsearched`, `conflicts`, and `gaps`;
@@ -95,7 +95,7 @@ Keep these fields in conversation:
 - valid lane results, their sources, and the facts, inferences, and
   recommendations they support;
 - `conflicts`, `gaps`, `searched`, `unsearched`, and meaningful limitations;
-- candidate requirement implications and decisions still owned by the user;
+- requirement implications and decisions still owned by the user;
 - aggregate `status` using the rules below.
 
 Classify aggregate status as:
@@ -105,17 +105,17 @@ Classify aggregate status as:
 - `partial`: stable useful evidence supports some analysis, but a declared gap,
   conflict, failed lane, or budget limit prevents complete coverage;
 - `blocked`: unresolved target identity, authority, access, or required evidence
-  prevents any evidence-backed candidate analysis;
+  prevents any evidence-backed requirements analysis;
 - `drifted`: the frozen target binding or decisive evidence changed enough to
-  invalidate the candidate analysis.
+  invalidate the analysis.
 
 Do not report `complete` when a required lane result is malformed, a decisive
 source has unresolved drift, or a material conflict or gap remains.
 
-## Classify candidate requirements
+## Attribute each requirement
 
-For each supported candidate, state the requirement and an observable acceptance
-criterion, and tag it with exactly one status:
+For each supported requirement, state it with an observable acceptance
+criterion, and tag it with exactly one authority source:
 
 - **from the request:** directly authorized by what the user asked for or
   already accepted;
@@ -125,7 +125,7 @@ criterion, and tag it with exactly one status:
 - **suggestion:** an evidence-supported recommendation that remains unaccepted
   until the user decides.
 
-Link each candidate to its supporting source(s) or to the restated request
+Link each requirement to its supporting source(s) or to the restated request
 directly above it — a separate ID-cross-reference table is not needed. Project
 evidence does not make the current design immutable; external evidence does not
 prove user acceptance. A user may change scope to avoid an otherwise applicable
@@ -139,15 +139,15 @@ Start every answer with `Overall status: complete|partial|blocked|drifted` and u
 only the matching branch:
 
 - **complete:** lead with the proposed outcome, then the relevant request basis,
-  supported candidates, acceptance criteria, sources, material alternatives, and
-  any non-material limitations;
-- **partial:** label the outcome provisional, include only candidates supported by
-  stable evidence, and identify coverage gaps, affected conclusions, unsearched
-  scope, and the smallest next action;
-- **blocked:** do not emit candidates; identify the exact missing identity,
+  supported requirements, acceptance criteria, sources, material alternatives,
+  and any non-material limitations;
+- **partial:** label the outcome provisional, include only requirements
+  supported by stable evidence, and identify coverage gaps, affected
+  conclusions, unsearched scope, and the smallest next action;
+- **blocked:** do not emit requirements; identify the exact missing identity,
   authority, access, or evidence and the smallest user or environment action that
   would unblock analysis;
-- **drifted:** do not present invalidated candidates as current; identify the
+- **drifted:** do not present invalidated requirements as current; identify the
   changed binding or source, affected claims, and the smallest rebind and research
   needed for a new run.
 
