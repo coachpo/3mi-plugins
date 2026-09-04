@@ -10,6 +10,11 @@ worktree containing the current session cwd. Draft and verification operate on
 that same physical directory. The workflow convention is one verified GOAL per
 worktree; no cross-alias selector or global lock enforces it.
 
+Explicit user instructions take precedence over this skill; when they conflict,
+follow the user and say which instruction here you set aside. If this skill
+makes you pause, ask, or leave requested work unfinished, name the instruction
+that caused it.
+
 Read [execution-plan.md](references/execution-plan.md) before initialization.
 Create the exact execution binding from the immutable acceptance intent, then
 initialize with a finite stdin pipe:
@@ -49,9 +54,8 @@ exactly these keys plus an optional `symbol`:
 }
 ```
 
-Campaign state lives in one state file per GOAL, rewritten atomically after
-each phase; a crash mid-advance resumes the in-progress attempt exactly where
-it stopped. A repair's own retest only reruns the case(s) it fixed, for fast
+A crash mid-advance resumes the in-progress attempt exactly where it stopped.
+A repair's own retest only reruns the case(s) it fixed, for fast
 feedback — but a fix proves nothing about the cases it did not touch, so once
 every outstanding failure is resolved, a campaign that repaired anything owes
 exactly one more all-cases sweep against the final source before the
@@ -69,6 +73,7 @@ Explicit invocation authorizes reviewed local cases, per-GOAL ignored controls,
 and evidence-backed source repairs inside the accepted GOAL. It does not grant
 external effects, credentials, destructive restoration, commits, deployment,
 or broader implementation authority. Report `complete`, `incomplete`, or
-`blocked` with the GOAL alias, decisive case/criterion evidence, repairs, the
-completion check, every waived non-required failure listed as an unmet
-optional intent, and remaining limitation.
+`blocked`, then only the applicable details: the GOAL alias, decisive
+case/criterion evidence, repairs, the completion check, every waived
+non-required failure listed as an unmet optional intent, and remaining
+limitation.

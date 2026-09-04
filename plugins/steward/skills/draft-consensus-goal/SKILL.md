@@ -15,6 +15,11 @@ selected ignored GOAL bundle. It does not authorize implementing the GOAL,
 running acceptance cases, touching external state, or creating, starting, or
 activating a host-managed GOAL.
 
+Explicit user instructions take precedence over this skill; when they conflict,
+follow the user and say which instruction here you set aside. If this skill
+makes you pause, ask, or leave requested work unfinished, name the instruction
+that caused it.
+
 Read and apply [goal-authoring.md](../../references/goal-authoring.md). Read
 [goal-context.md](../../references/goal-context.md) when composing the context.
 The GOAL must stay within 4,000 Unicode code points and follow the canonical

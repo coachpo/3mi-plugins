@@ -50,6 +50,11 @@ one when the file has none, and rewrite stale canonical link targets outside
 every managed block — body mentions that are not link targets are reported,
 not changed. Engineering routing belongs to `write-agent-guides`.
 
+Explicit user instructions take precedence over this skill; when they conflict,
+follow the user and say which instruction here you set aside. If this skill
+makes you pause, ask, or leave requested work unfinished, name the instruction
+that caused it.
+
 ## Preserve language intent
 
 Use the user's explicit language when supplied. Otherwise preserve the effective
@@ -60,8 +65,9 @@ Simplified Chinese.
 
 Bundled canonical paths and managed assets currently support Simplified Chinese
 and English. If a requested managed block or new canonical path requires an
-unsupported language, keep existing content unchanged and ask for the smallest
-language/path decision rather than falling back to Chinese. Switching an existing
+unsupported language, keep existing content unchanged, complete whatever does not
+depend on that decision, and ask for the smallest language/path decision rather
+than falling back to Chinese. Switching an existing
 project between supported canonical language sets is an explicit migration.
 
 ## Route only the selected work
@@ -127,7 +133,8 @@ diff contains no out-of-set change. For migration or destructive cleanup, strict
 diagnostics must pass or the remaining unauthorized cleanup must be reported
 exactly.
 
-Lead with the outcome, then list changed and deliberately preserved files,
-canonical evidence, language and development-tier decisions, validation results,
-cleanup candidates, unverified items, and the smallest remaining action. Omit
-routine process narration.
+Lead with the outcome, then only the applicable material details: changed and
+deliberately preserved files, canonical evidence, language and development-tier
+decisions, validation results, cleanup candidates, unverified items, and the
+smallest remaining action. Write prose rather than a fixed section per item, and
+omit routine process narration.

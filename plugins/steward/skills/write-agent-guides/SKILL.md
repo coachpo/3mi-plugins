@@ -22,6 +22,11 @@ Create, repair, refresh, or update requests authorize the affected local
 destructive replacement, unusually expensive actions, or material scope
 expansion.
 
+Explicit user instructions take precedence over this skill; when they conflict,
+follow the user and say which instruction here you set aside. If this skill
+makes you pause, ask, or leave requested work unfinished, name the instruction
+that caused it.
+
 `CLAUDE.md` is outside this skill's write set. Do not create, repair, rewrite,
 or delete it. Existing host-specific instruction files may be read when needed
 to resolve applicable guidance, but this skill maintains only the `AGENTS.md`

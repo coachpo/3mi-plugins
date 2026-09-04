@@ -16,6 +16,11 @@ single symbol, file, or serial lookup, perform the same bounded research directl
 Stop at repository facts. Do not turn search evidence into severity labels,
 behavioral findings, counterexamples, or verification cases.
 
+Explicit user instructions take precedence over this skill; when they conflict,
+follow the user and say which instruction here you set aside. If this skill
+makes you pause, ask, or leave requested work unfinished, name the instruction
+that caused it.
+
 ## Plan the research lanes
 
 Resolve the exact target worktree, then define each lane's `laneId`, whether it
@@ -100,15 +105,12 @@ valid.
 ## Verify and aggregate
 
 The coordinator reopens decisive evidence, confirms it against the bound source,
-deduplicates overlaps, and preserves material conflicts. Return exactly:
-
-- `status`: aggregate `complete`, `partial`, `blocked`, or `drifted`;
-- `directAnswer`: answer to the original research goal;
-- `evidence`: coordinator-verified citations and claims;
-- `searched`: combined verified search coverage;
-- `unsearched`: requested or relevant scope not covered;
-- `conflicts`: unresolved repository disagreement;
-- `gaps`: missing evidence and limitations.
+deduplicates overlaps, and preserves material conflicts. Always give the
+aggregate `status` — `complete`, `partial`, `blocked`, or `drifted` — and a
+`directAnswer` to the original research goal. Then add only what applies:
+coordinator-verified evidence with citations, combined searched coverage,
+unsearched scope, unresolved conflicts, and gaps. Write it as prose; an empty
+category is omitted, not reported as empty.
 
 Per-lane results back that answer and stay available. Surface them when the
 reader needs the audit trail or when lanes disagree, not by default.
