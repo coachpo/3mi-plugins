@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import hashlib
 import json
 import shutil
 import subprocess
@@ -22,7 +21,6 @@ from verifier import (  # noqa: E402
     VerificationError,
     advance,
     campaign_lock,
-    canonical_bytes,
     record_repair,
     status_report,
 )
@@ -178,7 +176,7 @@ class VerificationV1Tests(unittest.TestCase):
         os_chdir(self.previous)
         self.temporary.cleanup()
 
-    def test_initial_regression_and_audit_complete(self) -> None:
+    def test_initial_run_completes(self) -> None:
         campaign = Campaign.initialize("goal-a", execution())
         with campaign_lock(campaign):
             report, code = advance(Campaign.load("goal-a"))
@@ -188,7 +186,7 @@ class VerificationV1Tests(unittest.TestCase):
             "COMPLETE", status_report(Campaign.load("goal-a"))["completionStatus"]
         )
 
-    def test_failed_case_repair_retest_regression_and_audit(self) -> None:
+    def test_failed_case_repair_and_targeted_retest_completes(self) -> None:
         (self.root / "app.txt").write_text("bad\n", encoding="utf-8")
         campaign = Campaign.initialize("goal-a", execution())
         with campaign_lock(campaign):
@@ -206,36 +204,39 @@ class VerificationV1Tests(unittest.TestCase):
         ).encode()
         with campaign_lock(Campaign.load("goal-a")):
             report = record_repair(Campaign.load("goal-a"), repair)
-        self.assertEqual("RETEST_REQUIRED", report["executionStatus"])
+        self.assertEqual("PENDING", report["executionStatus"])
         with campaign_lock(Campaign.load("goal-a")):
             report, code = advance(Campaign.load("goal-a"))
         self.assertEqual(0, code)
         self.assertEqual(1, len(report["repairs"]))
         self.assertEqual("COMPLETE", report["completionStatus"])
+        # The retest attempt only reran the repaired case, not a full regression.
+        retest = report["attempts"][-1]
+        self.assertEqual("retest", retest["mode"])
+        self.assertEqual(["acceptance"], retest["caseIds"])
 
-    def test_source_drift_blocks_until_manual_restore(self) -> None:
+    def test_source_drift_is_recorded_as_a_warning_and_does_not_block(self) -> None:
         Campaign.initialize("goal-a", execution())
-        baseline = (self.root / "app.txt").read_bytes()
-        (self.root / "app.txt").write_text("changed\n", encoding="utf-8")
-        with campaign_lock(Campaign.load("goal-a")):
-            report, code = advance(Campaign.load("goal-a"))
-        self.assertEqual(1, code)
-        self.assertEqual("BLOCKED", report["executionStatus"])
-        (self.root / "app.txt").write_bytes(baseline)
+        # Trailing whitespace changes the file's bytes (and so its fingerprint)
+        # without affecting the stripped marker check, isolating the drift
+        # warning from an actual acceptance failure.
+        (self.root / "app.txt").write_text("good \n", encoding="utf-8")
         with campaign_lock(Campaign.load("goal-a")):
             report, code = advance(Campaign.load("goal-a"))
         self.assertEqual(0, code)
         self.assertEqual("COMPLETE", report["completionStatus"])
+        self.assertEqual(1, len(report["driftWarnings"]))
 
-    def test_index_drift_blocks_even_when_worktree_bytes_are_restored(self) -> None:
+    def test_index_drift_is_recorded_as_a_warning(self) -> None:
         Campaign.initialize("goal-a", execution())
         (self.root / "app.txt").write_text("staged\n", encoding="utf-8")
         subprocess.run(["git", "-C", str(self.root), "add", "app.txt"], check=True)
         (self.root / "app.txt").write_text("good\n", encoding="utf-8")
         with campaign_lock(Campaign.load("goal-a")):
             report, code = advance(Campaign.load("goal-a"))
-        self.assertEqual(1, code)
-        self.assertEqual("BLOCKED", report["executionStatus"])
+        self.assertEqual(0, code)
+        self.assertEqual("COMPLETE", report["completionStatus"])
+        self.assertEqual(1, len(report["driftWarnings"]))
 
     def test_ignored_build_outputs_do_not_drift_source(self) -> None:
         Campaign.initialize("goal-a", execution())
@@ -246,6 +247,7 @@ class VerificationV1Tests(unittest.TestCase):
             report, code = advance(Campaign.load("goal-a"))
         self.assertEqual(0, code)
         self.assertEqual("COMPLETE", report["completionStatus"])
+        self.assertEqual([], report["driftWarnings"])
 
     def test_execution_plan_cannot_change_case_identity_or_use_bad_cwd(self) -> None:
         value = json.loads(execution())
@@ -277,25 +279,16 @@ class VerificationV1Tests(unittest.TestCase):
         with self.assertRaises(VerificationError):
             Campaign.load("goal-a")
 
-    def test_rehashed_but_semantically_invalid_journal_is_rejected(self) -> None:
+    def test_tampered_state_status_is_rejected(self) -> None:
         campaign = Campaign.initialize("goal-a", execution())
-        event = json.loads(campaign.events_path.read_text(encoding="utf-8"))
-        event["state"]["status"] = "COMPLETE"
-        event.pop("hash")
-        raw = json.dumps(
-            event,
-            ensure_ascii=False,
-            sort_keys=True,
-            separators=(",", ":"),
-            allow_nan=False,
-        ).encode()
-        event["hash"] = "sha256:" + hashlib.sha256(raw).hexdigest()
-        campaign.events_path.write_text(
-            json.dumps(event, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+        state = json.loads(campaign.state_path.read_text(encoding="utf-8"))
+        state["status"] = "NOT-A-REAL-STATUS"
+        campaign.state_path.write_text(
+            json.dumps(state, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
             + "\n",
             encoding="utf-8",
         )
-        with self.assertRaisesRegex(VerificationError, "start"):
+        with self.assertRaises(VerificationError):
             Campaign.load("goal-a")
 
     def test_public_cli_completes_the_no_repair_flow(self) -> None:
@@ -368,7 +361,10 @@ class VerificationV1Tests(unittest.TestCase):
         self.assertEqual("FAILED", probe_run["status"])
         self.assertEqual(["probe"], report["waivedCaseIds"])
 
-    def test_waived_failure_in_retest_rewaives_in_final_regression(self) -> None:
+    def test_waived_failure_survives_targeted_retest_of_a_different_case(self) -> None:
+        """A required case and an unrelated waived-optional case fail in the
+        same initial attempt; repairing the required case must not force the
+        already-tolerated optional failure through another run."""
         self.recreate_goal_with_waived_plan()
         (self.root / "app.txt").write_text("bad\n", encoding="utf-8")
         Campaign.initialize("goal-a", waived_execution())
@@ -376,6 +372,13 @@ class VerificationV1Tests(unittest.TestCase):
             report, code = advance(Campaign.load("goal-a"))
         self.assertEqual("REPAIR_REQUIRED", report["executionStatus"])
         self.assertEqual("acceptance", report["lastFailure"]["caseId"])
+        # Both cases ran in the initial attempt even though "acceptance" failed
+        # first; "probe" was not skipped by an early exit.
+        initial = report["attempts"][0]
+        self.assertEqual(
+            {"acceptance", "probe"}, {run["caseId"] for run in initial["runs"]}
+        )
+        self.assertEqual(["probe"], initial["waivedCaseIds"])
         (self.root / "app.txt").write_text("good\n", encoding="utf-8")
         repair = json.dumps(
             {
@@ -391,13 +394,15 @@ class VerificationV1Tests(unittest.TestCase):
             report, code = advance(Campaign.load("goal-a"))
         self.assertEqual(0, code)
         self.assertEqual("COMPLETE", report["completionStatus"])
-        final_attempt = next(
-            a
-            for a in report["attempts"]
-            if a["id"] == report["successfulAudit"]["finalRegressionAttemptId"]
+        retest = report["attempts"][-1]
+        self.assertEqual(["acceptance"], retest["caseIds"])
+        self.assertEqual(["probe"], report["waivedCaseIds"])
+        # "probe" evidence still points at the initial attempt's run; it was
+        # never rerun.
+        probe_run_id = next(
+            run["runId"] for run in initial["runs"] if run["caseId"] == "probe"
         )
-        self.assertEqual("WAIVED", final_attempt["status"])
-        self.assertEqual(["probe"], final_attempt["waivedCaseIds"])
+        self.assertEqual(probe_run_id, report["completion"]["evidenceRunIds"]["probe"])
 
     def test_declared_writable_files_rollback_and_stay_out_of_source_identity(
         self,
@@ -470,7 +475,7 @@ class VerificationV1Tests(unittest.TestCase):
             ["coverage.lcov", "fresh-artifact.txt", "notes.txt"], capture["captured"]
         )
 
-    def test_case_writing_undeclared_source_still_blocks(self) -> None:
+    def test_case_writing_undeclared_source_requires_repair(self) -> None:
         runner = [
             sys.executable,
             "-c",
@@ -480,31 +485,19 @@ class VerificationV1Tests(unittest.TestCase):
         with campaign_lock(Campaign.load("goal-a")):
             report, code = advance(Campaign.load("goal-a"))
         self.assertEqual(1, code)
-        self.assertEqual("BLOCKED", report["executionStatus"])
+        self.assertEqual("REPAIR_REQUIRED", report["executionStatus"])
         self.assertIn("protected source", report["attempts"][0]["runs"][0]["reason"])
 
     def test_journal_claiming_undeclared_waiver_is_rejected(self) -> None:
         campaign = Campaign.initialize("goal-a", execution())
         with campaign_lock(campaign):
-            report, code = advance(Campaign.load("goal-a"))
+            _, code = advance(Campaign.load("goal-a"))
         self.assertEqual(0, code)
-        events = [
-            json.loads(line)
-            for line in campaign.events_path.read_text(encoding="utf-8").splitlines()
-        ]
-        last = events[-1]
-        self.assertEqual("audit_succeeded", last["type"])
-        last["state"]["attempts"][-1]["status"] = "WAIVED"
-        last["state"]["attempts"][-1]["waivedCaseIds"] = ["acceptance"]
-        unhashed = {key: value for key, value in last.items() if key != "hash"}
-        last["hash"] = "sha256:" + hashlib.sha256(canonical_bytes(unhashed)).hexdigest()
-        campaign.events_path.write_text(
-            "\n".join(
-                json.dumps(
-                    event, ensure_ascii=False, sort_keys=True, separators=(",", ":")
-                )
-                for event in events
-            )
+        state = json.loads(campaign.state_path.read_text(encoding="utf-8"))
+        state["attempts"][-1]["status"] = "WAIVED"
+        state["attempts"][-1]["waivedCaseIds"] = ["acceptance"]
+        campaign.state_path.write_text(
+            json.dumps(state, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
             + "\n",
             encoding="utf-8",
         )

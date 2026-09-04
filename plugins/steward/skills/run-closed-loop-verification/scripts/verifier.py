@@ -1,4 +1,4 @@
-"""Alias-scoped, journal-only Steward verification kernel."""
+"""Alias-scoped Steward verification kernel."""
 
 from __future__ import annotations
 
@@ -9,8 +9,6 @@ import importlib.util
 import json
 import math
 import os
-import re
-import signal
 import stat
 import subprocess
 import sys
@@ -25,67 +23,27 @@ PLUGIN_SCRIPTS = PLUGIN_ROOT / "scripts"
 if str(PLUGIN_SCRIPTS) not in sys.path:
     sys.path.insert(0, str(PLUGIN_SCRIPTS))
 MAX_JSON_BYTES = 16 * 1024 * 1024
+MAX_STATE_BYTES = 32 * 1024 * 1024
 MAX_SOURCE_SNAPSHOT_BYTES = 512 * 1024 * 1024
 MAX_SOURCE_FILE_BYTES = 256 * 1024 * 1024
 MAX_SOURCE_TOTAL_BYTES = 4 * 1024 * 1024 * 1024
 MAX_OUTPUT_BYTES = 5 * 1024 * 1024
 MAX_ARTIFACT_BYTES = 256 * 1024 * 1024
 EXECUTION_SCHEMA_VERSION = 1
-JOURNAL_SCHEMA_VERSION = 1
 ARTIFACT_SCHEMA_VERSION = 1
-ALLOWED_EVENT_TYPES = {
-    "campaign_initialized",
-    "attempt_started",
-    "case_finished",
-    "attempt_finished",
-    "repair_recorded",
-    "source_drift_blocked",
-    "blocker_cleared",
-    "audit_rejected",
-    "audit_succeeded",
-}
 STATE_FIELDS = {
     "status",
-    "resumeStatus",
     "sourceBaseline",
+    "driftWarnings",
     "repairs",
     "attempts",
+    "nextCaseIds",
     "lastFailure",
-    "finalRegressionAttemptId",
-    "successfulAudit",
+    "completion",
     "runtimePlatform",
     "authority",
 }
-ALLOWED_STATUSES = {
-    "PENDING",
-    "RUNNING",
-    "REPAIR_REQUIRED",
-    "RETEST_REQUIRED",
-    "REGRESSION_REQUIRED",
-    "AUDIT_REQUIRED",
-    "BLOCKED",
-    "COMPLETE",
-}
-SAFE_ENV = {
-    "PATH",
-    "PATHEXT",
-    "SYSTEMROOT",
-    "WINDIR",
-    "COMSPEC",
-    "TMP",
-    "TEMP",
-    "TMPDIR",
-    "LANG",
-    "LC_ALL",
-    "LC_CTYPE",
-}
-SECRET_PATTERNS = [
-    re.compile(
-        r"(?i)\b(?:api[_-]?key|access[_-]?token|auth[_-]?token|password|passwd|secret|credential)\s*[:=]\s*[^\s,;]+"
-    ),
-    re.compile(r"(?i)\bbearer\s+[A-Za-z0-9._~+/=-]{12,}"),
-    re.compile(r"\bgh[pousr]_[A-Za-z0-9_]{20,}\b"),
-]
+ALLOWED_STATUSES = {"PENDING", "REPAIR_REQUIRED", "BLOCKED", "COMPLETE"}
 
 
 def _load_shared(name: str):
@@ -135,14 +93,6 @@ def utc_now() -> str:
         .isoformat(timespec="milliseconds")
         .replace("+00:00", "Z")
     )
-
-
-def _redact(value: str) -> tuple[str, bool]:
-    found = False
-    for pattern in SECRET_PATTERNS:
-        value, count = pattern.subn("<REDACTED>", value)
-        found = found or bool(count)
-    return value, found
 
 
 def _strict_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
@@ -370,10 +320,8 @@ def source_delta(before: dict[str, Any], after: dict[str, Any]) -> list[dict[str
     return changes
 
 
-def persist_source_snapshot(
-    campaign_root: Path, source: dict[str, Any], ordinal: int
-) -> dict[str, Any]:
-    relative = f"sources/source-{ordinal:04d}.json"
+def persist_source_snapshot(campaign_root: Path, source: dict[str, Any]) -> dict[str, Any]:
+    relative = f"sources/source-{uuid.uuid4().hex}.json"
     path = campaign_root / relative
     data = canonical_bytes(source) + b"\n"
     with path.open("xb") as handle:
@@ -480,11 +428,6 @@ def validate_execution_plan(
             raise VerificationError(
                 "EXECUTION_PLAN_INVALID", f"case {intended['id']} argv is invalid"
             )
-        if _redact(" ".join(argv))[1]:
-            raise VerificationError(
-                "EXECUTION_PLAN_INVALID",
-                f"case {intended['id']} argv contains secret-like data",
-            )
         rationale = bound.get("bindingRationale")
         if not isinstance(rationale, str) or not rationale.strip():
             raise VerificationError(
@@ -535,6 +478,24 @@ def platform_available(requested: str, actual: str) -> bool:
     )
 
 
+def _write_canonical(path: Path, value: Any) -> None:
+    data = canonical_bytes(value) + b"\n"
+    with path.open("xb") as handle:
+        handle.write(data)
+        handle.flush()
+        os.fsync(handle.fileno())
+
+
+def _write_state_atomic(path: Path, value: Any) -> None:
+    data = canonical_bytes(value) + b"\n"
+    tmp = path.parent / f"{path.name}.tmp-{uuid.uuid4().hex}"
+    with tmp.open("xb") as handle:
+        handle.write(data)
+        handle.flush()
+        os.fsync(handle.fileno())
+    os.replace(tmp, path)
+
+
 class Campaign:
     def __init__(
         self,
@@ -543,7 +504,7 @@ class Campaign:
         view: dict[str, Any],
         acceptance: dict[str, Any],
         execution: dict[str, Any],
-        events: list[dict[str, Any]],
+        state: dict[str, Any],
     ) -> None:
         self.alias = alias
         self.root = root
@@ -553,28 +514,8 @@ class Campaign:
         self.bundle = root / ".steward" / "goals" / alias
         self.verification = self.bundle / "verification"
         self.campaign_root = self.verification / "campaign"
-        self.events_path = self.campaign_root / "events.jsonl"
-        self.events = events
-        self.state = events[-1]["state"]
-
-    @staticmethod
-    def _event(
-        previous: dict[str, Any] | None,
-        event_type: str,
-        state: dict[str, Any],
-        payload: dict[str, Any],
-    ) -> dict[str, Any]:
-        base = {
-            "journalSchemaVersion": JOURNAL_SCHEMA_VERSION,
-            "sequence": 1 if previous is None else previous["sequence"] + 1,
-            "previousHash": None if previous is None else previous["hash"],
-            "timestamp": utc_now(),
-            "type": event_type,
-            "payload": payload,
-            "state": state,
-        }
-        base["hash"] = sha256_bytes(canonical_bytes(base))
-        return base
+        self.state_path = self.campaign_root / "state.json"
+        self.state = state
 
     @classmethod
     def initialize(cls, alias: str, execution_raw: bytes) -> Campaign:
@@ -601,41 +542,33 @@ class Campaign:
                 )
             return campaign
         source = observe_source(root, acceptance["sourcePolicy"])
-        try:
-            verification.mkdir(mode=0o700)
-            campaign_root.mkdir(mode=0o700)
-            (campaign_root / "attempts").mkdir(mode=0o700)
-            (campaign_root / "sources").mkdir(mode=0o700)
-            with execution_path.open("xb") as handle:
-                handle.write(execution_bytes)
-                handle.flush()
-                os.fsync(handle.fileno())
-            source_binding = persist_source_snapshot(campaign_root, source, 1)
-            state = {
-                "status": "PENDING",
-                "resumeStatus": None,
-                "sourceBaseline": source_binding,
-                "repairs": [],
-                "attempts": [],
-                "lastFailure": None,
-                "finalRegressionAttemptId": None,
-                "successfulAudit": None,
-                "runtimePlatform": current_platform(),
-                "authority": {
-                    "bundleManifestSha256": view["manifestSha256"],
-                    "acceptancePlanSha256": view["acceptancePlan"]["sha256"],
-                    "executionPlanSha256": sha256_bytes(execution_bytes),
-                    "worktreeBinding": view["worktreeBinding"],
-                },
-            }
-            event = cls._event(None, "campaign_initialized", state, {"alias": alias})
-            with (campaign_root / "events.jsonl").open("xb") as handle:
-                handle.write(canonical_bytes(event) + b"\n")
-                handle.flush()
-                os.fsync(handle.fileno())
-        except Exception:
-            # Leave partial state in place for fail-closed diagnosis; never replace it.
-            raise
+        verification.mkdir(mode=0o700)
+        campaign_root.mkdir(mode=0o700)
+        (campaign_root / "attempts").mkdir(mode=0o700)
+        (campaign_root / "sources").mkdir(mode=0o700)
+        with execution_path.open("xb") as handle:
+            handle.write(execution_bytes)
+            handle.flush()
+            os.fsync(handle.fileno())
+        source_binding = persist_source_snapshot(campaign_root, source)
+        state = {
+            "status": "PENDING",
+            "sourceBaseline": source_binding,
+            "driftWarnings": [],
+            "repairs": [],
+            "attempts": [],
+            "nextCaseIds": None,
+            "lastFailure": None,
+            "completion": None,
+            "runtimePlatform": current_platform(),
+            "authority": {
+                "bundleManifestSha256": view["manifestSha256"],
+                "acceptancePlanSha256": view["acceptancePlan"]["sha256"],
+                "executionPlanSha256": sha256_bytes(execution_bytes),
+                "worktreeBinding": view["worktreeBinding"],
+            },
+        }
+        _write_canonical(campaign_root / "state.json", state)
         return cls.load(alias)
 
     @classmethod
@@ -651,7 +584,7 @@ class Campaign:
             verification / "campaign" / "sources", "source snapshots directory"
         )
         execution_path = verification / "execution-plan.json"
-        events_path = verification / "campaign" / "events.jsonl"
+        state_path = verification / "campaign" / "state.json"
         try:
             execution_bytes = goal_workspace.read_regular_bytes(
                 execution_path, label="execution plan", max_bytes=MAX_JSON_BYTES
@@ -663,77 +596,32 @@ class Campaign:
                 raise VerificationError(
                     "EXECUTION_PLAN_INVALID", "execution plan is not canonical JSON"
                 )
-            journal = goal_workspace.read_regular_bytes(
-                events_path, label="campaign journal", max_bytes=256 * 1024 * 1024
+            state_bytes = goal_workspace.read_regular_bytes(
+                state_path, label="campaign state", max_bytes=MAX_STATE_BYTES
             )
         except goal_workspace.GoalWorkspaceError as exc:
             raise VerificationError("CAMPAIGN_INVALID", str(exc)) from exc
-        events: list[dict[str, Any]] = []
-        for line_number, line in enumerate(journal.splitlines(), 1):
-            event = parse_json_bytes(line, f"journal line {line_number}")
-            expected = {
-                "journalSchemaVersion",
-                "sequence",
-                "previousHash",
-                "timestamp",
-                "type",
-                "payload",
-                "state",
-                "hash",
-            }
-            if (
-                not isinstance(event, dict)
-                or set(event) != expected
-                or event["journalSchemaVersion"] != 1
-                or event["sequence"] != line_number
-            ):
-                raise VerificationError(
-                    "JOURNAL_INVALID", f"journal line {line_number} has invalid fields"
-                )
-            if (
-                event["type"] not in ALLOWED_EVENT_TYPES
-                or not isinstance(event["payload"], dict)
-                or not isinstance(event["state"], dict)
-                or set(event["state"]) != STATE_FIELDS
-                or event["state"].get("status") not in ALLOWED_STATUSES
-            ):
-                raise VerificationError(
-                    "JOURNAL_INVALID",
-                    f"journal line {line_number} has an invalid event or state",
-                )
-            if line_number == 1 and (
-                event["type"] != "campaign_initialized"
-                or event["state"]["status"] != "PENDING"
-            ):
-                raise VerificationError(
-                    "JOURNAL_INVALID",
-                    "journal must start with campaign_initialized/PENDING",
-                )
-            if event["previousHash"] != (None if not events else events[-1]["hash"]):
-                raise VerificationError(
-                    "JOURNAL_INVALID",
-                    f"journal line {line_number} breaks the hash chain",
-                )
-            unhashed = dict(event)
-            observed_hash = unhashed.pop("hash")
-            if sha256_bytes(canonical_bytes(unhashed)) != observed_hash:
-                raise VerificationError(
-                    "JOURNAL_INVALID", f"journal line {line_number} has an invalid hash"
-                )
-            events.append(event)
-        if not events:
-            raise VerificationError("JOURNAL_INVALID", "campaign journal is empty")
-        campaign = cls(alias, root, view, acceptance, execution, events)
-        acceptance_by_id = {case["id"]: case for case in campaign.acceptance["cases"]}
-        for attempt in campaign.state["attempts"]:
+        state = parse_json_bytes(state_bytes, "campaign state")
+        if (
+            not isinstance(state, dict)
+            or set(state) != STATE_FIELDS
+            or state.get("status") not in ALLOWED_STATUSES
+        ):
+            raise VerificationError("STATE_INVALID", "campaign state has invalid fields")
+        if state_bytes != canonical_bytes(state) + b"\n":
+            raise VerificationError(
+                "STATE_INVALID", "campaign state is not canonical JSON"
+            )
+        acceptance_by_id = {case["id"]: case for case in acceptance["cases"]}
+        for attempt in state["attempts"]:
             waived_ids = attempt.get("waivedCaseIds")
-            if attempt.get("status") != "WAIVED":
-                if waived_ids is not None:
-                    raise VerificationError(
-                        "JOURNAL_INVALID",
-                        f"attempt {attempt.get('id')} records waivers without WAIVED status",
-                    )
+            if waived_ids is None:
                 continue
+            if attempt.get("status") not in {"WAIVED", "FAILED"}:
+                raise VerificationError(
+                    "STATE_INVALID",
+                    f"attempt {attempt.get('id')} records waivers with status {attempt.get('status')}",
+                )
             runs_by_id = {run.get("caseId"): run for run in attempt.get("runs", [])}
             if (
                 not isinstance(waived_ids, list)
@@ -741,7 +629,7 @@ class Campaign:
                 or any(item not in runs_by_id for item in waived_ids)
             ):
                 raise VerificationError(
-                    "JOURNAL_INVALID",
+                    "STATE_INVALID",
                     f"attempt {attempt.get('id')} records invalid waived cases",
                 )
             for case_id in waived_ids:
@@ -752,10 +640,10 @@ class Campaign:
                     or not _case_waives_failure(intended)
                 ):
                     raise VerificationError(
-                        "JOURNAL_INVALID",
+                        "STATE_INVALID",
                         f"attempt {attempt.get('id')} waives {case_id} without a declared optional failure",
                     )
-        authority = campaign.state.get("authority", {})
+        authority = state.get("authority", {})
         if (
             authority.get("bundleManifestSha256") != view["manifestSha256"]
             or authority.get("acceptancePlanSha256") != view["acceptancePlan"]["sha256"]
@@ -765,18 +653,11 @@ class Campaign:
             raise VerificationError(
                 "AUTHORITY_DRIFT", "goal or verification authority changed"
             )
-        load_source_snapshot(campaign.campaign_root, campaign.state["sourceBaseline"])
-        return campaign
+        load_source_snapshot(verification / "campaign", state["sourceBaseline"])
+        return cls(alias, root, view, acceptance, execution, state)
 
-    def commit(
-        self, event_type: str, state: dict[str, Any], payload: dict[str, Any]
-    ) -> None:
-        event = self._event(self.events[-1], event_type, state, payload)
-        with self.events_path.open("ab") as handle:
-            handle.write(canonical_bytes(event) + b"\n")
-            handle.flush()
-            os.fsync(handle.fileno())
-        self.events.append(event)
+    def save(self, state: dict[str, Any]) -> None:
+        _write_state_atomic(self.state_path, state)
         self.state = state
 
 
@@ -840,22 +721,10 @@ def campaign_lock(campaign: Campaign) -> Iterator[None]:
 
 
 def _child_environment(artifact: Path, case_id: str) -> dict[str, str]:
-    env = {key: value for key, value in os.environ.items() if key.upper() in SAFE_ENV}
+    env = dict(os.environ)
     env["CLOSED_LOOP_EVIDENCE_DIR"] = str(artifact)
     env["CLOSED_LOOP_CASE_ID"] = case_id
     return env
-
-
-def _terminate(process: subprocess.Popen[bytes]) -> None:
-    try:
-        if os.name == "posix":
-            os.killpg(process.pid, signal.SIGKILL)
-        else:
-            process.kill()
-    except (OSError, ProcessLookupError):
-        pass
-    with contextlib.suppress(subprocess.SubprocessError):
-        process.wait(timeout=5)
 
 
 def _artifact_manifest(directory: Path) -> dict[str, Any]:
@@ -887,43 +756,6 @@ def _artifact_manifest(directory: Path) -> dict[str, Any]:
             {"path": relative, "bytes": len(data), "sha256": sha256_bytes(data)}
         )
     return {"artifactManifestVersion": ARTIFACT_SCHEMA_VERSION, "files": files}
-
-
-def _redact_text_artifacts(directory: Path) -> bool:
-    found = False
-    for path in sorted(directory.rglob("*")):
-        if path.is_dir() or path.name in {
-            "stdout.txt",
-            "stderr.txt",
-            "result.json",
-            "artifact-manifest.json",
-        }:
-            continue
-        metadata = path.lstat()
-        if (
-            not stat.S_ISREG(metadata.st_mode)
-            or path.is_symlink()
-            or metadata.st_size > MAX_ARTIFACT_BYTES
-        ):
-            continue
-        data = path.read_bytes()
-        try:
-            text = data.decode("utf-8")
-        except UnicodeError:
-            continue
-        redacted, observed = _redact(text)
-        if observed:
-            path.write_text(redacted, encoding="utf-8")
-            found = True
-    return found
-
-
-def _write_canonical(path: Path, value: Any) -> None:
-    data = canonical_bytes(value) + b"\n"
-    with path.open("xb") as handle:
-        handle.write(data)
-        handle.flush()
-        os.fsync(handle.fileno())
 
 
 _WRITABLE_CAPTURE_LIMIT_BYTES = 16 * 1024 * 1024
@@ -1032,6 +864,24 @@ def _revert_writable(
     return mutations
 
 
+def _empty_run(
+    campaign_root: Path, artifact: Path, case_id: str, run_id: str, status: str, reason: str, fingerprint: str
+) -> dict[str, Any]:
+    (artifact / "stdout.txt").write_text("", encoding="utf-8")
+    (artifact / "stderr.txt").write_text("", encoding="utf-8")
+    return {
+        "caseId": case_id,
+        "runId": run_id,
+        "status": status,
+        "reason": reason,
+        "artifactDir": str(artifact.relative_to(campaign_root)),
+        "sourceBeforeFingerprint": fingerprint,
+        "sourceAfterFingerprint": fingerprint,
+        "exitCode": None,
+        "timedOut": False,
+    }
+
+
 def execute_case(
     campaign: Campaign,
     attempt_id: str,
@@ -1046,39 +896,17 @@ def execute_case(
     writable = _writable_relative_paths(campaign.acceptance["sourcePolicy"])
     captured = _capture_writable(campaign.root, writable) if writable else {}
     before = observe_source(campaign.root, campaign.acceptance["sourcePolicy"])
-    if before["fingerprint"] != campaign.state["sourceBaseline"]["fingerprint"]:
-        result = {
-            "caseId": case_id,
-            "runId": run_id,
-            "status": "BLOCKED",
-            "reason": "source differs from the accepted baseline",
-            "artifactDir": str(artifact.relative_to(campaign.campaign_root)),
-            "sourceBeforeFingerprint": before["fingerprint"],
-            "sourceAfterFingerprint": before["fingerprint"],
-            "exitCode": None,
-            "timedOut": False,
-            "secretRedacted": False,
-        }
-        (artifact / "stdout.txt").write_text("", encoding="utf-8")
-        (artifact / "stderr.txt").write_text("", encoding="utf-8")
-    elif not platform_available(
-        intended["platform"], campaign.state["runtimePlatform"]
-    ):
+    if not platform_available(intended["platform"], campaign.state["runtimePlatform"]):
         status = "BLOCKED" if intended["required"] else "NOT_RUN"
-        result = {
-            "caseId": case_id,
-            "runId": run_id,
-            "status": status,
-            "reason": "case platform is unavailable",
-            "artifactDir": str(artifact.relative_to(campaign.campaign_root)),
-            "sourceBeforeFingerprint": before["fingerprint"],
-            "sourceAfterFingerprint": before["fingerprint"],
-            "exitCode": None,
-            "timedOut": False,
-            "secretRedacted": False,
-        }
-        (artifact / "stdout.txt").write_text("", encoding="utf-8")
-        (artifact / "stderr.txt").write_text("", encoding="utf-8")
+        result = _empty_run(
+            campaign.campaign_root,
+            artifact,
+            case_id,
+            run_id,
+            status,
+            "case platform is unavailable",
+            before["fingerprint"],
+        )
     else:
         cwd = _resolve_project_path(campaign.root, bound["cwd"], f"case {case_id} cwd")
         try:
@@ -1090,23 +918,17 @@ def execute_case(
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 shell=False,
-                start_new_session=(os.name == "posix"),
             )
         except OSError as exc:
-            result = {
-                "caseId": case_id,
-                "runId": run_id,
-                "status": "BLOCKED",
-                "reason": f"cannot start command: {exc}",
-                "artifactDir": str(artifact.relative_to(campaign.campaign_root)),
-                "sourceBeforeFingerprint": before["fingerprint"],
-                "sourceAfterFingerprint": before["fingerprint"],
-                "exitCode": None,
-                "timedOut": False,
-                "secretRedacted": False,
-            }
-            (artifact / "stdout.txt").write_text("", encoding="utf-8")
-            (artifact / "stderr.txt").write_text("", encoding="utf-8")
+            result = _empty_run(
+                campaign.campaign_root,
+                artifact,
+                case_id,
+                run_id,
+                "BLOCKED",
+                f"cannot start command: {exc}",
+                before["fingerprint"],
+            )
         else:
             timed_out = False
             try:
@@ -1115,16 +937,17 @@ def execute_case(
                 )
             except subprocess.TimeoutExpired:
                 timed_out = True
-                _terminate(process)
+                process.kill()
                 stdout, stderr = process.communicate()
             exit_code = process.returncode
-            _terminate(process)
             stdout = stdout[:MAX_OUTPUT_BYTES]
             stderr = stderr[:MAX_OUTPUT_BYTES]
-            stdout_text, stdout_secret = _redact(stdout.decode("utf-8", "replace"))
-            stderr_text, stderr_secret = _redact(stderr.decode("utf-8", "replace"))
-            (artifact / "stdout.txt").write_text(stdout_text, encoding="utf-8")
-            (artifact / "stderr.txt").write_text(stderr_text, encoding="utf-8")
+            (artifact / "stdout.txt").write_text(
+                stdout.decode("utf-8", "replace"), encoding="utf-8"
+            )
+            (artifact / "stderr.txt").write_text(
+                stderr.decode("utf-8", "replace"), encoding="utf-8"
+            )
             missing: list[str] = []
             empty: list[str] = []
             evidence = intended["evidence"]
@@ -1140,7 +963,6 @@ def execute_case(
                 )
                 if path.is_file() and path.stat().st_size == 0:
                     empty.append(relative)
-            evidence_secret = _redact_text_artifacts(artifact)
             status = (
                 "PASS"
                 if exit_code == 0 and not timed_out and not missing and not empty
@@ -1163,7 +985,6 @@ def execute_case(
                 "timedOut": timed_out,
                 "missingEvidence": missing,
                 "emptyEvidence": empty,
-                "secretRedacted": stdout_secret or stderr_secret or evidence_secret,
             }
     mutations = _revert_writable(campaign.root, captured)
     if captured:
@@ -1174,11 +995,10 @@ def execute_case(
     after = observe_source(campaign.root, campaign.acceptance["sourcePolicy"])
     result["sourceAfterFingerprint"] = after["fingerprint"]
     result["writableMutations"] = mutations
-    if after["fingerprint"] != before["fingerprint"]:
-        result["status"] = "BLOCKED"
-        result["reason"] = (
-            "case changed protected source; restore the accepted baseline"
-        )
+    if result["status"] not in {"BLOCKED", "NOT_RUN"} and after["fingerprint"] != before["fingerprint"]:
+        result["status"] = "FAILED"
+        result["reason"] = "case modified protected source; treat as a required fix"
+        result["sourceDelta"] = source_delta(before, after)
     result["failureSignature"] = sha256_bytes(
         canonical_bytes(
             {
@@ -1211,98 +1031,101 @@ def _case_waives_failure(intended: dict[str, Any]) -> bool:
     return intended.get("onFailure") == "waive-with-report" and not intended["required"]
 
 
-def _attempt_mode(status: str) -> str:
-    return {
-        "PENDING": "initial",
-        "RETEST_REQUIRED": "retest",
-        "REGRESSION_REQUIRED": "regression",
-        "RUNNING": "resume",
-    }.get(status, "unknown")
-
-
-def run_phase(
-    campaign: Campaign, requested_status: str | None = None
-) -> tuple[dict[str, Any], int]:
+def _refresh_baseline(campaign: Campaign) -> None:
+    """Absorb source edits made between calls as the new baseline instead of blocking."""
     state = _copy_state(campaign.state)
-    status = requested_status or state["status"]
-    if status == "RUNNING":
-        status = state.get("resumeStatus") or "PENDING"
-    mode = _attempt_mode(status)
-    if mode == "unknown":
-        raise VerificationError(
-            "INVALID_STATE", f"cannot run cases from state {status}"
-        )
-    if status == "RETEST_REQUIRED":
-        case_ids = [state["lastFailure"]["caseId"]]
+    current = observe_source(campaign.root, campaign.acceptance["sourcePolicy"])
+    if current["fingerprint"] == state["sourceBaseline"]["fingerprint"]:
+        return
+    before = load_source_snapshot(campaign.campaign_root, state["sourceBaseline"])
+    state["driftWarnings"].append(
+        {"at": utc_now(), "changes": source_delta(before, current)}
+    )
+    state["sourceBaseline"] = persist_source_snapshot(campaign.campaign_root, current)
+    campaign.save(state)
+
+
+def _first_unresolved_failure(
+    acceptance: dict[str, Any], state: dict[str, Any]
+) -> dict[str, Any] | None:
+    """Latest evidence per case, in acceptance order; None once every failure
+    still standing is individually tolerated by its own plan declaration."""
+    evidence: dict[str, dict[str, Any]] = {}
+    for attempt in state["attempts"]:
+        for run in attempt["runs"]:
+            evidence[run["caseId"]] = run
+    for case in acceptance["cases"]:
+        run = evidence.get(case["id"])
+        if run is not None and run["status"] == "FAILED" and not _case_waives_failure(case):
+            return run
+    return None
+
+
+def run_phase(campaign: Campaign) -> tuple[dict[str, Any], int]:
+    state = _copy_state(campaign.state)
+    case_ids = state["nextCaseIds"] or [case["id"] for case in campaign.acceptance["cases"]]
+    mode = "retest" if state["nextCaseIds"] else "initial"
+    attempts = state["attempts"]
+    if attempts and attempts[-1]["caseIds"] == case_ids and attempts[-1]["status"] in {
+        "RUNNING",
+        "BLOCKED",
+    }:
+        attempt = attempts[-1]
+        attempt["status"] = "RUNNING"
+        attempt["runs"] = [run for run in attempt["runs"] if run["status"] != "BLOCKED"]
     else:
-        case_ids = [case["id"] for case in campaign.acceptance["cases"]]
-    attempt_id = f"attempt-{len(state['attempts']) + 1:04d}-{mode}-{state['sourceBaseline']['fingerprint'][7:15]}"
-    attempt = {
-        "id": attempt_id,
-        "mode": mode,
-        "sourceFingerprint": state["sourceBaseline"]["fingerprint"],
-        "caseIds": case_ids,
-        "runs": [],
-        "status": "RUNNING",
-    }
-    state["attempts"].append(attempt)
-    state["status"] = "RUNNING"
-    state["resumeStatus"] = status
-    campaign.commit("attempt_started", state, {"attemptId": attempt_id, "mode": mode})
+        attempt_id = f"attempt-{len(attempts) + 1:04d}-{mode}-{uuid.uuid4().hex[:8]}"
+        attempt = {
+            "id": attempt_id,
+            "mode": mode,
+            "sourceFingerprint": state["sourceBaseline"]["fingerprint"],
+            "caseIds": case_ids,
+            "runs": [],
+            "status": "RUNNING",
+        }
+        attempts.append(attempt)
+    campaign.save(state)
+    already_run = {run["caseId"] for run in attempt["runs"]}
     acceptance_by_id = {case["id"]: case for case in campaign.acceptance["cases"]}
     execution_by_id = {case["id"]: case for case in campaign.execution["cases"]}
     for ordinal, case_id in enumerate(case_ids, 1):
+        if case_id in already_run:
+            continue
         result = execute_case(
-            campaign,
-            attempt_id,
-            acceptance_by_id[case_id],
-            execution_by_id[case_id],
-            ordinal,
+            campaign, attempt["id"], acceptance_by_id[case_id], execution_by_id[case_id], ordinal
         )
         state = _copy_state(campaign.state)
-        active = state["attempts"][-1]
-        active["runs"].append(result)
-        campaign.commit(
-            "case_finished",
-            state,
-            {"attemptId": attempt_id, "caseId": case_id, "status": result["status"]},
-        )
-        if result["status"] in {"FAILED", "BLOCKED"} and not _case_waives_failure(
-            acceptance_by_id[case_id]
-        ):
+        state["attempts"][-1]["runs"].append(result)
+        campaign.save(state)
+        if result["status"] == "BLOCKED":
             state = _copy_state(campaign.state)
-            active = state["attempts"][-1]
-            active["status"] = result["status"]
-            state["lastFailure"] = result
-            state["status"] = (
-                "REPAIR_REQUIRED" if result["status"] == "FAILED" else "BLOCKED"
-            )
-            state["resumeStatus"] = status if result["status"] == "BLOCKED" else None
-            campaign.commit(
-                "attempt_finished",
-                state,
-                {"attemptId": attempt_id, "status": state["status"]},
-            )
+            state["attempts"][-1]["status"] = "BLOCKED"
+            state["status"] = "BLOCKED"
+            campaign.save(state)
             return status_report(campaign), 1
+    # Every case_id in this attempt now has a terminal, non-blocked run. A
+    # required (or otherwise undeclared) failure does not stop the sweep
+    # anymore, so every other case in the same attempt still gets recorded
+    # evidence instead of being silently skipped by an early exit.
     state = _copy_state(campaign.state)
     active = state["attempts"][-1]
     failed_ids = [run["caseId"] for run in active["runs"] if run["status"] == "FAILED"]
-    waived = bool(failed_ids) and all(
-        _case_waives_failure(acceptance_by_id[case_id]) for case_id in failed_ids
-    )
-    active["status"] = "WAIVED" if waived else "PASS"
-    if waived:
-        active["waivedCaseIds"] = failed_ids
-    if mode == "retest":
-        state["status"] = "REGRESSION_REQUIRED"
-    else:
-        state["status"] = "AUDIT_REQUIRED"
-        state["finalRegressionAttemptId"] = attempt_id
-    state["resumeStatus"] = None
-    campaign.commit(
-        "attempt_finished", state, {"attemptId": attempt_id, "status": state["status"]}
-    )
-    return status_report(campaign), 0
+    waived_ids = [cid for cid in failed_ids if _case_waives_failure(acceptance_by_id[cid])]
+    blocking_ids = [cid for cid in failed_ids if cid not in waived_ids]
+    active["status"] = "FAILED" if blocking_ids else ("WAIVED" if waived_ids else "PASS")
+    if waived_ids:
+        active["waivedCaseIds"] = waived_ids
+    pending = _first_unresolved_failure(campaign.acceptance, state)
+    if pending is not None:
+        state["lastFailure"] = pending
+        state["status"] = "REPAIR_REQUIRED"
+        state["nextCaseIds"] = [pending["caseId"]]
+        campaign.save(state)
+        return status_report(campaign), 1
+    state["lastFailure"] = None
+    state["nextCaseIds"] = None
+    campaign.save(state)
+    return finalize(campaign)
 
 
 def record_repair(campaign: Campaign, raw: bytes) -> dict[str, Any]:
@@ -1385,19 +1208,10 @@ def record_repair(campaign: Campaign, raw: bytes) -> dict[str, Any]:
     }
     state = _copy_state(campaign.state)
     state["repairs"].append(repair)
-    state["sourceBaseline"] = persist_source_snapshot(
-        campaign.campaign_root, after, len(state["repairs"]) + 2
-    )
-    state["status"] = "RETEST_REQUIRED"
-    state["resumeStatus"] = None
-    campaign.commit(
-        "repair_recorded",
-        state,
-        {
-            "failedCaseId": failure["caseId"],
-            "acceptedSourceFingerprint": after["fingerprint"],
-        },
-    )
+    state["sourceBaseline"] = persist_source_snapshot(campaign.campaign_root, after)
+    state["nextCaseIds"] = [failure["caseId"]]
+    state["status"] = "PENDING"
+    campaign.save(state)
     return status_report(campaign)
 
 
@@ -1421,15 +1235,17 @@ def _verify_artifact(campaign: Campaign, run: dict[str, Any]) -> list[str]:
     return errors
 
 
-def audit(campaign: Campaign) -> tuple[dict[str, Any], int]:
-    if campaign.state["status"] != "AUDIT_REQUIRED":
-        raise VerificationError(
-            "INVALID_STATE", "audit is not available in the current state"
-        )
-    first = observe_source(campaign.root, campaign.acceptance["sourcePolicy"])
-    second = observe_source(campaign.root, campaign.acceptance["sourcePolicy"])
+def _evaluate(campaign: Campaign) -> tuple[list[str], dict[str, dict[str, Any]]]:
+    """Compute whether current attempts plus current disk state count as complete.
+
+    Later attempts supply fresher per-case evidence than earlier ones, so a
+    targeted retest naturally overrides only the case(s) it re-ran.
+    """
+    evidence: dict[str, dict[str, Any]] = {}
+    for attempt in campaign.state["attempts"]:
+        for run in attempt["runs"]:
+            evidence[run["caseId"]] = run
     errors: list[str] = []
-    baseline = campaign.state["sourceBaseline"]["fingerprint"]
     try:
         final_root, final_view, final_acceptance = load_bundle(campaign.alias)
         execution_bytes = goal_workspace.read_regular_bytes(
@@ -1444,151 +1260,71 @@ def audit(campaign: Campaign) -> tuple[dict[str, Any], int]:
             or sha256_bytes(execution_bytes)
             != campaign.state["authority"]["executionPlanSha256"]
         ):
-            errors.append("GOAL or execution authority changed during audit")
+            errors.append("GOAL or execution authority changed")
     except Exception as exc:  # noqa: BLE001
         errors.append(f"cannot revalidate GOAL authority: {exc}")
-    if first["fingerprint"] != baseline or second["fingerprint"] != baseline:
-        errors.append("current source differs from the accepted final baseline")
-    attempt = next(
-        (
-            item
-            for item in campaign.state["attempts"]
-            if item["id"] == campaign.state["finalRegressionAttemptId"]
-        ),
-        None,
-    )
-    expected_ids = [case["id"] for case in campaign.acceptance["cases"]]
-    if (
-        attempt is None
-        or attempt["mode"] not in {"initial", "regression"}
-        or attempt["caseIds"] != expected_ids
-        or attempt["status"] not in {"PASS", "WAIVED"}
-    ):
-        errors.append("final regression attempt is incomplete")
-        runs: list[dict[str, Any]] = []
-    else:
-        runs = attempt["runs"]
-    by_id = {run["caseId"]: run for run in runs}
-    waived_case_ids = (
-        set(attempt.get("waivedCaseIds", [])) if attempt is not None else set()
-    )
     for intended in campaign.acceptance["cases"]:
-        run = by_id.get(intended["id"])
-        expected_status = (
-            "PASS"
-            if platform_available(
-                intended["platform"], campaign.state["runtimePlatform"]
-            )
-            else ("BLOCKED" if intended["required"] else "NOT_RUN")
-        )
-        if intended["id"] in waived_case_ids:
-            expected_status = "FAILED"
-        if (
-            run is None
-            or run["status"] != expected_status
-            or run["sourceBeforeFingerprint"] != baseline
-            or run["sourceAfterFingerprint"] != baseline
-        ):
-            errors.append(f"case {intended['id']} lacks final same-source evidence")
-        elif run["status"] in {"PASS", "NOT_RUN"} or (
-            run["status"] == "FAILED" and intended["id"] in waived_case_ids
-        ):
+        run = evidence.get(intended["id"])
+        if run is None:
+            errors.append(f"case {intended['id']} lacks evidence")
+            continue
+        tolerated = run["status"] == "FAILED" and _case_waives_failure(intended)
+        if run["status"] == "FAILED" and not tolerated:
+            errors.append(f"case {intended['id']} failed without a declared waiver")
+        if run["status"] in {"PASS", "NOT_RUN"} or tolerated:
             errors.extend(_verify_artifact(campaign, run))
-        if (
-            run is not None
-            and run["status"] == "FAILED"
-            and intended["id"] not in waived_case_ids
-        ):
-            errors.append(
-                f"case {intended['id']} failed in the final regression without a declared waiver"
-            )
     for criterion in campaign.view["goalContract"]["criteriaIds"]:
         if not any(
             case["required"]
             and criterion in case["coversCriteria"]
-            and by_id.get(case["id"], {}).get("status") == "PASS"
+            and evidence.get(case["id"], {}).get("status") == "PASS"
             for case in campaign.acceptance["cases"]
         ):
-            errors.append(f"criterion {criterion} lacks required final-PASS evidence")
+            errors.append(f"criterion {criterion} lacks required PASS evidence")
+    return errors, evidence
+
+
+def finalize(campaign: Campaign) -> tuple[dict[str, Any], int]:
+    errors, evidence = _evaluate(campaign)
+    state = _copy_state(campaign.state)
     if errors:
-        state = _copy_state(campaign.state)
         state["status"] = "BLOCKED"
-        state["resumeStatus"] = "AUDIT_REQUIRED"
-        campaign.commit("audit_rejected", state, {"errors": errors})
-        return status_report(campaign, audit_errors=errors), 1
-    final_source = observe_source(campaign.root, campaign.acceptance["sourcePolicy"])
-    _, final_view, _ = load_bundle(campaign.alias)
-    if final_source["fingerprint"] != baseline or final_view != campaign.view:
-        errors = ["final audit authority changed before completion binding"]
-        state = _copy_state(campaign.state)
-        state["status"] = "BLOCKED"
-        state["resumeStatus"] = "AUDIT_REQUIRED"
-        campaign.commit("audit_rejected", state, {"errors": errors})
-        return status_report(campaign, audit_errors=errors), 1
-    binding = {
-        "finalRegressionAttemptId": campaign.state["finalRegressionAttemptId"],
-        "sourceFingerprint": baseline,
+        campaign.save(state)
+        return status_report(campaign, errors), 1
+    source = observe_source(campaign.root, campaign.acceptance["sourcePolicy"])
+    state["status"] = "COMPLETE"
+    state["completion"] = {
+        "sourceFingerprint": source["fingerprint"],
         "bundleManifestSha256": campaign.view["manifestSha256"],
         "executionPlanSha256": campaign.state["authority"]["executionPlanSha256"],
+        "evidenceRunIds": {
+            case_id: run["runId"] for case_id, run in evidence.items()
+        },
     }
-    state = _copy_state(campaign.state)
-    state["status"] = "COMPLETE"
-    state["successfulAudit"] = binding
-    state["resumeStatus"] = None
-    campaign.commit("audit_succeeded", state, binding)
+    campaign.save(state)
     return status_report(campaign), 0
 
 
 def completion_status(campaign: Campaign) -> tuple[str, list[str]]:
-    if (
-        campaign.state["status"] != "COMPLETE"
-        or campaign.state.get("successfulAudit") is None
-    ):
+    if campaign.state["status"] != "COMPLETE" or campaign.state.get("completion") is None:
         return "INCOMPLETE", []
-    errors: list[str] = []
-    try:
-        source = observe_source(campaign.root, campaign.acceptance["sourcePolicy"])
-        if (
-            source["fingerprint"]
-            != campaign.state["successfulAudit"]["sourceFingerprint"]
-        ):
-            errors.append("current source differs from the successful audit")
-        attempt = next(
-            item
-            for item in campaign.state["attempts"]
-            if item["id"]
-            == campaign.state["successfulAudit"]["finalRegressionAttemptId"]
-        )
-        waived_case_ids = (
-            set(attempt.get("waivedCaseIds", []))
-            if attempt.get("status") == "WAIVED"
-            else set()
-        )
-        for run in attempt["runs"]:
-            if run["status"] in {"PASS", "NOT_RUN"} or (
-                run["status"] == "FAILED" and run["caseId"] in waived_case_ids
-            ):
-                errors.extend(_verify_artifact(campaign, run))
-    except Exception as exc:  # noqa: BLE001
-        errors.append(str(exc))
+    errors, _ = _evaluate(campaign)
     return ("COMPLETE" if not errors else "INCOMPLETE"), errors
 
 
 def status_report(
-    campaign: Campaign, audit_errors: list[str] | None = None
+    campaign: Campaign, errors: list[str] | None = None
 ) -> dict[str, Any]:
-    status = campaign.state["status"]
-    displayed = "INTERRUPTED" if status == "RUNNING" else status
     completion, current_errors = completion_status(campaign)
     return {
         "schemaId": "steward.verification-status",
         "schemaVersion": 1,
         "goal": campaign.alias,
         "goalPath": campaign.view["path"],
-        "executionStatus": displayed,
-        "resumeStatus": campaign.state.get("resumeStatus"),
+        "executionStatus": campaign.state["status"],
         "completionStatus": completion,
         "sourceFingerprint": campaign.state["sourceBaseline"]["fingerprint"],
+        "driftWarnings": campaign.state["driftWarnings"],
         "repairs": campaign.state["repairs"],
         "attempts": campaign.state["attempts"],
         "lastFailure": campaign.state.get("lastFailure"),
@@ -1602,19 +1338,16 @@ def status_report(
         )
         if campaign.state["attempts"]
         else [],
-        "successfulAudit": campaign.state.get("successfulAudit"),
-        "errors": list(audit_errors or []) + current_errors,
+        "completion": campaign.state.get("completion"),
+        "errors": list(errors or []) + current_errors,
     }
 
 
 def advance(campaign: Campaign) -> tuple[dict[str, Any], int]:
     """Run the campaign until it needs a human decision or reaches completion.
 
-    Journal and state transitions are unchanged: each phase still commits its
-    own event. Chaining only removes the per-phase re-invocation between
-    mechanical steps (retest -> regression -> audit -> completion). advance
-    stops before the states where the verifier must act or decide:
-    REPAIR_REQUIRED, BLOCKED, or a rejected audit.
+    Stops only at REPAIR_REQUIRED, BLOCKED, or COMPLETE; each phase still
+    saves its own state so an interruption resumes the in-progress attempt.
     """
     while True:
         status = campaign.state["status"]
@@ -1623,39 +1356,8 @@ def advance(campaign: Campaign) -> tuple[dict[str, Any], int]:
             return report, 0 if report["completionStatus"] == "COMPLETE" else 1
         if status == "REPAIR_REQUIRED":
             return status_report(campaign), 1
-        if status == "BLOCKED":
-            current = observe_source(campaign.root, campaign.acceptance["sourcePolicy"])
-            if (
-                current["fingerprint"]
-                != campaign.state["sourceBaseline"]["fingerprint"]
-            ):
-                return status_report(campaign), 1
-            resume = campaign.state.get("resumeStatus")
-            state = _copy_state(campaign.state)
-            state["status"] = resume or "PENDING"
-            state["resumeStatus"] = None
-            campaign.commit("blocker_cleared", state, {"resumeStatus": resume})
-            continue
-        if status == "AUDIT_REQUIRED":
-            report, code = audit(campaign)
-            if code != 0:
-                return report, code
-            continue
-        if status in {"PENDING", "RETEST_REQUIRED", "REGRESSION_REQUIRED", "RUNNING"}:
-            current = observe_source(campaign.root, campaign.acceptance["sourcePolicy"])
-            if (
-                current["fingerprint"]
-                != campaign.state["sourceBaseline"]["fingerprint"]
-            ):
-                state = _copy_state(campaign.state)
-                state["status"] = "BLOCKED"
-                state["resumeStatus"] = status
-                campaign.commit(
-                    "source_drift_blocked",
-                    state,
-                    {"observedSourceFingerprint": current["fingerprint"]},
-                )
-                return status_report(campaign), 1
+        if status in {"PENDING", "BLOCKED"}:
+            _refresh_baseline(campaign)
             report, code = run_phase(campaign)
             if code != 0:
                 return report, code

@@ -1,6 +1,6 @@
 {
   "name": "steward",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "面向 Codex 与 Claude Code 的六技能工程工作流，覆盖项目文档维护、只读需求调研，以及 GOAL 起草与闭环验收。",
   "author": {
     "name": "coachpo",
@@ -27,7 +27,7 @@
   "interface": {
     "displayName": "Steward",
     "shortDescription": "项目文档、调研分析与 GOAL 验收工作流",
-    "longDescription": "Steward 用六个共享技能组织三条工程工作流：维护 canonical 项目文档与 AGENTS.md 层级，执行只读仓库调研与变更请求分析，以及按别名起草持久 GOAL、context 与验收意图，在手动实施后维护可恢复的同目录 campaign，依据证据修补并完成完整回归和 audit。Codex 与 Claude Code 读取同一套技能、合同和工作树本地证据。",
+    "longDescription": "Steward 用六个共享技能组织三条工程工作流：维护 canonical 项目文档与 AGENTS.md 层级，执行只读仓库调研与变更请求分析，以及按别名起草持久 GOAL、context 与验收意图，在手动实施后维护可恢复的同目录 campaign，依据证据修补并完成定向复测与收尾核验。Codex 与 Claude Code 读取同一套技能、合同和工作树本地证据。",
     "developerName": "CoachPo",
     "category": "Productivity",
     "capabilities": [
@@ -37,7 +37,7 @@
     "defaultPrompt": [
       "使用 $steward:write-project-docs 维护 canonical 项目文档，再用 $steward:write-agent-guides 同步 AGENTS.md 层级。",
       "使用 $steward:analyze-change-request 调研当前变更请求；需要复杂仓库搜索时使用 $steward:parallel-repository-research。",
-      "使用 $steward:draft-consensus-goal 按别名写入 GOAL、context 与验收意图；手动执行完成后，用 $steward:run-closed-loop-verification 验收同一别名，修补有证据的问题并完成完整回归和 audit。"
+      "使用 $steward:draft-consensus-goal 按别名写入 GOAL、context 与验收意图；手动执行完成后，用 $steward:run-closed-loop-verification 验收同一别名，修补有证据的问题并完成定向复测与收尾核验。"
     ],
     "brandColor": "#1A73E8",
     "websiteURL": "https://github.com/coachpo/plugins/tree/main/plugins/steward"
