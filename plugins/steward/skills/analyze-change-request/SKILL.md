@@ -47,8 +47,9 @@ read and apply
 [`references/research-contract.md`](references/research-contract.md). Freeze its
 contract fields, including:
 
-- answer-local `U*` intent records, target, `targetRoot`, source binding, scope,
-  constraints, assumptions, and required `applicableInstructions`;
+- what the user is asking for and has already accepted, target, `targetRoot`,
+  source binding, scope, constraints, assumptions, and required
+  `applicableInstructions`;
 - material research questions and only the useful lanes needed to answer them;
 - finite task-wide and per-lane budgets, concurrency, `retryLimit: 1`, and the
   stopping condition.
@@ -72,10 +73,9 @@ because it exists:
   configuration, tests as text, constraints, and relevant history;
 - **official:** exact-version product documentation, specifications, release
   notes, compatibility policies, deprecations, and maintainer material;
-- **obligation:** governing standards, regulations, security, privacy,
-  accessibility, reliability, or interoperability obligations;
 - **practice:** independent implementations, incidents, and practitioner evidence
-  that reveal material tradeoffs or omissions.
+  that reveal material tradeoffs or omissions — useful whenever the right call
+  isn't obvious from the repository or official docs alone.
 
 Delegate only when the host mechanically enforces lane-specific capabilities:
 
@@ -97,7 +97,8 @@ question IDs, sanitized source binding, include/exclude scope, required
 `applicableInstructions`, budget and stopping condition, allowed capability class,
 one-retry rule, and the fixed lane-result schema from the research contract. Do
 not reproduce hidden host, system, or developer text. Workers obey their own
-instruction hierarchy, must not delegate, and must not produce `R*` requirements.
+instruction hierarchy, must not delegate, and must not produce candidate
+requirements.
 
 Search results and snippets identify candidates; they are not evidence. Open each
 decisive source and bind its claims to the frozen version and context. Stop when
@@ -107,15 +108,16 @@ permitted retry fails.
 ## Verify and deliver
 
 Validate every lane result against the fixed schema. Reopen evidence only when a
-locator, applicability, independence, normative status, or drift check remains
-unresolved. Preserve conflicts and classify unsupported or changed evidence as a
-gap or drift; never fill it from model memory.
+locator or drift check remains unresolved. Preserve conflicts and classify
+unsupported or changed evidence as a gap or drift; never fill it from model
+memory.
 
 Build the internal `ResearchBrief`, then deliver from the current main session
 using the research contract's explicit `complete`, `partial`, `blocked`, or
 `drifted` branch. Always lead with the overall status. For supported candidates,
-use answer-local `R*` IDs, an allowed requirement-authority category, traceability
-to `U*` and evidence records, and observable acceptance criteria.
+list each with an observable acceptance criterion, its source link(s), and one
+of: from the request, a constraint, or a suggestion (see the research contract
+for what each means).
 
 Do not dump the brief or worker transcripts, emit persistent Steward `C*`,
 invariant, or campaign identities, or claim that candidates are accepted, canonical,
