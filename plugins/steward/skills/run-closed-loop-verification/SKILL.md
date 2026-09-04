@@ -22,13 +22,31 @@ Use `advance --goal <alias>` to drive the campaign and `status --goal <alias>`
 for read-only inspection. One `advance` runs every mechanical phase in
 sequence (cases, targeted retest of any repaired case, a final regression if
 any repair happened, an integrated completion check) and stops only where the
-verifier must act or decide: a proven project-source failure
-(`REPAIR_REQUIRED`), a blocker (`BLOCKED`, including a failed completion
-check), or `COMPLETE`. On a proven project-source failure, make the smallest
-authorized repair and record its structured evidence:
+verifier must act or decide: a failing case (`REPAIR_REQUIRED`), a blocker
+(`BLOCKED`, including a failed completion check), or `COMPLETE`.
+
+`REPAIR_REQUIRED` means a case exited non-zero, timed out, or did not produce
+its declared evidence — not that project source is the proven cause. Diagnose
+before repairing: `lastFailure` carries `exitCode`, `timedOut`,
+`missingEvidence`, `emptyEvidence`, and `artifactDir` for that run. Repair
+only a confirmed project-source root cause; an execution-binding or
+environment cause takes the recovery route in
+[state-and-evidence.md](references/state-and-evidence.md) instead. For a
+source root cause, make the smallest authorized repair and record it:
 
 ```text
 python3 -B "<skill-dir>/scripts/campaign.py" record-repair --goal <alias> --repair -
+```
+
+The payload accepts exactly these three fields, and `rootCauseSource` accepts
+exactly these keys plus an optional `symbol`:
+
+```json
+{
+  "rootCause": "why the case failed, bound to the source location below",
+  "rootCauseSource": {"path": "src/x.py", "lineStart": 10, "lineEnd": 24},
+  "fixSummary": "the one smallest change made"
+}
 ```
 
 Campaign state lives in one state file per GOAL, rewritten atomically after

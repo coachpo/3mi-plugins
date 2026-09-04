@@ -1350,6 +1350,10 @@ def status_report(
     campaign: Campaign, errors: list[str] | None = None
 ) -> dict[str, Any]:
     completion, current_errors = completion_status(campaign)
+    # Observed now rather than read from the cached baseline: a COMPLETE
+    # campaign never refreshes that baseline, so reporting it would hide
+    # post-completion source drift from a caller comparing this against
+    # completion.sourceFingerprint.
     return {
         "schemaId": "steward.verification-status",
         "schemaVersion": 1,
@@ -1357,7 +1361,9 @@ def status_report(
         "goalPath": campaign.view["path"],
         "executionStatus": campaign.state["status"],
         "completionStatus": completion,
-        "sourceFingerprint": campaign.state["sourceBaseline"]["fingerprint"],
+        "sourceFingerprint": observe_source(
+            campaign.root, campaign.acceptance["sourcePolicy"]
+        )["fingerprint"],
         "driftWarnings": campaign.state["driftWarnings"],
         "repairs": campaign.state["repairs"],
         "attempts": campaign.state["attempts"],

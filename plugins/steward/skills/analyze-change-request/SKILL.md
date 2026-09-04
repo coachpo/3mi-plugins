@@ -59,10 +59,13 @@ Use `none-found` when no repository-local instruction applies; never omit
 fact could materially change result, scope, authority, cost, or risk. Otherwise
 record a safe assumption.
 
-Once evidence collection starts, do not add a lane, question, source family, or
-scope. Record newly discovered work as a gap or unsearched scope. Retry one lane
-at most once and only after a transient transport or service failure; do not retry
-permission failures, missing authority, budget exhaustion, conflicts, or drift.
+The user's goal, authorized scope, and already-dispatched lane prompts stay
+frozen once evidence collection starts. Within that frozen scope and the
+remaining budget, add a question or lane when collected evidence shows the
+analysis actually needs one. Record work that would widen scope, or that the
+budget cannot cover, as a gap or unsearched scope. Retry one lane at most once
+and only after a transient transport or service failure; do not retry permission
+failures, missing authority, budget exhaustion, conflicts, or drift.
 
 ## Isolate and collect lanes
 

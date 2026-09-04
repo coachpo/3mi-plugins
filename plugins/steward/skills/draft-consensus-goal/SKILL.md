@@ -18,8 +18,10 @@ activating a host-managed GOAL.
 Read and apply [goal-authoring.md](../../references/goal-authoring.md). Read
 [goal-context.md](../../references/goal-context.md) when composing the context.
 The GOAL must stay within 4,000 Unicode code points and follow the canonical
-seven-line template; write the context and acceptance plan to their bundle
-paths as-is. Create the bundle with the single staged-file command
+seven-line template in
+[goal-template.txt](../../references/goal-template.txt), whose seven line
+labels are required exactly as written; write the context and acceptance plan
+to their bundle paths as-is. Create the bundle with the single staged-file command
 `goal_workspace.py create-from --goal <alias> <staging-dir>` (plain files, no
 JSON quoting); `create` with strict stdin JSON remains the alternative
 transport. Declare tolerance only in the plan: a non-required case may carry

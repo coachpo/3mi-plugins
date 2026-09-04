@@ -11,8 +11,9 @@ criteria.
 
 Use only current and explicitly accepted decisions as consensus. Ask when a
 missing decision can materially change outcome, scope, authority, cost, or
-risk. Keep the existing canonical seven-line format and consecutive `C1...Cn`
-criteria.
+risk. Keep the canonical seven-line format from
+[goal-template.txt](goal-template.txt) — its seven line labels are required
+exactly as written — and consecutive `C1...Cn` criteria.
 
 ## Build the immutable bundle
 

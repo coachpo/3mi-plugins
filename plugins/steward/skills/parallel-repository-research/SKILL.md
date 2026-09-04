@@ -108,8 +108,10 @@ deduplicates overlaps, and preserves material conflicts. Return exactly:
 - `searched`: combined verified search coverage;
 - `unsearched`: requested or relevant scope not covered;
 - `conflicts`: unresolved repository disagreement;
-- `gaps`: missing evidence and limitations;
-- `laneResults`: one final result for every lane run.
+- `gaps`: missing evidence and limitations.
+
+Per-lane results back that answer and stay available. Surface them when the
+reader needs the audit trail or when lanes disagree, not by default.
 
 Use `complete` only when every required lane is complete and coordinator
 verification succeeds. If useful evidence exists but any required lane is not

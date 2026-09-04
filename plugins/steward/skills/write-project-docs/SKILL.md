@@ -44,9 +44,11 @@ document.
 File deletion, moves, archival, cleanup outside the authorized document or
 managed-block write set, external writes, source/configuration/CI edits, or
 material scope expansion require explicit authority. Preserve generated and
-other-skill managed regions. The only root `AGENTS.md` write owned here is an
-existing eligible document-navigation block through its updater; engineering
-routing belongs to `write-agent-guides`.
+other-skill managed regions. Root `AGENTS.md` writes owned here are exactly
+what its updater does: refresh the managed document-navigation block, append
+one when the file has none, and rewrite stale canonical link targets outside
+every managed block — body mentions that are not link targets are reported,
+not changed. Engineering routing belongs to `write-agent-guides`.
 
 ## Preserve language intent
 
@@ -107,6 +109,11 @@ consistency, and managed-block consistency; it does not replace semantic review
 of the prose or check local link validity — report broken or stale links you
 notice while reading, but do not treat link-checking as automated.
 
+The validator always reports the whole canonical set, so a focused task on a
+repository that never had that set exits non-zero on documents outside the
+request. Judge each error: fix the ones the request covers, report the rest as
+pre-existing. A non-zero exit is not itself a reason to widen the write set.
+
 On resume, re-resolve the project, language, canonical paths, exact development
 tier, write set, managed boundaries, and affected asset snapshots. Preserve
 non-overlapping user changes; old validation is stale after a relevant input
@@ -115,8 +122,8 @@ change.
 ## Complete and report
 
 Complete a write task only when every affected required document has substantive
-content, owned blocks validate, applicable repository checks pass, and the diff
-contains no out-of-set change. For migration or destructive cleanup, strict
+content, owned blocks validate, in-scope validation errors are cleared, and the
+diff contains no out-of-set change. For migration or destructive cleanup, strict
 diagnostics must pass or the remaining unauthorized cleanup must be reported
 exactly.
 

@@ -21,6 +21,12 @@ is required. If a trustworthy runner
 does not exist after implementation, report the blocker rather than weakening
 the acceptance plan or inventing a placeholder.
 
+Each case runs with `CLOSED_LOOP_EVIDENCE_DIR` set to its own private evidence
+directory, and the acceptance plan's `requiredFiles` and `nonEmptyFiles` are
+resolved relative to that directory, not to `cwd`. A runner that writes its
+proof anywhere else fails as missing evidence even when the behavior it checks
+is correct, so bind the runner to that variable.
+
 The binding inherits two Draft-declared relaxations mechanically; it never
 invents them:
 

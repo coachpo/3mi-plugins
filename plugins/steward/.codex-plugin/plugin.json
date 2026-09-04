@@ -1,6 +1,6 @@
 {
   "name": "steward",
-  "version": "0.7.1",
+  "version": "0.7.2",
   "description": "面向 Codex 与 Claude Code 的六技能工程工作流，覆盖项目文档维护、只读需求调研，以及 GOAL 起草与闭环验收。",
   "author": {
     "name": "coachpo",

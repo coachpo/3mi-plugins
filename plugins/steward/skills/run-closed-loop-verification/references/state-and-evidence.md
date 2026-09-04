@@ -36,10 +36,24 @@ file-set plans bind only the declared files plus HEAD/index. Source edits
 observed between calls are absorbed as the new baseline and recorded as a
 drift warning rather than blocking the campaign; the verifier never discards
 or overwrites a user's edits to do this. A case that modifies protected
-source during its own run is instead treated as a failure requiring a fix —
-typically correcting the runner or declaring the path in
-`sourcePolicy.writable` — routed through the same repair window as any other
-failure, not a silent baseline change.
+source during its own run is instead treated as a failure requiring a fix,
+routed through the same repair window as any other failure, not a silent
+baseline change. Correcting the runner is the in-campaign fix while the runner
+is tracked source. Adding the path to `sourcePolicy.writable` is not:
+`sourcePolicy` lives in the immutable acceptance plan, so editing it
+mid-campaign breaks the bundle manifest and every later command fails to load
+the campaign at all. That case takes the redraft route below.
+
+Not every failure has a project-source root cause, and `record-repair` accepts
+only that kind. When the cause is the execution binding itself — wrong `argv`,
+`cwd`, or `timeoutSeconds` — or the machine, no repair can move the campaign
+forward. Delete `.steward/goals/<alias>/verification/` and `init` again with
+the corrected execution plan: the GOAL bundle is untouched, the accepted
+acceptance intent still stands, and the campaign restarts from `PENDING`.
+Re-running `init` without deleting that directory is refused as
+`CAMPAIGN_CONFLICT`. When the acceptance intent itself is wrong — an
+assertion, a waiver, or `sourcePolicy` — that is a redraft of the GOAL, not a
+verification step.
 
 Cases run directly, with a bounded timeout and output size, and a private
 evidence directory. Artifacts, results, and their manifest are write-once and
@@ -61,5 +75,12 @@ that final sweep when something did — rather than as a separate resumable
 phase.
 Completion is current only while those bindings remain valid; a later tamper
 or authority change shows up as `INCOMPLETE` on the next check without
-changing the persisted campaign status. Restoring exact bytes/source restores
-current completion without creating a new campaign epoch.
+changing the persisted campaign status. Restoring exact bytes restores current
+completion without creating a new campaign epoch.
+
+Protected source is deliberately not one of those bindings — an unrelated
+later edit should not retroactively reject a campaign. Every status report
+instead observes source at call time, so `sourceFingerprint` differing from
+`completion.sourceFingerprint` means the accepted evidence predates the
+current working tree. Read that difference and judge whether the edit touches
+what the cases actually proved; re-proving it is a new campaign.
