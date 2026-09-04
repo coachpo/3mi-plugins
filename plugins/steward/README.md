@@ -66,9 +66,9 @@ $steward:<skill-name>
 
 ### GOAL 交付
 
-`draft-consensus-goal` 从当前会话 cwd 绑定精确 Git worktree，并把已收敛决定保存到 `.steward/goals/<alias>/`。不可变 bundle 包含 canonical 七行中文 `goal.txt`、唯一 `context.md`、Draft 冻结的 `acceptance-plan.json` 和摘要 manifest。alias 使用小写字母、数字及单连字符；目录协议允许多个 alias，但一个 worktree 只起草一个 GOAL 是调用方约定。
+`draft-consensus-goal` 从当前会话 cwd 绑定精确 Git worktree，并把已收敛决定保存到 `.steward/goals/<alias>/`。不可变 bundle 包含 canonical 七行中文 `goal.txt`、唯一 `context.md`、Draft 冻结的 `acceptance-plan.json` 和摘要 manifest。alias 使用小写字母、数字及单连字符；目录协议允许多个 alias，但一个 worktree 只起草一个 GOAL 是调用方约定。容错只能由 Draft 事先声明：非必需 case 可携带 `onFailure: "waive-with-report"`（失败记录证据但不开修补窗口），case 副作用文件可声明进 `sourcePolicy.writable`（验证明确捕获并回滚，源码指纹排除它们）；其余全部保持严格。
 
-用户或执行代理随后按 GOAL 实施。声明完成后，`run-closed-loop-verification` 用同一 alias 和同一物理目录验收：它把 acceptance intent 解析成不可变的精确 execution plan，捕获 Git 可见源码基线，并维护 hash-linked journal、attempt 和 artifacts。旧平铺 GOAL、context、Adapter 与 Campaign 路径完全不参与新流程。
+用户或执行代理随后按 GOAL 实施。声明完成后，`run-closed-loop-verification` 用同一 alias 和同一物理目录验收：它把 acceptance intent 解析成不可变的精确 execution plan，捕获 Git 可见源码基线，并维护 hash-linked journal、attempt 和 artifacts。被 Draft 声明 waive 的非必需 case 失败会以 `WAIVED` attempt 记录并在完成报告中列为未满足的可选意图；其余失败照旧进入修补闭环。旧平铺 GOAL、context、Adapter 与 Campaign 路径完全不参与新流程。
 
 项目源码失败只能在 repair 窗口内凭失败快照、根因位置和真实 delta 接受修补；随后先定向复测失败 case，再从 case 1 完整回归。非 repair 阶段源码漂移会阻塞并要求手动恢复。只有所有 required `C*` 获得同源最终 PASS 且 audit 当前有效时才报告完成。
 

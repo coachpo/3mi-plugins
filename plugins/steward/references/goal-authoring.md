@@ -36,11 +36,21 @@ Create acceptance plan schema version 1 with exactly:
 - an ordered non-empty `cases` list.
 
 Each case contains only `id`, `required`, `platform`, `coversCriteria`,
-`assertion`, `runnerHint`, and `evidence`. Evidence contains only
-`requiredFiles` and `nonEmptyFiles`; non-empty files must also be required.
-Every `C*` needs a required case. Freeze observable acceptance intent, not
-runtime argv: a runner may be planned even when implementation will create it,
-but placeholders and unverifiable assertions are invalid.
+`assertion`, `runnerHint`, and `evidence`, plus an optional
+`onFailure: "waive-with-report"` that only a non-required case may carry: a
+failed waived case is reported but does not open the repair window or block a
+passing attempt. Evidence contains only `requiredFiles` and `nonEmptyFiles`;
+non-empty files must also be required. Every `C*` needs a required case. Freeze
+observable acceptance intent, not runtime argv: a runner may be planned even
+when implementation will create it, but placeholders and unverifiable
+assertions are invalid.
+
+`sourcePolicy` accepts an optional `writable` list of safe project-relative
+files that cases may create or modify, such as coverage or lockfile byproducts
+or an ignored runner's outputs that verification must keep out of the source
+identity. `writable` files must be disjoint from an explicit `files` source
+set; a runner that is itself a repair target must instead be tracked or
+declared in a `files` source set, not hidden in `writable`.
 
 Serialize one strict payload in memory:
 

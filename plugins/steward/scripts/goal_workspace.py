@@ -18,8 +18,18 @@ from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
 from typing import Any
 
-from goal_contract import GoalContract, GoalContractError, goal_contract_sha256, validate_goal_text
-from worktree_binding import GIT_REPOSITORY_ENVIRONMENT, WorktreeBinding, WorktreeBindingError, bind_target_worktree
+from goal_contract import (
+    GoalContract,
+    GoalContractError,
+    goal_contract_sha256,
+    validate_goal_text,
+)
+from worktree_binding import (
+    GIT_REPOSITORY_ENVIRONMENT,
+    WorktreeBinding,
+    WorktreeBindingError,
+    bind_target_worktree,
+)
 
 BUNDLE_SCHEMA_ID = "steward.goal-bundle"
 BUNDLE_SCHEMA_VERSION = 1
@@ -60,9 +70,17 @@ class CreateRequest:
 
 def canonical_json_bytes(value: Any) -> bytes:
     try:
-        return json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False).encode("utf-8")
+        return json.dumps(
+            value,
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+            allow_nan=False,
+        ).encode("utf-8")
     except (TypeError, ValueError, UnicodeError) as exc:
-        raise GoalWorkspaceError("WORKSPACE_JSON", "value is not canonical JSON") from exc
+        raise GoalWorkspaceError(
+            "WORKSPACE_JSON", "value is not canonical JSON"
+        ) from exc
 
 
 def sha256_bytes(value: bytes) -> str:
@@ -70,8 +88,15 @@ def sha256_bytes(value: bytes) -> str:
 
 
 def validate_alias(alias: str) -> str:
-    if not isinstance(alias, str) or len(alias) > 64 or ALIAS_PATTERN.fullmatch(alias) is None:
-        raise GoalWorkspaceError("WORKSPACE_ALIAS", "goal alias must be 1-64 lowercase ASCII letters/digits joined by single hyphens")
+    if (
+        not isinstance(alias, str)
+        or len(alias) > 64
+        or ALIAS_PATTERN.fullmatch(alias) is None
+    ):
+        raise GoalWorkspaceError(
+            "WORKSPACE_ALIAS",
+            "goal alias must be 1-64 lowercase ASCII letters/digits joined by single hyphens",
+        )
     return alias
 
 
@@ -84,7 +109,12 @@ def _clean_git_environment() -> dict[str, str]:
 
 def _git(cwd: Path, *arguments: str) -> subprocess.CompletedProcess[bytes]:
     try:
-        return subprocess.run(["git", "-C", str(cwd), *arguments], check=False, capture_output=True, env=_clean_git_environment())
+        return subprocess.run(
+            ["git", "-C", str(cwd), *arguments],
+            check=False,
+            capture_output=True,
+            env=_clean_git_environment(),
+        )
     except OSError as exc:
         raise GoalWorkspaceError("WORKSPACE_GIT", f"cannot execute git: {exc}") from exc
 
@@ -94,10 +124,14 @@ def resolve_current_binding(cwd: str | Path | None = None) -> WorktreeBinding:
     try:
         supplied = supplied.resolve(strict=True)
     except OSError as exc:
-        raise GoalWorkspaceError("WORKSPACE_BINDING", f"cannot resolve cwd: {exc}") from exc
+        raise GoalWorkspaceError(
+            "WORKSPACE_BINDING", f"cannot resolve cwd: {exc}"
+        ) from exc
     result = _git(supplied, "rev-parse", "--show-toplevel")
     if result.returncode != 0:
-        detail = result.stderr.decode("utf-8", "replace").strip() or "not in a Git worktree"
+        detail = (
+            result.stderr.decode("utf-8", "replace").strip() or "not in a Git worktree"
+        )
         raise GoalWorkspaceError("WORKSPACE_BINDING", detail)
     try:
         root = Path(result.stdout.decode("utf-8").strip()).resolve(strict=True)
@@ -107,17 +141,28 @@ def resolve_current_binding(cwd: str | Path | None = None) -> WorktreeBinding:
 
 
 def _is_reparse(observed: os.stat_result) -> bool:
-    return bool(getattr(observed, "st_file_attributes", 0) & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0))
+    return bool(
+        getattr(observed, "st_file_attributes", 0)
+        & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0)
+    )
 
 
 def _require_real_directory(path: Path, label: str) -> None:
     try:
         observed = path.lstat()
     except FileNotFoundError as exc:
-        raise GoalWorkspaceError("WORKSPACE_MISSING", f"{label} does not exist") from exc
+        raise GoalWorkspaceError(
+            "WORKSPACE_MISSING", f"{label} does not exist"
+        ) from exc
     except OSError as exc:
-        raise GoalWorkspaceError("WORKSPACE_IO", f"cannot inspect {label}: {exc}") from exc
-    if stat.S_ISLNK(observed.st_mode) or _is_reparse(observed) or not stat.S_ISDIR(observed.st_mode):
+        raise GoalWorkspaceError(
+            "WORKSPACE_IO", f"cannot inspect {label}: {exc}"
+        ) from exc
+    if (
+        stat.S_ISLNK(observed.st_mode)
+        or _is_reparse(observed)
+        or not stat.S_ISDIR(observed.st_mode)
+    ):
         raise GoalWorkspaceError("WORKSPACE_PATH", f"{label} must be a real directory")
 
 
@@ -125,10 +170,18 @@ def read_regular_bytes(path: Path, *, label: str, max_bytes: int) -> bytes:
     descriptor: int | None = None
     try:
         before = path.lstat()
-        if stat.S_ISLNK(before.st_mode) or _is_reparse(before) or not stat.S_ISREG(before.st_mode):
-            raise GoalWorkspaceError("WORKSPACE_PATH", f"{label} must be a regular non-link file")
+        if (
+            stat.S_ISLNK(before.st_mode)
+            or _is_reparse(before)
+            or not stat.S_ISREG(before.st_mode)
+        ):
+            raise GoalWorkspaceError(
+                "WORKSPACE_PATH", f"{label} must be a regular non-link file"
+            )
         if before.st_size > max_bytes:
-            raise GoalWorkspaceError("WORKSPACE_SIZE", f"{label} exceeds the safe size limit")
+            raise GoalWorkspaceError(
+                "WORKSPACE_SIZE", f"{label} exceeds the safe size limit"
+            )
         flags = os.O_RDONLY
         for name in ("O_BINARY", "O_CLOEXEC", "O_NOFOLLOW", "O_NONBLOCK"):
             flags |= getattr(os, name, 0)
@@ -143,7 +196,9 @@ def read_regular_bytes(path: Path, *, label: str, max_bytes: int) -> bytes:
                 break
             data.extend(chunk)
             if len(data) > max_bytes:
-                raise GoalWorkspaceError("WORKSPACE_SIZE", f"{label} exceeds the safe size limit")
+                raise GoalWorkspaceError(
+                    "WORKSPACE_SIZE", f"{label} exceeds the safe size limit"
+                )
         after = path.lstat()
         final = os.fstat(descriptor)
         if not os.path.samestat(before, final) or not os.path.samestat(before, after):
@@ -163,9 +218,13 @@ def read_regular_bytes(path: Path, *, label: str, max_bytes: int) -> bytes:
 def _require_untracked_steward(root: Path) -> None:
     result = _git(root, "ls-files", "-z", "--", ".steward")
     if result.returncode != 0:
-        raise GoalWorkspaceError("WORKSPACE_GIT", result.stderr.decode("utf-8", "replace").strip())
+        raise GoalWorkspaceError(
+            "WORKSPACE_GIT", result.stderr.decode("utf-8", "replace").strip()
+        )
     if result.stdout:
-        raise GoalWorkspaceError("WORKSPACE_TRACKED", ".steward must not contain tracked paths")
+        raise GoalWorkspaceError(
+            "WORKSPACE_TRACKED", ".steward must not contain tracked paths"
+        )
 
 
 def _ensure_root(binding: WorktreeBinding) -> Path:
@@ -180,8 +239,15 @@ def _ensure_root(binding: WorktreeBinding) -> Path:
     try:
         fd = os.open(ignore, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
     except FileExistsError:
-        if read_regular_bytes(ignore, label=".steward/.gitignore", max_bytes=MAX_IGNORE_BYTES) != IGNORE_BYTES:
-            raise GoalWorkspaceError("WORKSPACE_IGNORE", ".steward/.gitignore must contain exactly '*\\n'")
+        if (
+            read_regular_bytes(
+                ignore, label=".steward/.gitignore", max_bytes=MAX_IGNORE_BYTES
+            )
+            != IGNORE_BYTES
+        ):
+            raise GoalWorkspaceError(
+                "WORKSPACE_IGNORE", ".steward/.gitignore must contain exactly '*\\n'"
+            ) from None
     else:
         with os.fdopen(fd, "wb") as handle:
             handle.write(IGNORE_BYTES)
@@ -204,7 +270,11 @@ def ensure_workspace_root(raw_target: str) -> dict[str, Any]:
     except WorktreeBindingError as exc:
         raise GoalWorkspaceError("WORKSPACE_BINDING", str(exc)) from exc
     _ensure_root(binding)
-    return {"schemaId": ROOT_SCHEMA_ID, "schemaVersion": ROOT_SCHEMA_VERSION, "path": ".steward"}
+    return {
+        "schemaId": ROOT_SCHEMA_ID,
+        "schemaVersion": ROOT_SCHEMA_VERSION,
+        "path": ".steward",
+    }
 
 
 def _strict_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
@@ -220,7 +290,9 @@ def _canonical_text(value: Any, label: str, max_bytes: int) -> bytes:
     if not isinstance(value, str) or not value.strip():
         raise GoalWorkspaceError("WORKSPACE_INPUT", f"{label} must be non-empty text")
     if value.startswith("\ufeff") or "\x00" in value or "\r" in value:
-        raise GoalWorkspaceError("WORKSPACE_INPUT", f"{label} must use UTF-8 LF text without BOM/NUL")
+        raise GoalWorkspaceError(
+            "WORKSPACE_INPUT", f"{label} must use UTF-8 LF text without BOM/NUL"
+        )
     if not value.endswith("\n"):
         value += "\n"
     data = value.encode("utf-8")
@@ -229,8 +301,12 @@ def _canonical_text(value: Any, label: str, max_bytes: int) -> bytes:
     return data
 
 
-def _unique_strings(value: Any, label: str, pattern: re.Pattern[str] | None = None) -> list[str]:
-    if not isinstance(value, list) or any(not isinstance(item, str) or not item for item in value):
+def _unique_strings(
+    value: Any, label: str, pattern: re.Pattern[str] | None = None
+) -> list[str]:
+    if not isinstance(value, list) or any(
+        not isinstance(item, str) or not item for item in value
+    ):
         raise GoalWorkspaceError("WORKSPACE_PLAN", f"{label} must be a string array")
     if len(set(value)) != len(value):
         raise GoalWorkspaceError("WORKSPACE_PLAN", f"{label} contains duplicates")
@@ -240,68 +316,205 @@ def _unique_strings(value: Any, label: str, pattern: re.Pattern[str] | None = No
 
 
 def validate_acceptance_plan(value: Any, criteria_ids: list[str]) -> dict[str, Any]:
-    if not isinstance(value, dict) or set(value) != {"schemaVersion", "sourcePolicy", "cases"}:
-        raise GoalWorkspaceError("WORKSPACE_PLAN", "acceptance plan has invalid top-level fields")
-    if value.get("schemaVersion") != ACCEPTANCE_SCHEMA_VERSION or type(value.get("schemaVersion")) is not int:
-        raise GoalWorkspaceError("WORKSPACE_PLAN", "acceptance plan schemaVersion must be 1")
+    """Validate a Draft-frozen acceptance plan and return its canonical form.
+
+    Extends v1 with two optional declarations; both keep the gate owned by
+    Draft — the verifier only mechanically enforces the declared boundary.
+
+    `sourcePolicy` may declare an optional `writable` set: project-relative
+    files that cases may create or modify. These files stay outside the
+    protected source identity, are snapshotted into the case artifact before
+    an exact byte-level rollback, and must be disjoint from an explicit files
+    source set.
+
+    Cases may also declare optional `onFailure: "waive-with-report"`. Only a
+    non-required case may waive: a failed waived case records its structured
+    failure evidence, does not open the repair window, and does not block a
+    passing attempt; audit accepts the failure only while it remains covered
+    by the same-source snapshot. Required cases keep the strict stop.
+
+    Optional fields are never defaulted: absent fields reproduce exactly the
+    previous plan bytes, keeping existing bundles and campaigns byte-stable.
+    """
+    if not isinstance(value, dict) or set(value) != {
+        "schemaVersion",
+        "sourcePolicy",
+        "cases",
+    }:
+        raise GoalWorkspaceError(
+            "WORKSPACE_PLAN", "acceptance plan has invalid top-level fields"
+        )
+    if (
+        value.get("schemaVersion") != ACCEPTANCE_SCHEMA_VERSION
+        or type(value.get("schemaVersion")) is not int
+    ):
+        raise GoalWorkspaceError(
+            "WORKSPACE_PLAN", "acceptance plan schemaVersion must be 1"
+        )
     source = value.get("sourcePolicy")
     if not isinstance(source, dict):
         raise GoalWorkspaceError("WORKSPACE_PLAN", "sourcePolicy must be an object")
     mode = source.get("mode")
     if mode == "git-visible":
-        if set(source) != {"mode"}:
-            raise GoalWorkspaceError("WORKSPACE_PLAN", "git-visible sourcePolicy only accepts mode")
+        if not set(source).issubset({"mode", "writable"}):
+            raise GoalWorkspaceError(
+                "WORKSPACE_PLAN",
+                "git-visible sourcePolicy only accepts mode and optional writable",
+            )
     elif mode == "files":
-        if set(source) != {"mode", "files"}:
-            raise GoalWorkspaceError("WORKSPACE_PLAN", "files sourcePolicy requires mode and files")
+        if set(source) not in ({"mode", "files"}, {"mode", "files", "writable"}):
+            raise GoalWorkspaceError(
+                "WORKSPACE_PLAN",
+                "files sourcePolicy requires mode and files, with optional writable",
+            )
         files = _unique_strings(source.get("files"), "sourcePolicy.files")
         if not files:
-            raise GoalWorkspaceError("WORKSPACE_PLAN", "sourcePolicy.files must not be empty")
+            raise GoalWorkspaceError(
+                "WORKSPACE_PLAN", "sourcePolicy.files must not be empty"
+            )
         for item in files:
             path = PurePosixPath(item)
-            if path.is_absolute() or path.as_posix() != item or ".." in path.parts or item.startswith(".steward/"):
-                raise GoalWorkspaceError("WORKSPACE_PLAN", "sourcePolicy.files contains an unsafe path")
+            if (
+                path.is_absolute()
+                or path.as_posix() != item
+                or ".." in path.parts
+                or item.startswith(".steward/")
+            ):
+                raise GoalWorkspaceError(
+                    "WORKSPACE_PLAN", "sourcePolicy.files contains an unsafe path"
+                )
     else:
-        raise GoalWorkspaceError("WORKSPACE_PLAN", "sourcePolicy.mode must be git-visible or files")
+        raise GoalWorkspaceError(
+            "WORKSPACE_PLAN", "sourcePolicy.mode must be git-visible or files"
+        )
+    if "writable" in source:
+        for item in _unique_strings(source.get("writable"), "sourcePolicy.writable"):
+            path = PurePosixPath(item)
+            if (
+                path.is_absolute()
+                or path.as_posix() != item
+                or ".." in path.parts
+                or item.startswith(".steward/")
+            ):
+                raise GoalWorkspaceError(
+                    "WORKSPACE_PLAN", "sourcePolicy.writable contains an unsafe path"
+                )
+            if mode == "files" and item in set(source["files"]):
+                raise GoalWorkspaceError(
+                    "WORKSPACE_PLAN",
+                    "sourcePolicy.writable must be disjoint from sourcePolicy.files",
+                )
     cases = value.get("cases")
     if not isinstance(cases, list) or not cases:
         raise GoalWorkspaceError("WORKSPACE_PLAN", "cases must be a non-empty array")
-    expected = {"id", "required", "platform", "coversCriteria", "assertion", "runnerHint", "evidence"}
+    expected = {
+        "id",
+        "required",
+        "platform",
+        "coversCriteria",
+        "assertion",
+        "runnerHint",
+        "evidence",
+        "onFailure",
+    }
     seen: set[str] = set()
     criteria = set(criteria_ids)
     normalized_cases: list[dict[str, Any]] = []
     for index, case in enumerate(cases):
-        if not isinstance(case, dict) or set(case) != expected:
-            raise GoalWorkspaceError("WORKSPACE_PLAN", f"case {index} has invalid fields")
+        if not isinstance(case, dict) or not set(case).issubset(expected):
+            raise GoalWorkspaceError(
+                "WORKSPACE_PLAN", f"case {index} has invalid fields"
+            )
         case_id = case.get("id")
-        if not isinstance(case_id, str) or CASE_ID_PATTERN.fullmatch(case_id) is None or case_id in seen:
-            raise GoalWorkspaceError("WORKSPACE_PLAN", f"case {index} has invalid or duplicate id")
+        if (
+            not isinstance(case_id, str)
+            or CASE_ID_PATTERN.fullmatch(case_id) is None
+            or case_id in seen
+        ):
+            raise GoalWorkspaceError(
+                "WORKSPACE_PLAN", f"case {case_id} has invalid or duplicate id"
+            )
         seen.add(case_id)
-        if type(case.get("required")) is not bool or case.get("platform") not in SUPPORTED_PLATFORMS:
-            raise GoalWorkspaceError("WORKSPACE_PLAN", f"case {case_id} has invalid required/platform")
-        covers = _unique_strings(case.get("coversCriteria"), f"case {case_id} coversCriteria", CRITERION_ID_PATTERN)
+        if (
+            type(case.get("required")) is not bool
+            or case.get("platform") not in SUPPORTED_PLATFORMS
+        ):
+            raise GoalWorkspaceError(
+                "WORKSPACE_PLAN", f"case {case_id} has invalid required/platform"
+            )
+        if "onFailure" in case and (
+            case["onFailure"] != "waive-with-report" or case["required"]
+        ):
+            raise GoalWorkspaceError(
+                "WORKSPACE_PLAN",
+                f"case {case_id} onFailure must be waive-with-report on a non-required case",
+            )
+        covers = _unique_strings(
+            case.get("coversCriteria"),
+            f"case {case_id} coversCriteria",
+            CRITERION_ID_PATTERN,
+        )
         if not covers or not set(covers).issubset(criteria):
-            raise GoalWorkspaceError("WORKSPACE_PLAN", f"case {case_id} references unknown criteria")
+            raise GoalWorkspaceError(
+                "WORKSPACE_PLAN", f"case {case_id} references unknown criteria"
+            )
         for name in ("assertion", "runnerHint"):
             item = case.get(name)
-            if not isinstance(item, str) or not item.strip() or "replace-with" in item.lower() or "placeholder" in item.lower():
-                raise GoalWorkspaceError("WORKSPACE_PLAN", f"case {case_id} {name} is empty or placeholder")
+            if (
+                not isinstance(item, str)
+                or not item.strip()
+                or "replace-with" in item.lower()
+                or "placeholder" in item.lower()
+            ):
+                raise GoalWorkspaceError(
+                    "WORKSPACE_PLAN", f"case {case_id} {name} is empty or placeholder"
+                )
         evidence = case.get("evidence")
-        if not isinstance(evidence, dict) or set(evidence) != {"requiredFiles", "nonEmptyFiles"}:
-            raise GoalWorkspaceError("WORKSPACE_PLAN", f"case {case_id} evidence has invalid fields")
-        required_files = _unique_strings(evidence.get("requiredFiles"), f"case {case_id} requiredFiles")
-        nonempty = _unique_strings(evidence.get("nonEmptyFiles"), f"case {case_id} nonEmptyFiles")
+        if not isinstance(evidence, dict) or set(evidence) != {
+            "requiredFiles",
+            "nonEmptyFiles",
+        }:
+            raise GoalWorkspaceError(
+                "WORKSPACE_PLAN", f"case {case_id} evidence has invalid fields"
+            )
+        required_files = _unique_strings(
+            evidence.get("requiredFiles"), f"case {case_id} requiredFiles"
+        )
+        nonempty = _unique_strings(
+            evidence.get("nonEmptyFiles"), f"case {case_id} nonEmptyFiles"
+        )
         if not set(nonempty).issubset(set(required_files)):
-            raise GoalWorkspaceError("WORKSPACE_PLAN", f"case {case_id} nonEmptyFiles must be required")
+            raise GoalWorkspaceError(
+                "WORKSPACE_PLAN", f"case {case_id} nonEmptyFiles must be required"
+            )
         for item in required_files:
             path = PurePosixPath(item)
-            if path.is_absolute() or path.as_posix() != item or ".." in path.parts or item in {"", "."}:
-                raise GoalWorkspaceError("WORKSPACE_PLAN", f"case {case_id} evidence path is unsafe")
+            if (
+                path.is_absolute()
+                or path.as_posix() != item
+                or ".." in path.parts
+                or item in {"", "."}
+            ):
+                raise GoalWorkspaceError(
+                    "WORKSPACE_PLAN", f"case {case_id} evidence path is unsafe"
+                )
         normalized_cases.append(dict(case))
-    uncovered = [criterion for criterion in criteria_ids if not any(c["required"] and criterion in c["coversCriteria"] for c in normalized_cases)]
+    uncovered = [
+        criterion
+        for criterion in criteria_ids
+        if not any(
+            c["required"] and criterion in c["coversCriteria"] for c in normalized_cases
+        )
+    ]
     if uncovered:
-        raise GoalWorkspaceError("WORKSPACE_PLAN", "criteria lack required coverage: " + ", ".join(uncovered))
-    normalized = {"schemaVersion": 1, "sourcePolicy": dict(source), "cases": normalized_cases}
+        raise GoalWorkspaceError(
+            "WORKSPACE_PLAN", "criteria lack required coverage: " + ", ".join(uncovered)
+        )
+    normalized = {
+        "schemaVersion": 1,
+        "sourcePolicy": dict(source),
+        "cases": normalized_cases,
+    }
     if len(canonical_json_bytes(normalized)) > MAX_PLAN_BYTES:
         raise GoalWorkspaceError("WORKSPACE_SIZE", "acceptance plan is too large")
     return normalized
@@ -314,25 +527,44 @@ def _context_reference(alias: str) -> str:
 def _validate_context_reference(contract: GoalContract, alias: str) -> None:
     reference = _context_reference(alias)
     if contract.objective.count(reference) != 1:
-        raise GoalWorkspaceError("WORKSPACE_CONTEXT_REFERENCE", f"GOAL must reference {reference} exactly once")
-    evidence = next(field.value for field in contract.fields if field.key == "evidenceAndContext")
+        raise GoalWorkspaceError(
+            "WORKSPACE_CONTEXT_REFERENCE",
+            f"GOAL must reference {reference} exactly once",
+        )
+    evidence = next(
+        field.value for field in contract.fields if field.key == "evidenceAndContext"
+    )
     if reference not in evidence:
-        raise GoalWorkspaceError("WORKSPACE_CONTEXT_REFERENCE", "context reference must be in 证据与上下文")
+        raise GoalWorkspaceError(
+            "WORKSPACE_CONTEXT_REFERENCE", "context reference must be in 证据与上下文"
+        )
 
 
 def _load_create_request(raw: bytes, alias: str) -> CreateRequest:
     if len(raw) > MAX_INPUT_BYTES or raw.startswith(b"\xef\xbb\xbf"):
-        raise GoalWorkspaceError("WORKSPACE_INPUT", "create payload is too large or has a BOM")
+        raise GoalWorkspaceError(
+            "WORKSPACE_INPUT", "create payload is too large or has a BOM"
+        )
     try:
         value = json.loads(raw.decode("utf-8"), object_pairs_hook=_strict_object)
     except GoalWorkspaceError:
         raise
     except (UnicodeError, json.JSONDecodeError) as exc:
-        raise GoalWorkspaceError("WORKSPACE_INPUT", "create payload must be UTF-8 JSON") from exc
-    if not isinstance(value, Mapping) or set(value) != {"objective", "context", "acceptancePlan"}:
-        raise GoalWorkspaceError("WORKSPACE_INPUT", "payload fields must be objective, context, acceptancePlan")
+        raise GoalWorkspaceError(
+            "WORKSPACE_INPUT", "create payload must be UTF-8 JSON"
+        ) from exc
+    if not isinstance(value, Mapping) or set(value) != {
+        "objective",
+        "context",
+        "acceptancePlan",
+    }:
+        raise GoalWorkspaceError(
+            "WORKSPACE_INPUT",
+            "payload fields must be objective, context, acceptancePlan",
+        )
     try:
-        contract = validate_goal_text(value.get("objective"))
+        objective = value.get("objective")
+        contract = validate_goal_text(objective if isinstance(objective, str) else "")
     except GoalContractError as exc:
         raise GoalWorkspaceError("WORKSPACE_GOAL", str(exc)) from exc
     _validate_context_reference(contract, alias)
@@ -340,42 +572,122 @@ def _load_create_request(raw: bytes, alias: str) -> CreateRequest:
     criteria_ids = [criterion.id for criterion in contract.completion_criteria]
     plan = validate_acceptance_plan(value.get("acceptancePlan"), criteria_ids)
     goal_bytes = contract.objective.encode("utf-8") + b"\n"
-    return CreateRequest(contract, goal_bytes, context_bytes, plan, canonical_json_bytes(plan) + b"\n")
+    return CreateRequest(
+        contract, goal_bytes, context_bytes, plan, canonical_json_bytes(plan) + b"\n"
+    )
 
 
-def _manifest(alias: str, binding: WorktreeBinding, request: CreateRequest) -> dict[str, Any]:
+def _manifest(
+    alias: str, binding: WorktreeBinding, request: CreateRequest
+) -> dict[str, Any]:
     return {
-        "schemaId": BUNDLE_SCHEMA_ID, "schemaVersion": BUNDLE_SCHEMA_VERSION, "alias": alias,
+        "schemaId": BUNDLE_SCHEMA_ID,
+        "schemaVersion": BUNDLE_SCHEMA_VERSION,
+        "alias": alias,
         "worktreeBinding": binding.view(),
-        "goal": {"path": "goal.txt", "contractVersion": 1, "sha256": goal_contract_sha256(request.contract)},
-        "context": {"path": "context.md", "sha256": sha256_bytes(request.context_bytes), "bytes": len(request.context_bytes)},
-        "acceptancePlan": {"path": "acceptance-plan.json", "schemaVersion": 1, "sha256": sha256_bytes(request.plan_bytes)},
+        "goal": {
+            "path": "goal.txt",
+            "contractVersion": 1,
+            "sha256": goal_contract_sha256(request.contract),
+        },
+        "context": {
+            "path": "context.md",
+            "sha256": sha256_bytes(request.context_bytes),
+            "bytes": len(request.context_bytes),
+        },
+        "acceptancePlan": {
+            "path": "acceptance-plan.json",
+            "schemaVersion": 1,
+            "sha256": sha256_bytes(request.plan_bytes),
+        },
     }
 
 
-def _bundle_view(alias: str, relative: str, manifest: dict[str, Any], contract: GoalContract, plan: dict[str, Any]) -> dict[str, Any]:
+def _bundle_view(
+    alias: str,
+    relative: str,
+    manifest: dict[str, Any],
+    contract: GoalContract,
+    plan: dict[str, Any],
+) -> dict[str, Any]:
     return {
-        "schemaId": VIEW_SCHEMA_ID, "schemaVersion": VIEW_SCHEMA_VERSION, "alias": alias, "path": relative,
+        "schemaId": VIEW_SCHEMA_ID,
+        "schemaVersion": VIEW_SCHEMA_VERSION,
+        "alias": alias,
+        "path": relative,
         "manifestSha256": sha256_bytes(canonical_json_bytes(manifest) + b"\n"),
-        "goalContract": {"path": f"{relative}/goal.txt", "contractVersion": 1, "sha256": goal_contract_sha256(contract), "objective": contract.objective, "criteriaIds": [item.id for item in contract.completion_criteria]},
-        "context": {"path": f"{relative}/context.md", "sha256": manifest["context"]["sha256"]},
-        "acceptancePlan": {"path": f"{relative}/acceptance-plan.json", "sha256": manifest["acceptancePlan"]["sha256"], "caseIds": [case["id"] for case in plan["cases"]]},
+        "goalContract": {
+            "path": f"{relative}/goal.txt",
+            "contractVersion": 1,
+            "sha256": goal_contract_sha256(contract),
+            "objective": contract.objective,
+            "criteriaIds": [item.id for item in contract.completion_criteria],
+        },
+        "context": {
+            "path": f"{relative}/context.md",
+            "sha256": manifest["context"]["sha256"],
+        },
+        "acceptancePlan": {
+            "path": f"{relative}/acceptance-plan.json",
+            "sha256": manifest["acceptancePlan"]["sha256"],
+            "caseIds": [case["id"] for case in plan["cases"]],
+        },
         "worktreeBinding": manifest["worktreeBinding"],
     }
 
 
-def _validate_manifest(value: Any, alias: str, binding: WorktreeBinding) -> dict[str, Any]:
-    expected = {"schemaId", "schemaVersion", "alias", "worktreeBinding", "goal", "context", "acceptancePlan"}
-    if not isinstance(value, dict) or set(value) != expected or value.get("schemaId") != BUNDLE_SCHEMA_ID or value.get("schemaVersion") != 1 or value.get("alias") != alias:
-        raise GoalWorkspaceError("WORKSPACE_MANIFEST", "manifest identity or fields are invalid")
+def _validate_manifest(
+    value: Any, alias: str, binding: WorktreeBinding
+) -> dict[str, Any]:
+    expected = {
+        "schemaId",
+        "schemaVersion",
+        "alias",
+        "worktreeBinding",
+        "goal",
+        "context",
+        "acceptancePlan",
+    }
+    if (
+        not isinstance(value, dict)
+        or set(value) != expected
+        or value.get("schemaId") != BUNDLE_SCHEMA_ID
+        or value.get("schemaVersion") != 1
+        or value.get("alias") != alias
+    ):
+        raise GoalWorkspaceError(
+            "WORKSPACE_MANIFEST", "manifest identity or fields are invalid"
+        )
     if value.get("worktreeBinding") != binding.view():
-        raise GoalWorkspaceError("WORKSPACE_BINDING", "goal bundle belongs to a different worktree")
-    if not isinstance(value.get("goal"), dict) or set(value["goal"]) != {"path", "contractVersion", "sha256"} or value["goal"].get("path") != "goal.txt" or value["goal"].get("contractVersion") != 1:
-        raise GoalWorkspaceError("WORKSPACE_MANIFEST", "manifest goal binding is invalid")
-    if not isinstance(value.get("context"), dict) or set(value["context"]) != {"path", "sha256", "bytes"} or value["context"].get("path") != "context.md":
-        raise GoalWorkspaceError("WORKSPACE_MANIFEST", "manifest context binding is invalid")
-    if not isinstance(value.get("acceptancePlan"), dict) or set(value["acceptancePlan"]) != {"path", "schemaVersion", "sha256"} or value["acceptancePlan"].get("path") != "acceptance-plan.json" or value["acceptancePlan"].get("schemaVersion") != 1:
-        raise GoalWorkspaceError("WORKSPACE_MANIFEST", "manifest acceptance plan binding is invalid")
+        raise GoalWorkspaceError(
+            "WORKSPACE_BINDING", "goal bundle belongs to a different worktree"
+        )
+    if (
+        not isinstance(value.get("goal"), dict)
+        or set(value["goal"]) != {"path", "contractVersion", "sha256"}
+        or value["goal"].get("path") != "goal.txt"
+        or value["goal"].get("contractVersion") != 1
+    ):
+        raise GoalWorkspaceError(
+            "WORKSPACE_MANIFEST", "manifest goal binding is invalid"
+        )
+    if (
+        not isinstance(value.get("context"), dict)
+        or set(value["context"]) != {"path", "sha256", "bytes"}
+        or value["context"].get("path") != "context.md"
+    ):
+        raise GoalWorkspaceError(
+            "WORKSPACE_MANIFEST", "manifest context binding is invalid"
+        )
+    if (
+        not isinstance(value.get("acceptancePlan"), dict)
+        or set(value["acceptancePlan"]) != {"path", "schemaVersion", "sha256"}
+        or value["acceptancePlan"].get("path") != "acceptance-plan.json"
+        or value["acceptancePlan"].get("schemaVersion") != 1
+    ):
+        raise GoalWorkspaceError(
+            "WORKSPACE_MANIFEST", "manifest acceptance plan binding is invalid"
+        )
     return value
 
 
@@ -387,62 +699,126 @@ def view_goal_bundle(alias: str, cwd: str | Path | None = None) -> dict[str, Any
     _require_real_directory(bundle, f"goal bundle {alias}")
     names = {item.name for item in bundle.iterdir()}
     required = {"manifest.json", "goal.txt", "context.md", "acceptance-plan.json"}
-    if not required.issubset(names) or any(name not in required | {"verification"} for name in names):
-        raise GoalWorkspaceError("WORKSPACE_LAYOUT", "goal bundle is partial or contains unexpected entries")
+    if not required.issubset(names) or any(
+        name not in required | {"verification"} for name in names
+    ):
+        raise GoalWorkspaceError(
+            "WORKSPACE_LAYOUT", "goal bundle is partial or contains unexpected entries"
+        )
     if "verification" in names:
         _require_real_directory(bundle / "verification", "goal verification directory")
-    manifest_bytes = read_regular_bytes(bundle / "manifest.json", label="goal manifest", max_bytes=MAX_PLAN_BYTES)
+    manifest_bytes = read_regular_bytes(
+        bundle / "manifest.json", label="goal manifest", max_bytes=MAX_PLAN_BYTES
+    )
     try:
-        manifest = _validate_manifest(json.loads(manifest_bytes.decode("utf-8"), object_pairs_hook=_strict_object), alias, binding)
+        manifest = _validate_manifest(
+            json.loads(
+                manifest_bytes.decode("utf-8"), object_pairs_hook=_strict_object
+            ),
+            alias,
+            binding,
+        )
     except (UnicodeError, json.JSONDecodeError) as exc:
-        raise GoalWorkspaceError("WORKSPACE_MANIFEST", "manifest is not UTF-8 JSON") from exc
+        raise GoalWorkspaceError(
+            "WORKSPACE_MANIFEST", "manifest is not UTF-8 JSON"
+        ) from exc
     if manifest_bytes != canonical_json_bytes(manifest) + b"\n":
         raise GoalWorkspaceError("WORKSPACE_MANIFEST", "manifest is not canonical JSON")
-    goal_bytes = read_regular_bytes(bundle / "goal.txt", label="goal.txt", max_bytes=20000)
+    goal_bytes = read_regular_bytes(
+        bundle / "goal.txt", label="goal.txt", max_bytes=20000
+    )
     try:
         contract = validate_goal_text(goal_bytes)
     except GoalContractError as exc:
         raise GoalWorkspaceError("WORKSPACE_GOAL", str(exc)) from exc
-    if goal_bytes != contract.objective.encode("utf-8") + b"\n" or goal_contract_sha256(contract) != manifest["goal"]["sha256"]:
+    if (
+        goal_bytes != contract.objective.encode("utf-8") + b"\n"
+        or goal_contract_sha256(contract) != manifest["goal"]["sha256"]
+    ):
         raise GoalWorkspaceError("WORKSPACE_GOAL", "goal.txt differs from its manifest")
     _validate_context_reference(contract, alias)
-    context = read_regular_bytes(bundle / "context.md", label="context.md", max_bytes=MAX_CONTEXT_BYTES)
+    context = read_regular_bytes(
+        bundle / "context.md", label="context.md", max_bytes=MAX_CONTEXT_BYTES
+    )
     try:
-        canonical_context = _canonical_text(context.decode("utf-8"), "context", MAX_CONTEXT_BYTES)
+        canonical_context = _canonical_text(
+            context.decode("utf-8"), "context", MAX_CONTEXT_BYTES
+        )
     except UnicodeError as exc:
-        raise GoalWorkspaceError("WORKSPACE_CONTEXT", "context.md is not UTF-8") from exc
-    if sha256_bytes(context) != manifest["context"]["sha256"] or len(context) != manifest["context"]["bytes"] or canonical_context != context:
-        raise GoalWorkspaceError("WORKSPACE_CONTEXT", "context.md differs from its manifest")
-    plan_bytes = read_regular_bytes(bundle / "acceptance-plan.json", label="acceptance-plan.json", max_bytes=MAX_PLAN_BYTES)
+        raise GoalWorkspaceError(
+            "WORKSPACE_CONTEXT", "context.md is not UTF-8"
+        ) from exc
+    if (
+        sha256_bytes(context) != manifest["context"]["sha256"]
+        or len(context) != manifest["context"]["bytes"]
+        or canonical_context != context
+    ):
+        raise GoalWorkspaceError(
+            "WORKSPACE_CONTEXT", "context.md differs from its manifest"
+        )
+    plan_bytes = read_regular_bytes(
+        bundle / "acceptance-plan.json",
+        label="acceptance-plan.json",
+        max_bytes=MAX_PLAN_BYTES,
+    )
     try:
-        raw_plan = json.loads(plan_bytes.decode("utf-8"), object_pairs_hook=_strict_object)
+        raw_plan = json.loads(
+            plan_bytes.decode("utf-8"), object_pairs_hook=_strict_object
+        )
     except (UnicodeError, json.JSONDecodeError) as exc:
-        raise GoalWorkspaceError("WORKSPACE_PLAN", "acceptance plan is not UTF-8 JSON") from exc
-    plan = validate_acceptance_plan(raw_plan, [item.id for item in contract.completion_criteria])
-    if plan_bytes != canonical_json_bytes(plan) + b"\n" or sha256_bytes(plan_bytes) != manifest["acceptancePlan"]["sha256"]:
-        raise GoalWorkspaceError("WORKSPACE_PLAN", "acceptance plan differs from its manifest")
+        raise GoalWorkspaceError(
+            "WORKSPACE_PLAN", "acceptance plan is not UTF-8 JSON"
+        ) from exc
+    plan = validate_acceptance_plan(
+        raw_plan, [item.id for item in contract.completion_criteria]
+    )
+    if (
+        plan_bytes != canonical_json_bytes(plan) + b"\n"
+        or sha256_bytes(plan_bytes) != manifest["acceptancePlan"]["sha256"]
+    ):
+        raise GoalWorkspaceError(
+            "WORKSPACE_PLAN", "acceptance plan differs from its manifest"
+        )
     return _bundle_view(alias, f".steward/goals/{alias}", manifest, contract, plan)
 
 
-def validate_create_request(alias: str, raw: bytes, cwd: str | Path | None = None) -> dict[str, Any]:
+def validate_create_request(
+    alias: str, raw: bytes, cwd: str | Path | None = None
+) -> dict[str, Any]:
     alias = validate_alias(alias)
     binding = resolve_current_binding(cwd)
     request = _load_create_request(raw, alias)
-    return _bundle_view(alias, f".steward/goals/{alias}", _manifest(alias, binding, request), request.contract, request.plan)
+    return _bundle_view(
+        alias,
+        f".steward/goals/{alias}",
+        _manifest(alias, binding, request),
+        request.contract,
+        request.plan,
+    )
 
 
-def create_goal_bundle(alias: str, raw: bytes, cwd: str | Path | None = None) -> dict[str, Any]:
+def create_goal_bundle(
+    alias: str, raw: bytes, cwd: str | Path | None = None
+) -> dict[str, Any]:
     alias = validate_alias(alias)
     binding = resolve_current_binding(cwd)
     request = _load_create_request(raw, alias)
     root = Path(binding.target_worktree_root)
     goals = _ensure_root(binding)
     target = goals / alias
-    expected = _bundle_view(alias, f".steward/goals/{alias}", _manifest(alias, binding, request), request.contract, request.plan)
+    expected = _bundle_view(
+        alias,
+        f".steward/goals/{alias}",
+        _manifest(alias, binding, request),
+        request.contract,
+        request.plan,
+    )
     if target.exists() or target.is_symlink():
         observed = view_goal_bundle(alias, root)
         if observed != expected:
-            raise GoalWorkspaceError("WORKSPACE_CONFLICT", "goal alias already contains different content")
+            raise GoalWorkspaceError(
+                "WORKSPACE_CONFLICT", "goal alias already contains different content"
+            )
         return observed
     temporary = Path(tempfile.mkdtemp(prefix=f".{alias}.", dir=goals))
     try:
@@ -450,7 +826,8 @@ def create_goal_bundle(alias: str, raw: bytes, cwd: str | Path | None = None) ->
             "goal.txt": request.goal_bytes,
             "context.md": request.context_bytes,
             "acceptance-plan.json": request.plan_bytes,
-            "manifest.json": canonical_json_bytes(_manifest(alias, binding, request)) + b"\n",
+            "manifest.json": canonical_json_bytes(_manifest(alias, binding, request))
+            + b"\n",
         }
         for name, data in files.items():
             with (temporary / name).open("xb") as handle:
@@ -458,9 +835,13 @@ def create_goal_bundle(alias: str, raw: bytes, cwd: str | Path | None = None) ->
                 handle.flush()
                 os.fsync(handle.fileno())
         if resolve_current_binding(root) != binding:
-            raise GoalWorkspaceError("WORKSPACE_BINDING", "worktree binding changed during create")
+            raise GoalWorkspaceError(
+                "WORKSPACE_BINDING", "worktree binding changed during create"
+            )
         if target.exists() or target.is_symlink():
-            raise GoalWorkspaceError("WORKSPACE_CONFLICT", "goal alias appeared during create")
+            raise GoalWorkspaceError(
+                "WORKSPACE_CONFLICT", "goal alias appeared during create"
+            )
         os.rename(temporary, target)
         return view_goal_bundle(alias, root)
     finally:
@@ -475,13 +856,22 @@ def list_goal_bundles(cwd: str | Path | None = None) -> dict[str, Any]:
         aliases: list[str] = []
     else:
         _require_real_directory(goals, ".steward/goals")
-        aliases = sorted(item.name for item in goals.iterdir() if ALIAS_PATTERN.fullmatch(item.name) and item.is_dir() and not item.is_symlink())
+        aliases = sorted(
+            item.name
+            for item in goals.iterdir()
+            if ALIAS_PATTERN.fullmatch(item.name)
+            and item.is_dir()
+            and not item.is_symlink()
+        )
     return {"schemaId": "steward.goal-list", "schemaVersion": 1, "aliases": aliases}
 
 
 def _read_stdin() -> bytes:
     if sys.stdin.buffer.isatty():
-        raise GoalWorkspaceError("WORKSPACE_INPUT_TRANSPORT", "input must arrive through a finite non-TTY pipe")
+        raise GoalWorkspaceError(
+            "WORKSPACE_INPUT_TRANSPORT",
+            "input must arrive through a finite non-TTY pipe",
+        )
     data = sys.stdin.buffer.read(MAX_INPUT_BYTES + 1)
     if len(data) > MAX_INPUT_BYTES:
         raise GoalWorkspaceError("WORKSPACE_SIZE", "stdin input is too large")
@@ -489,7 +879,9 @@ def _read_stdin() -> bytes:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Manage alias-scoped Steward GOAL bundles in the current worktree.")
+    parser = argparse.ArgumentParser(
+        description="Manage alias-scoped Steward GOAL bundles in the current worktree."
+    )
     sub = parser.add_subparsers(dest="command", required=True)
     ensure = sub.add_parser("ensure-root")
     ensure.add_argument("target")

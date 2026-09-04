@@ -21,7 +21,15 @@ manual restoration; the verifier never discards user changes.
 
 Cases run without a shell, with bounded time/output, reduced environment,
 process-group cleanup, secret redaction, and a private evidence directory.
-Artifacts, results, and their manifest are write-once and digest-bound.
+Artifacts, results, and their manifest are write-once and digest-bound. Files
+listed in `sourcePolicy.writable` are snapshotted before each case and restored
+byte-exact afterwards; the snapshot and the recorded mutations live in the
+case artifact, and the protected source fingerprint excludes them by
+construction. A non-required case that Draft declared
+`onFailure: "waive-with-report"` may fail without opening the repair window;
+the attempt then finishes as `WAIVED` and audit re-checks the waiver against
+the final same-source regression, while the failed evidence stays in the
+journal.
 
 Audit revalidates the GOAL bundle, both plans, journal, source, final ordered
 case pass, required `C*` coverage, and artifacts. Completion is current only

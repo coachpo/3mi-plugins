@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-import json
 import hashlib
+import json
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -15,8 +16,16 @@ for path in (SCRIPTS, PLUGIN_SCRIPTS):
     if str(path) not in sys.path:
         sys.path.insert(0, str(path))
 
-import goal_workspace
-from verifier import Campaign, VerificationError, advance, campaign_lock, record_repair, status_report
+import goal_workspace  # noqa: E402  (runtime sys.path injection above)
+from verifier import (  # noqa: E402
+    Campaign,
+    VerificationError,
+    advance,
+    campaign_lock,
+    canonical_bytes,
+    record_repair,
+    status_report,
+)
 
 CAMPAIGN_CLI = SCRIPTS / "campaign.py"
 
@@ -47,7 +56,10 @@ def acceptance() -> dict:
                 "coversCriteria": ["C1"],
                 "assertion": "app.txt 为 good 时命令成功并生成 proof.txt",
                 "runnerHint": "运行读取 app.txt 的项目本地验收入口",
-                "evidence": {"requiredFiles": ["proof.txt"], "nonEmptyFiles": ["proof.txt"]},
+                "evidence": {
+                    "requiredFiles": ["proof.txt"],
+                    "nonEmptyFiles": ["proof.txt"],
+                },
             }
         ],
     }
@@ -82,23 +94,83 @@ def execution(command: list[str] | None = None) -> bytes:
     return json.dumps(value, ensure_ascii=False, separators=(",", ":")).encode()
 
 
+def waived_execution() -> bytes:
+    """Required case plus an optional probe declared waive-with-report that always fails."""
+    value = {
+        "schemaVersion": 1,
+        "cases": [
+            {
+                "id": "acceptance",
+                "argv": marker_command(),
+                "cwd": ".",
+                "timeoutSeconds": 30,
+                "bindingRationale": "该命令直接检查 app.txt 并生成 acceptance plan 要求的 proof.txt",
+            },
+            {
+                "id": "probe",
+                "argv": [sys.executable, "-c", "raise SystemExit(3)"],
+                "cwd": ".",
+                "timeoutSeconds": 30,
+                "bindingRationale": "探针恒失败，用于验证 Draft 声明的 waive-with-report 行为",
+            },
+        ],
+    }
+    return json.dumps(value, ensure_ascii=False, separators=(",", ":")).encode()
+
+
+def waived_acceptance() -> dict:
+    plan = acceptance()
+    plan["cases"].append(
+        {
+            "id": "probe",
+            "required": False,
+            "platform": "any",
+            "coversCriteria": ["C1"],
+            "assertion": "可选探针成功",
+            "runnerHint": "运行可选探针入口",
+            "evidence": {"requiredFiles": [], "nonEmptyFiles": []},
+            "onFailure": "waive-with-report",
+        }
+    )
+    return plan
+
+
 class VerificationV1Tests(unittest.TestCase):
     def setUp(self) -> None:
         self.temporary = tempfile.TemporaryDirectory()
         self.root = Path(self.temporary.name)
         subprocess.run(["git", "init", "-q", str(self.root)], check=True)
-        subprocess.run(["git", "-C", str(self.root), "config", "user.name", "Verifier Tests"], check=True)
-        subprocess.run(["git", "-C", str(self.root), "config", "user.email", "verify@example.invalid"], check=True)
+        subprocess.run(
+            ["git", "-C", str(self.root), "config", "user.name", "Verifier Tests"],
+            check=True,
+        )
+        subprocess.run(
+            [
+                "git",
+                "-C",
+                str(self.root),
+                "config",
+                "user.email",
+                "verify@example.invalid",
+            ],
+            check=True,
+        )
         (self.root / "app.txt").write_text("good\n", encoding="utf-8")
         (self.root / ".gitignore").write_text("build/\n", encoding="utf-8")
-        subprocess.run(["git", "-C", str(self.root), "add", "app.txt", ".gitignore"], check=True)
-        subprocess.run(["git", "-C", str(self.root), "commit", "-qm", "fixture"], check=True)
+        subprocess.run(
+            ["git", "-C", str(self.root), "add", "app.txt", ".gitignore"], check=True
+        )
+        subprocess.run(
+            ["git", "-C", str(self.root), "commit", "-qm", "fixture"], check=True
+        )
         payload = {
             "objective": goal_text("goal-a"),
             "context": "# 已核实背景\n\n- 当前测试请求与 app.txt。\n",
             "acceptancePlan": acceptance(),
         }
-        goal_workspace.create_goal_bundle("goal-a", json.dumps(payload, ensure_ascii=False).encode(), self.root)
+        goal_workspace.create_goal_bundle(
+            "goal-a", json.dumps(payload, ensure_ascii=False).encode(), self.root
+        )
         self.previous = Path.cwd()
         os_chdir(self.root)
 
@@ -116,7 +188,9 @@ class VerificationV1Tests(unittest.TestCase):
             report, code = advance(Campaign.load("goal-a"))
         self.assertEqual(0, code)
         self.assertEqual("COMPLETE", report["completionStatus"])
-        self.assertEqual("COMPLETE", status_report(Campaign.load("goal-a"))["completionStatus"])
+        self.assertEqual(
+            "COMPLETE", status_report(Campaign.load("goal-a"))["completionStatus"]
+        )
 
     def test_failed_case_repair_retest_regression_and_audit(self) -> None:
         (self.root / "app.txt").write_text("bad\n", encoding="utf-8")
@@ -191,7 +265,7 @@ class VerificationV1Tests(unittest.TestCase):
             Campaign.initialize("goal-a", json.dumps(value).encode())
 
     def test_artifact_tamper_makes_completion_incomplete(self) -> None:
-        campaign = Campaign.initialize("goal-a", execution())
+        Campaign.initialize("goal-a", execution())
         for _ in range(2):
             with campaign_lock(Campaign.load("goal-a")):
                 _, code = advance(Campaign.load("goal-a"))
@@ -200,7 +274,9 @@ class VerificationV1Tests(unittest.TestCase):
         run = complete.state["attempts"][0]["runs"][0]
         artifact = complete.campaign_root / run["artifactDir"] / "stdout.txt"
         artifact.write_text("tampered\n", encoding="utf-8")
-        self.assertEqual("INCOMPLETE", status_report(Campaign.load("goal-a"))["completionStatus"])
+        self.assertEqual(
+            "INCOMPLETE", status_report(Campaign.load("goal-a"))["completionStatus"]
+        )
 
     def test_bundle_or_execution_plan_tamper_blocks_loading(self) -> None:
         Campaign.initialize("goal-a", execution())
@@ -214,15 +290,34 @@ class VerificationV1Tests(unittest.TestCase):
         event = json.loads(campaign.events_path.read_text(encoding="utf-8"))
         event["state"]["status"] = "COMPLETE"
         event.pop("hash")
-        raw = json.dumps(event, ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False).encode()
+        raw = json.dumps(
+            event,
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+            allow_nan=False,
+        ).encode()
         event["hash"] = "sha256:" + hashlib.sha256(raw).hexdigest()
-        campaign.events_path.write_text(json.dumps(event, ensure_ascii=False, sort_keys=True, separators=(",", ":")) + "\n", encoding="utf-8")
+        campaign.events_path.write_text(
+            json.dumps(event, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+            + "\n",
+            encoding="utf-8",
+        )
         with self.assertRaisesRegex(VerificationError, "start"):
             Campaign.load("goal-a")
 
     def test_public_cli_completes_the_no_repair_flow(self) -> None:
         initialized = subprocess.run(
-            [sys.executable, "-B", str(CAMPAIGN_CLI), "init", "--goal", "goal-a", "--execution-plan", "-"],
+            [
+                sys.executable,
+                "-B",
+                str(CAMPAIGN_CLI),
+                "init",
+                "--goal",
+                "goal-a",
+                "--execution-plan",
+                "-",
+            ],
             cwd=self.root,
             input=execution(),
             capture_output=True,
@@ -231,7 +326,14 @@ class VerificationV1Tests(unittest.TestCase):
         self.assertEqual(0, initialized.returncode, initialized.stderr.decode())
         for expected in ("AUDIT_REQUIRED", "COMPLETE"):
             result = subprocess.run(
-                [sys.executable, "-B", str(CAMPAIGN_CLI), "advance", "--goal", "goal-a"],
+                [
+                    sys.executable,
+                    "-B",
+                    str(CAMPAIGN_CLI),
+                    "advance",
+                    "--goal",
+                    "goal-a",
+                ],
                 cwd=self.root,
                 capture_output=True,
                 check=False,
@@ -242,10 +344,194 @@ class VerificationV1Tests(unittest.TestCase):
     def test_stale_per_goal_lock_is_recovered(self) -> None:
         campaign = Campaign.initialize("goal-a", execution())
         lock = campaign.campaign_root / "campaign.lock"
-        lock.write_text(json.dumps({"pid": 99_999_999, "createdAt": "stale"}) + "\n", encoding="utf-8")
+        lock.write_text(
+            json.dumps({"pid": 99_999_999, "createdAt": "stale"}) + "\n",
+            encoding="utf-8",
+        )
         with campaign_lock(campaign):
             self.assertTrue(lock.exists())
         self.assertFalse(lock.exists())
+
+    def recreate_goal_with_waived_plan(self, alias: str = "goal-a") -> None:
+        shutil.rmtree(self.root / ".steward")
+        payload = {
+            "objective": goal_text(alias),
+            "context": "# 已核实背景\n\n- 当前测试请求与 app.txt。\n",
+            "acceptancePlan": waived_acceptance(),
+        }
+        goal_workspace.create_goal_bundle(
+            alias, json.dumps(payload, ensure_ascii=False).encode(), self.root
+        )
+
+    def test_waived_optional_failure_records_evidence_and_completes(self) -> None:
+        self.recreate_goal_with_waived_plan()
+        Campaign.initialize("goal-a", waived_execution())
+        with campaign_lock(Campaign.load("goal-a")):
+            report, code = advance(Campaign.load("goal-a"))
+        self.assertEqual(0, code)
+        self.assertEqual("AUDIT_REQUIRED", report["executionStatus"])
+        attempt = report["attempts"][0]
+        self.assertEqual("WAIVED", attempt["status"])
+        self.assertEqual(["probe"], attempt["waivedCaseIds"])
+        probe_run = next(run for run in attempt["runs"] if run["caseId"] == "probe")
+        self.assertEqual("FAILED", probe_run["status"])
+        with campaign_lock(Campaign.load("goal-a")):
+            report, code = advance(Campaign.load("goal-a"))
+        self.assertEqual(0, code)
+        self.assertEqual("COMPLETE", report["completionStatus"])
+        self.assertEqual(["probe"], report["waivedCaseIds"])
+
+    def test_waived_failure_in_retest_rewaives_in_final_regression(self) -> None:
+        self.recreate_goal_with_waived_plan()
+        (self.root / "app.txt").write_text("bad\n", encoding="utf-8")
+        Campaign.initialize("goal-a", waived_execution())
+        with campaign_lock(Campaign.load("goal-a")):
+            report, code = advance(Campaign.load("goal-a"))
+        self.assertEqual("REPAIR_REQUIRED", report["executionStatus"])
+        self.assertEqual("acceptance", report["lastFailure"]["caseId"])
+        (self.root / "app.txt").write_text("good\n", encoding="utf-8")
+        repair = json.dumps(
+            {
+                "rootCause": "app.txt 使用了失败标记",
+                "rootCauseSource": {"path": "app.txt", "lineStart": 1, "lineEnd": 1},
+                "fixSummary": "将失败标记改为 good",
+            },
+            ensure_ascii=False,
+        ).encode()
+        with campaign_lock(Campaign.load("goal-a")):
+            record_repair(Campaign.load("goal-a"), repair)
+        with campaign_lock(Campaign.load("goal-a")):
+            report, code = advance(Campaign.load("goal-a"))
+        self.assertEqual("REGRESSION_REQUIRED", report["executionStatus"])
+        with campaign_lock(Campaign.load("goal-a")):
+            report, code = advance(Campaign.load("goal-a"))
+        self.assertEqual("AUDIT_REQUIRED", report["executionStatus"])
+        with campaign_lock(Campaign.load("goal-a")):
+            report, code = advance(Campaign.load("goal-a"))
+        self.assertEqual("COMPLETE", report["completionStatus"])
+        final_attempt = next(
+            a
+            for a in report["attempts"]
+            if a["id"] == report["successfulAudit"]["finalRegressionAttemptId"]
+        )
+        self.assertEqual("WAIVED", final_attempt["status"])
+        self.assertEqual(["probe"], final_attempt["waivedCaseIds"])
+
+    def test_declared_writable_files_rollback_and_stay_out_of_source_identity(
+        self,
+    ) -> None:
+        plan = waived_acceptance()
+        plan["cases"] = plan["cases"][:1]
+        plan["sourcePolicy"] = {
+            "mode": "git-visible",
+            "writable": ["coverage.lcov", "fresh-artifact.txt", "notes.txt"],
+        }
+        (self.root / "notes.txt").write_text("keep\n", encoding="utf-8")
+        subprocess.run(["git", "-C", str(self.root), "add", "notes.txt"], check=True)
+        subprocess.run(
+            ["git", "-C", str(self.root), "commit", "-qm", "notes"], check=True
+        )
+        payload = {
+            "objective": goal_text("goal-b"),
+            "context": "# 已核实背景\n",
+            "acceptancePlan": plan,
+        }
+        goal_workspace.create_goal_bundle(
+            "goal-b", json.dumps(payload, ensure_ascii=False).encode(), self.root
+        )
+        runner = (
+            "import os,pathlib,sys; "
+            "ok=pathlib.Path('app.txt').read_text(encoding='utf-8').strip()=='good'; "
+            "pathlib.Path(os.environ['CLOSED_LOOP_EVIDENCE_DIR'],'proof.txt').write_text('ok') if ok else None; "
+            "pathlib.Path('coverage.lcov').write_text('DA:1,1'); "
+            "p=pathlib.Path('fresh-artifact.txt'); p.write_text('v1') if not p.exists() else p.write_text('v2'); "
+            "pathlib.Path('notes.txt').write_text('mutated\\n'); "
+            "sys.exit(0 if ok else 1)"
+        )
+        value = {
+            "schemaVersion": 1,
+            "cases": [
+                {
+                    "id": "acceptance",
+                    "argv": [sys.executable, "-c", runner],
+                    "cwd": ".",
+                    "timeoutSeconds": 30,
+                    "bindingRationale": "生成 proof 并写声明可写文件",
+                }
+            ],
+        }
+        Campaign.initialize("goal-b", json.dumps(value, ensure_ascii=False).encode())
+        with campaign_lock(Campaign.load("goal-b")):
+            report, code = advance(Campaign.load("goal-b"))
+        self.assertEqual("AUDIT_REQUIRED", report["executionStatus"])
+        run = report["attempts"][0]["runs"][0]
+        actions = {item["path"]: item["action"] for item in run["writableMutations"]}
+        self.assertEqual(
+            {
+                "coverage.lcov": "deleted",
+                "fresh-artifact.txt": "deleted",
+                "notes.txt": "restored",
+            },
+            actions,
+        )
+        self.assertFalse((self.root / "coverage.lcov").exists())
+        self.assertFalse((self.root / "fresh-artifact.txt").exists())
+        self.assertEqual(
+            "keep\n", (self.root / "notes.txt").read_text(encoding="utf-8")
+        )
+        artifact_dir = Campaign.load("goal-b").campaign_root / run["artifactDir"]
+        capture = json.loads(
+            (artifact_dir / "writable-capture.json").read_text(encoding="utf-8")
+        )
+        self.assertEqual(
+            ["coverage.lcov", "fresh-artifact.txt", "notes.txt"], capture["captured"]
+        )
+        with campaign_lock(Campaign.load("goal-b")):
+            report, code = advance(Campaign.load("goal-b"))
+        self.assertEqual(0, code)
+        self.assertEqual("COMPLETE", report["completionStatus"])
+
+    def test_case_writing_undeclared_source_still_blocks(self) -> None:
+        runner = [
+            sys.executable,
+            "-c",
+            "import pathlib,sys; pathlib.Path('app.txt').write_text('mutated\\n'); sys.exit(0)",
+        ]
+        Campaign.initialize("goal-a", execution(runner))
+        with campaign_lock(Campaign.load("goal-a")):
+            report, code = advance(Campaign.load("goal-a"))
+        self.assertEqual(1, code)
+        self.assertEqual("BLOCKED", report["executionStatus"])
+        self.assertIn("protected source", report["attempts"][0]["runs"][0]["reason"])
+
+    def test_journal_claiming_undeclared_waiver_is_rejected(self) -> None:
+        campaign = Campaign.initialize("goal-a", execution())
+        with campaign_lock(campaign):
+            report, code = advance(Campaign.load("goal-a"))
+        self.assertEqual(0, code)
+        events = [
+            json.loads(line)
+            for line in campaign.events_path.read_text(encoding="utf-8").splitlines()
+        ]
+        last = events[-1]
+        self.assertEqual("attempt_finished", last["type"])
+        last["state"]["attempts"][-1]["status"] = "WAIVED"
+        last["state"]["attempts"][-1]["waivedCaseIds"] = ["acceptance"]
+        last["state"]["status"] = "AUDIT_REQUIRED"
+        unhashed = {key: value for key, value in last.items() if key != "hash"}
+        last["hash"] = "sha256:" + hashlib.sha256(canonical_bytes(unhashed)).hexdigest()
+        campaign.events_path.write_text(
+            "\n".join(
+                json.dumps(
+                    event, ensure_ascii=False, sort_keys=True, separators=(",", ":")
+                )
+                for event in events
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+        with self.assertRaisesRegex(VerificationError, "waives"):
+            Campaign.load("goal-a")
 
 
 def os_chdir(path: Path) -> None:

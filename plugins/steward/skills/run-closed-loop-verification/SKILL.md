@@ -1,6 +1,6 @@
 ---
 name: run-closed-loop-verification
-description: Verify one existing alias-scoped Steward GOAL in the current Git worktree through a frozen execution binding, resumable evidence journal, proven repairs, targeted retests, final same-source regression, and audit. Use only for explicit GOAL acceptance, not ordinary one-off testing.
+description: Verify one existing alias-scoped Steward GOAL in the current Git worktree through a frozen execution binding, resumable evidence journal, proven repairs, targeted retests, final same-source regression, and audit. Honors Draft-declared waived non-required cases and writable files; use only for explicit GOAL acceptance, not ordinary one-off testing.
 ---
 
 # Closed-loop GOAL verification
@@ -34,4 +34,5 @@ and evidence-backed source repairs inside the accepted GOAL. It does not grant
 external effects, credentials, destructive restoration, commits, deployment,
 or broader implementation authority. Report `complete`, `incomplete`, or
 `blocked` with the GOAL alias, decisive case/criterion evidence, repairs, final
-regression, audit, and remaining limitation.
+regression, audit, every waived non-required failure listed as an unmet
+optional intent, and remaining limitation.

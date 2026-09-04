@@ -1,6 +1,6 @@
 ---
 name: draft-consensus-goal
-description: Persist an accepted seven-line Chinese GOAL, one verified context, and its acceptance intent under a caller-chosen alias in the current Git worktree. Use only when explicitly asked to create or resume that contract; do not implement or verify it.
+description: Persist an accepted seven-line Chinese GOAL, one verified context, and its acceptance intent under a caller-chosen alias in the current Git worktree, including declared waived non-required cases and writable case-byproduct files. Use only when explicitly asked to create or resume that contract; do not implement or verify it.
 ---
 
 # Draft Consensus Goal
@@ -17,6 +17,9 @@ activating a host-managed GOAL.
 
 Read and apply [goal-authoring.md](../../references/goal-authoring.md). Read
 [goal-context.md](../../references/goal-context.md) when composing the context.
+Declare tolerance only in the plan: a non-required case may carry
+`onFailure: "waive-with-report"`, and byproduct files a case must write go into
+`sourcePolicy.writable`; anything else stays strict.
 
 On success, return the alias, `.steward/goals/<alias>/`, and the canonical
 seven-line GOAL. Do not expose creator JSON, digests, or internal verification
