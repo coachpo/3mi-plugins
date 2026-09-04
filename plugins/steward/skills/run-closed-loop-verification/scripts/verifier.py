@@ -1061,10 +1061,31 @@ def _first_unresolved_failure(
     return None
 
 
-def run_phase(campaign: Campaign) -> tuple[dict[str, Any], int]:
+def _needs_final_regression(state: dict[str, Any]) -> bool:
+    """Whether an all-cases sweep against the current baseline is still owed
+    before completion.
+
+    A repair proves its own fix but says nothing about the cases it did not
+    touch; only a fresh full sweep can show the fix did not break one of
+    them. A campaign with no repairs has no such gap — its one full-coverage
+    attempt already stands against the source that is about to be accepted,
+    so it costs nothing extra."""
+    if not state["repairs"]:
+        return False
+    full_attempts = [a for a in state["attempts"] if a["mode"] in {"initial", "regression"}]
+    if not full_attempts:
+        return True
+    return full_attempts[-1]["sourceFingerprint"] != state["sourceBaseline"]["fingerprint"]
+
+
+def _run_attempt(campaign: Campaign) -> bool:
+    """Run every case_id currently scheduled to a terminal result, resuming
+    an interrupted attempt in place. Returns False (campaign now BLOCKED) if
+    a case could not be run at all; True once the sweep completed, whatever
+    its cases' individual outcomes."""
     state = _copy_state(campaign.state)
     case_ids = state["nextCaseIds"] or [case["id"] for case in campaign.acceptance["cases"]]
-    mode = "retest" if state["nextCaseIds"] else "initial"
+    mode = "retest" if state["nextCaseIds"] else ("initial" if not state["attempts"] else "regression")
     attempts = state["attempts"]
     if attempts and attempts[-1]["caseIds"] == case_ids and attempts[-1]["status"] in {
         "RUNNING",
@@ -1102,7 +1123,7 @@ def run_phase(campaign: Campaign) -> tuple[dict[str, Any], int]:
             state["attempts"][-1]["status"] = "BLOCKED"
             state["status"] = "BLOCKED"
             campaign.save(state)
-            return status_report(campaign), 1
+            return False
     # Every case_id in this attempt now has a terminal, non-blocked run. A
     # required (or otherwise undeclared) failure does not stop the sweep
     # anymore, so every other case in the same attempt still gets recorded
@@ -1115,17 +1136,30 @@ def run_phase(campaign: Campaign) -> tuple[dict[str, Any], int]:
     active["status"] = "FAILED" if blocking_ids else ("WAIVED" if waived_ids else "PASS")
     if waived_ids:
         active["waivedCaseIds"] = waived_ids
-    pending = _first_unresolved_failure(campaign.acceptance, state)
-    if pending is not None:
-        state["lastFailure"] = pending
-        state["status"] = "REPAIR_REQUIRED"
-        state["nextCaseIds"] = [pending["caseId"]]
-        campaign.save(state)
-        return status_report(campaign), 1
-    state["lastFailure"] = None
-    state["nextCaseIds"] = None
     campaign.save(state)
-    return finalize(campaign)
+    return True
+
+
+def run_phase(campaign: Campaign) -> tuple[dict[str, Any], int]:
+    while True:
+        if not _run_attempt(campaign):
+            return status_report(campaign), 1
+        state = _copy_state(campaign.state)
+        pending = _first_unresolved_failure(campaign.acceptance, state)
+        if pending is not None:
+            state["lastFailure"] = pending
+            state["status"] = "REPAIR_REQUIRED"
+            state["nextCaseIds"] = [pending["caseId"]]
+            campaign.save(state)
+            return status_report(campaign), 1
+        state["lastFailure"] = None
+        if _needs_final_regression(state):
+            state["nextCaseIds"] = None
+            campaign.save(state)
+            continue
+        state["nextCaseIds"] = None
+        campaign.save(state)
+        return finalize(campaign)
 
 
 def record_repair(campaign: Campaign, raw: bytes) -> dict[str, Any]:

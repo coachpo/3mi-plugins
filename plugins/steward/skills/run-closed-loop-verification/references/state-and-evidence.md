@@ -15,10 +15,20 @@ failing does not stop the others, so every case in that attempt gets recorded
 evidence. Any case left failing without a declared waiver opens a repair
 window for that case specifically. `record-repair` proves the root-cause
 location against the failed snapshot, records the exact source delta, accepts
-the new baseline, and schedules only that one case for a targeted retest —
-every other case keeps standing on its existing evidence rather than being
-rerun. Repeated machine-bound failures without a new source/evidence
-fingerprint stop.
+the new baseline, and schedules only that one case for a targeted retest, for
+fast feedback on the fix. Repeated machine-bound failures without a new
+source/evidence fingerprint stop.
+
+A fix proves nothing about the cases it did not touch. So once every
+outstanding failure is resolved, a campaign that recorded at least one repair
+owes exactly one more all-cases sweep against the current baseline before the
+completion check — the targeted retests that got there stay cheap, but the
+last mile is not allowed to run on evidence older than the final repair. That
+sweep can itself find a case the repair broke; if it does, the campaign
+returns to `REPAIR_REQUIRED` for that case and the same cycle applies again.
+A campaign that never needed a repair skips this sweep entirely: its one
+clean pass already stands against the source about to be accepted, so the
+happy path pays nothing extra.
 
 Source identity defaults to HEAD, index, tracked files, and non-ignored
 untracked files; `.steward` and ignored build products are excluded. Explicit
@@ -42,11 +52,13 @@ it; its evidence stays attached to the attempt that produced it, independent
 of whether that same attempt also has an unrelated blocking failure.
 
 The completion check assembles each acceptance case's most recent evidence
-across attempts — a targeted retest's result overrides only the case(s) it
-reran — then revalidates the GOAL bundle, both plans, every relied-upon
-artifact, and required `C*` coverage. It runs inline as soon as no case is
-left with an unwaived failure, immediately after the initial pass or after a
-retest closes the last one, rather than as a separate resumable phase.
+across attempts, then revalidates the GOAL bundle, both plans, every
+relied-upon artifact, and required `C*` coverage. It runs inline as soon as
+no case is left with an unwaived failure and, for a campaign with any repair,
+that all-cases sweep against the current baseline has already happened —
+immediately after the initial pass when nothing needed repairing, or after
+that final sweep when something did — rather than as a separate resumable
+phase.
 Completion is current only while those bindings remain valid; a later tamper
 or authority change shows up as `INCOMPLETE` on the next check without
 changing the persisted campaign status. Restoring exact bytes/source restores

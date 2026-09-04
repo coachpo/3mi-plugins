@@ -54,7 +54,7 @@ $steward:<skill-name>
 
 `parallel-repository-research` 负责复杂仓库问题的只读定位、架构映射、实现盘点和依赖追踪。它冻结互不重叠的检索 lane，在宿主能够机械限制 worker 为只读且无网络时并发，否则由主会话顺序执行；最终结果必须说明证据、冲突、未搜索范围和缺口。
 
-`analyze-change-request` 负责分析一项明确的软件变更请求。它按决策相关性核实仓库事实、项目实际版本的官方资料和独立实践,必要时才纳入适用的强制性约束,输出带来源、可验收但尚未接受的候选需求。它不写文件、不生成 GOAL，也不开始实施。
+`analyze-change-request` 负责分析一项明确的软件变更请求。它按决策相关性核实仓库事实、项目实际版本的官方资料和独立实践，必要时才纳入适用的强制性约束，输出带来源、可验收但尚未接受的候选需求。它不写文件、不生成 GOAL，也不开始实施。
 
 ```text
 使用 $steward:parallel-repository-research 调研当前仓库中的实现位置、调用关系和测试覆盖，只返回可复核的仓库证据。
@@ -70,7 +70,7 @@ $steward:<skill-name>
 
 用户或执行代理随后按 GOAL 实施。声明完成后，`run-closed-loop-verification` 用同一 alias 和同一物理目录验收：它把 acceptance intent 解析成不可变的精确 execution plan，捕获 Git 可见源码基线，并维护一份原子写入的 campaign 状态文件、attempt 和 artifacts。被 Draft 声明 waive 的非必需 case 失败会记录在其所属 attempt 中，并在完成报告中列为未满足的可选意图；其余失败照旧进入修补闭环。旧平铺 GOAL、context、Adapter 与 Campaign 路径完全不参与新流程。
 
-项目源码失败只能在 repair 窗口内凭失败快照、根因位置和真实 delta 接受修补；随后只定向复测被修补的 case，其余 case 沿用已有证据，不做强制全量回归。一条 `advance` 会连续执行全部机械阶段（case、定向复测、内联完成检查），只在需要执行方介入或决策的停点返回：`REPAIR_REQUIRED`、`BLOCKED`（含未通过的完成检查）或 `COMPLETE`；每个阶段仍各自保存状态，中断后原地续跑。两次 `advance` 之间发生的源码改动会被记录为漂移提示并自动纳入新基线，不阻塞流程；但某个 case 在自身运行过程中修改了受保护源码，会被当作需要修补的失败处理。只有每个 case 的最新证据都满足要求、且所有 required `C*` 都有当前有效的 PASS 证据时才报告完成。
+项目源码失败只能在 repair 窗口内凭失败快照、根因位置和真实 delta 接受修补；随后只定向复测被修补的 case，换来快速反馈，其余 case 先沿用已有证据。但修补证明不了它没碰过的 case 是否还成立，所以只要这次 campaign 发生过修补，等全部失败项都解决后，收尾核验前会自动补一次针对当前基线的全量回归；这一趟如果又测出别的 case 被连带弄坏，会重新回到 `REPAIR_REQUIRED` 走同一套流程。全程零修补时不需要这一步，初次通过本身就是对最终源码的证明。一条 `advance` 会连续执行全部机械阶段（case、定向复测、按需的全量回归、内联完成检查），只在需要执行方介入或决策的停点返回：`REPAIR_REQUIRED`、`BLOCKED`（含未通过的完成检查）或 `COMPLETE`；每个阶段仍各自保存状态，中断后原地续跑。两次 `advance` 之间发生的源码改动会被记录为漂移提示并自动纳入新基线，不阻塞流程；但某个 case 在自身运行过程中修改了受保护源码，会被当作需要修补的失败处理。只有每个 case 的最新证据都满足要求、且所有 required `C*` 都有当前有效的 PASS 证据时才报告完成。
 
 ```text
 使用 $steward:draft-consensus-goal 在当前工作树以 goal-a 别名保存 canonical GOAL、context 和 acceptance plan；不要开始执行。
@@ -117,7 +117,7 @@ Steward 的 GOAL 与验证控制产物位于当前 worktree 的 `.steward/goals/
 
 恢复时从 cwd 重新绑定 worktree，按 alias 校验 manifest、GOAL、context、两个 plan 和 campaign 状态文件，再从未闭合阶段继续。持久 bundle 与 campaign 状态是恢复和完成权威；聊天摘要不能替代精确 payload 或机器证据。
 
-快速检查和定向复测只能证明局部反馈。完成检查为每个 case 取其跨 attempt 的最新证据——一次定向复测只覆盖它重跑的 case，其余 case 沿用既有证据——再校验 bundle、两个 plan、相关 artifact 与 required `C*` 映射；不要求每次修补后都重跑全部 runnable case。
+快速检查和定向复测只能证明局部反馈。完成检查为每个 case 取其跨 attempt 的最新证据，再校验 bundle、两个 plan、相关 artifact 与 required `C*` 映射；发生过修补的 campaign，这份"最新证据"在完成检查前已经来自同一次全量回归，不是东拼西凑的旧结果——不要求每次修补后都立刻重跑全部 case，但收尾前必须补齐这一趟。
 
 ## 运行要求
 

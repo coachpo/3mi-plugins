@@ -133,6 +133,64 @@ def waived_acceptance() -> dict:
     return plan
 
 
+def flip_acceptance() -> dict:
+    """Two required cases whose assertions directly contradict each other,
+    so that flipping flag.txt to satisfy one necessarily breaks the other."""
+
+    def case(case_id: str, wants: str) -> dict:
+        return {
+            "id": case_id,
+            "required": True,
+            "platform": "any",
+            "coversCriteria": ["C1"],
+            "assertion": f"flag.txt 为 {wants} 时命令成功并生成 proof.txt",
+            "runnerHint": "运行读取 flag.txt 的项目本地验收入口",
+            "evidence": {"requiredFiles": ["proof.txt"], "nonEmptyFiles": ["proof.txt"]},
+        }
+
+    return {
+        "schemaVersion": 1,
+        "sourcePolicy": {"mode": "git-visible"},
+        "cases": [case("flip-on", "on"), case("flip-off", "off")],
+    }
+
+
+def flip_runner(expected: str) -> list[str]:
+    return [
+        sys.executable,
+        "-c",
+        (
+            "import os,pathlib,sys; "
+            f"ok=pathlib.Path('flag.txt').read_text(encoding='utf-8').strip()=='{expected}'; "
+            "pathlib.Path(os.environ['CLOSED_LOOP_EVIDENCE_DIR'],'proof.txt').write_text('ok',encoding='utf-8') if ok else None; "
+            "sys.exit(0 if ok else 1)"
+        ),
+    ]
+
+
+def flip_execution() -> bytes:
+    value = {
+        "schemaVersion": 1,
+        "cases": [
+            {
+                "id": "flip-on",
+                "argv": flip_runner("on"),
+                "cwd": ".",
+                "timeoutSeconds": 30,
+                "bindingRationale": "检查 flag.txt 是否为 on 并生成 proof.txt",
+            },
+            {
+                "id": "flip-off",
+                "argv": flip_runner("off"),
+                "cwd": ".",
+                "timeoutSeconds": 30,
+                "bindingRationale": "检查 flag.txt 是否为 off 并生成 proof.txt",
+            },
+        ],
+    }
+    return json.dumps(value, ensure_ascii=False, separators=(",", ":")).encode()
+
+
 class VerificationV1Tests(unittest.TestCase):
     def setUp(self) -> None:
         self.temporary = tempfile.TemporaryDirectory()
@@ -185,6 +243,9 @@ class VerificationV1Tests(unittest.TestCase):
         self.assertEqual(
             "COMPLETE", status_report(Campaign.load("goal-a"))["completionStatus"]
         )
+        # No repair ever happened, so the campaign owes no extra regression
+        # sweep: the one initial attempt is the only attempt.
+        self.assertEqual(["initial"], [a["mode"] for a in report["attempts"]])
 
     def test_failed_case_repair_and_targeted_retest_completes(self) -> None:
         (self.root / "app.txt").write_text("bad\n", encoding="utf-8")
@@ -210,10 +271,68 @@ class VerificationV1Tests(unittest.TestCase):
         self.assertEqual(0, code)
         self.assertEqual(1, len(report["repairs"]))
         self.assertEqual("COMPLETE", report["completionStatus"])
-        # The retest attempt only reran the repaired case, not a full regression.
-        retest = report["attempts"][-1]
-        self.assertEqual("retest", retest["mode"])
-        self.assertEqual(["acceptance"], retest["caseIds"])
+        # The retest right after the repair only reran the repaired case; a
+        # repair having happened at all then owes exactly one full regression
+        # against the final source before completion is reported.
+        self.assertEqual(
+            ["initial", "retest", "regression"],
+            [attempt["mode"] for attempt in report["attempts"]],
+        )
+        self.assertEqual(["acceptance"], report["attempts"][1]["caseIds"])
+        self.assertEqual(["acceptance"], report["attempts"][2]["caseIds"])
+
+    def test_final_regression_after_repair_catches_a_newly_broken_case(self) -> None:
+        """A repair that fixes one required case can silently break another
+        that was already passing. The retest right after the repair only
+        reruns the fixed case and would miss this by itself; the final
+        regression a repair now owes must catch it before completion."""
+        shutil.rmtree(self.root / ".steward")
+        payload = {
+            "objective": goal_text("goal-a"),
+            "context": "# 已核实背景\n",
+            "acceptancePlan": flip_acceptance(),
+        }
+        goal_workspace.create_goal_bundle(
+            "goal-a", json.dumps(payload, ensure_ascii=False).encode(), self.root
+        )
+        (self.root / "flag.txt").write_text("off\n", encoding="utf-8")
+        subprocess.run(["git", "-C", str(self.root), "add", "flag.txt"], check=True)
+        subprocess.run(["git", "-C", str(self.root), "commit", "-qm", "flag"], check=True)
+        Campaign.initialize("goal-a", flip_execution())
+        with campaign_lock(Campaign.load("goal-a")):
+            report, code = advance(Campaign.load("goal-a"))
+        self.assertEqual(1, code)
+        self.assertEqual("REPAIR_REQUIRED", report["executionStatus"])
+        self.assertEqual("flip-on", report["lastFailure"]["caseId"])
+        initial = report["attempts"][0]
+        flip_off_run = next(run for run in initial["runs"] if run["caseId"] == "flip-off")
+        self.assertEqual("PASS", flip_off_run["status"])
+        # The fix for "flip-on" flips the very flag "flip-off" depends on.
+        (self.root / "flag.txt").write_text("on\n", encoding="utf-8")
+        repair = json.dumps(
+            {
+                "rootCause": "flag.txt 处于 off，flip-on 要求 on",
+                "rootCauseSource": {"path": "flag.txt", "lineStart": 1, "lineEnd": 1},
+                "fixSummary": "将 flag.txt 改为 on",
+            },
+            ensure_ascii=False,
+        ).encode()
+        with campaign_lock(Campaign.load("goal-a")):
+            record_repair(Campaign.load("goal-a"), repair)
+        with campaign_lock(Campaign.load("goal-a")):
+            report, code = advance(Campaign.load("goal-a"))
+        # Without the final regression this would wrongly report COMPLETE:
+        # the targeted retest only reruns "flip-on", and stale "flip-off"
+        # evidence from before the repair would still look valid. The
+        # regression sweep reruns "flip-off" too and must catch that the
+        # repair broke it.
+        self.assertEqual(1, code)
+        self.assertEqual("REPAIR_REQUIRED", report["executionStatus"])
+        self.assertEqual("flip-off", report["lastFailure"]["caseId"])
+        self.assertEqual(
+            ["initial", "retest", "regression"],
+            [attempt["mode"] for attempt in report["attempts"]],
+        )
 
     def test_source_drift_is_recorded_as_a_warning_and_does_not_block(self) -> None:
         Campaign.initialize("goal-a", execution())
@@ -363,8 +482,10 @@ class VerificationV1Tests(unittest.TestCase):
 
     def test_waived_failure_survives_targeted_retest_of_a_different_case(self) -> None:
         """A required case and an unrelated waived-optional case fail in the
-        same initial attempt; repairing the required case must not force the
-        already-tolerated optional failure through another run."""
+        same initial attempt. Repairing the required case reruns only that
+        case for fast feedback, but the repair still owes one final
+        regression before completion, which reruns "probe" too and must
+        still tolerate its declared-waivable failure."""
         self.recreate_goal_with_waived_plan()
         (self.root / "app.txt").write_text("bad\n", encoding="utf-8")
         Campaign.initialize("goal-a", waived_execution())
@@ -394,13 +515,22 @@ class VerificationV1Tests(unittest.TestCase):
             report, code = advance(Campaign.load("goal-a"))
         self.assertEqual(0, code)
         self.assertEqual("COMPLETE", report["completionStatus"])
-        retest = report["attempts"][-1]
+        retest, regression = report["attempts"][1], report["attempts"][2]
+        self.assertEqual("retest", retest["mode"])
         self.assertEqual(["acceptance"], retest["caseIds"])
+        self.assertEqual("regression", regression["mode"])
+        self.assertEqual(["acceptance", "probe"], regression["caseIds"])
+        self.assertEqual(["probe"], regression["waivedCaseIds"])
         self.assertEqual(["probe"], report["waivedCaseIds"])
-        # "probe" evidence still points at the initial attempt's run; it was
-        # never rerun.
+        # "probe" evidence now points at the final regression's run, not the
+        # initial attempt's — the repair made that case owe one more proof
+        # that it still only fails in the same tolerated way.
         probe_run_id = next(
-            run["runId"] for run in initial["runs"] if run["caseId"] == "probe"
+            run["runId"] for run in regression["runs"] if run["caseId"] == "probe"
+        )
+        self.assertNotEqual(
+            next(run["runId"] for run in initial["runs"] if run["caseId"] == "probe"),
+            probe_run_id,
         )
         self.assertEqual(probe_run_id, report["completion"]["evidenceRunIds"]["probe"])
 

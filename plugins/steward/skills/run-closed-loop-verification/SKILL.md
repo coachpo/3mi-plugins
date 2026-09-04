@@ -20,12 +20,12 @@ python3 -B "<skill-dir>/scripts/campaign.py" init --goal <alias> --execution-pla
 
 Use `advance --goal <alias>` to drive the campaign and `status --goal <alias>`
 for read-only inspection. One `advance` runs every mechanical phase in
-sequence (cases, targeted retest of any repaired case, an integrated
-completion check) and stops only where the verifier must act or decide: a
-proven project-source failure (`REPAIR_REQUIRED`), a blocker (`BLOCKED`,
-including a failed completion check), or `COMPLETE`. On a proven
-project-source failure, make the smallest authorized repair and record its
-structured evidence:
+sequence (cases, targeted retest of any repaired case, a final regression if
+any repair happened, an integrated completion check) and stops only where the
+verifier must act or decide: a proven project-source failure
+(`REPAIR_REQUIRED`), a blocker (`BLOCKED`, including a failed completion
+check), or `COMPLETE`. On a proven project-source failure, make the smallest
+authorized repair and record its structured evidence:
 
 ```text
 python3 -B "<skill-dir>/scripts/campaign.py" record-repair --goal <alias> --repair -
@@ -33,11 +33,15 @@ python3 -B "<skill-dir>/scripts/campaign.py" record-repair --goal <alias> --repa
 
 Campaign state lives in one state file per GOAL, rewritten atomically after
 each phase; a crash mid-advance resumes the in-progress attempt exactly where
-it stopped. A repair only reruns the case(s) it fixed — other cases keep
-standing on their existing evidence — and the completion check runs inline
-once every case has current evidence, instead of as a separate stop-and-resume
-phase. A happy path is `init` plus one `advance`; a repair cycle is
-`record-repair` plus one `advance`.
+it stopped. A repair's own retest only reruns the case(s) it fixed, for fast
+feedback — but a fix proves nothing about the cases it did not touch, so once
+every outstanding failure is resolved, a campaign that repaired anything owes
+exactly one more all-cases sweep against the final source before the
+completion check runs; that sweep can itself surface a case the repair broke,
+sending the campaign back to `REPAIR_REQUIRED` for it. A campaign that never
+needed a repair skips this — its one clean pass already stands against the
+source being accepted. A happy path is `init` plus one `advance`; a repair
+cycle is `record-repair` plus one `advance`.
 
 Read [state-and-evidence.md](references/state-and-evidence.md) when diagnosing
 failure, interruption, source drift, artifact integrity, or a rejected
