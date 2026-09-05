@@ -29,9 +29,11 @@ Record all fields before evidence collection:
 Do not turn an assumption, repository behavior, or external recommendation into
 part of what the user asked for or already accepted.
 
-After the first search or worker dispatch, the questions, lanes, scope, capability
-classes, and budgets are immutable. Put any newly discovered need in `gaps` or
-`unsearched`; do not expand the run.
+After the first search or worker dispatch, the user's goal, authorized scope,
+and already-dispatched lane prompts stay frozen. Within that scope and the
+remaining budget, add a question or lane when collected evidence shows the
+analysis actually needs one. Record work that would widen scope, or that the
+budget cannot cover, in `gaps` or `unsearched`.
 
 ## Record sources and claims
 
