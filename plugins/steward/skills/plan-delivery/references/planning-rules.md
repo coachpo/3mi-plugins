@@ -131,10 +131,11 @@ unsynchronized counterpart limits the consistency claim; complete independent
 authorized work and explain the exact limit.
 
 Use existing paths, format, language, and document structure unless the user asks
-otherwise. Defaults are `implementation-plan.md` and `sprint-backlog.md`; neither
-joins the canonical document set of `write-project-docs`. This skill owns their
-specialized planning content and relationship checks, without requiring a
-separate versioning, approval, status, or GOAL system.
+otherwise. Defaults are `docs/planning/implementation-plan.md` and
+`docs/planning/sprint-backlog.md`; neither joins the canonical document set of
+`write-project-docs`. This skill owns their specialized planning content and
+relationship checks, without requiring a separate versioning, approval, status,
+or GOAL system.
 
 ## Model review before delivery
 

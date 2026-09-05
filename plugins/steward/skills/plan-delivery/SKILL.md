@@ -39,10 +39,10 @@ An unresolved choice needs its effect and clarification or validation work,
 not an invented accepted solution.
 
 Use the user's requested paths, language, and format, then project conventions.
-Without an established convention, use `implementation-plan.md` in the requested
-project directory and `sprint-backlog.md` beside it. These are planning artifacts;
-they do not extend the canonical document set maintained by `write-project-docs`
-or require invoking that workflow.
+Without an established convention, use `docs/planning/implementation-plan.md`
+and `docs/planning/sprint-backlog.md` under the repository root. These are
+planning artifacts; they do not extend the canonical document set maintained by
+`write-project-docs` or require invoking that workflow.
 
 ## Implementation phase
 

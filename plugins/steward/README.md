@@ -71,7 +71,7 @@ $steward:<skill-name>
 
 Backlog 阶段可直接接收已有实施计划，结合优先级、容量、当前条件和迭代目标，维护任务分解、任务依赖、迭代安排及完成条件，并引用计划的范围和验收。任务以 Sprint 为主组织，工作包视图只保留追溯索引；工作包可跨 Sprint，Sprint 可包含多个工作包。容量或日期未知时提供建议顺序及成立条件。
 
-技能支持仅创建、修订或审查实施计划，直接创建、修订或审查 Backlog，连续交付两份文档，以及授权范围内的联合修订。仅请求计划不强制生成 Backlog，审查不写文件。保存位置和格式沿用项目约定，默认文件名为 `implementation-plan.md`、`sprint-backlog.md`，不加入 `write-project-docs` 的 canonical 文档集。
+技能支持仅创建、修订或审查实施计划，直接创建、修订或审查 Backlog，连续交付两份文档，以及授权范围内的联合修订。仅请求计划不强制生成 Backlog，审查不写文件。保存位置和格式沿用项目约定，无既有约定时默认保存到仓库根下的 `docs/planning/implementation-plan.md` 和 `docs/planning/sprint-backlog.md`，不加入 `write-project-docs` 的 canonical 文档集。
 
 修改前读取现有两份产物及输入基线，在授权范围内同步受影响内容。执行技能的会话模型按[共享规则和检查清单](skills/plan-delivery/references/planning-rules.md)核对标识、具体交付与验收覆盖、任务或交付物级前置依赖、顺序、责任及容量。启动前置、接口协作和最终集成关系分别处理，不要求工作包汇总图绝对无环，也不按 Sprint 名称推断全局顺序。验收记录实际所需条件与预期证据，分别保留 Placeholder 和真实接入义务。
 
