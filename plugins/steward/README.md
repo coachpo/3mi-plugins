@@ -67,7 +67,7 @@ $steward:<skill-name>
 
 ### 开发规划
 
-[`plan-delivery`](skills/plan-delivery/SKILL.md) 提供两个可分别进入的规划阶段。实施计划维护需求范围、工作包、责任边界、主要依赖和总体验收；职责分组按协作需要启用，角色数量不代表实际人员或并行容量。
+[`plan-delivery`](skills/plan-delivery/SKILL.md) 提供两个可分别进入的规划阶段。实施计划围绕工作包、责任分工、依赖关系和验收标准组织内容，并维护需求范围及总体验收。角色数量不代表实际人员或并行容量。
 
 Backlog 阶段可直接接收已有实施计划，结合优先级、容量、当前条件和迭代目标，维护任务分解、任务依赖、迭代安排及完成条件，并引用计划的范围和验收。任务以 Sprint 为主组织，工作包视图只保留追溯索引；工作包可跨 Sprint，Sprint 可包含多个工作包。容量或日期未知时提供建议顺序及成立条件。
 
@@ -123,7 +123,7 @@ Backlog 阶段可直接接收已有实施计划，结合优先级、容量、当
 | `write-project-docs` | 审查或维护 canonical 项目文档 | 单一事实权威、同步的索引与链接、范围内文档更新 |
 | `parallel-repository-research` | 至少两个独立检索 lane 才能有效回答的仓库问题 | 主会话复核的路径或符号证据、冲突、未搜索范围和缺口 |
 | `analyze-change-request` | 需要项目事实与外部证据的软件变更请求 | 带来源和验收标准、尚未接受的候选需求 |
-| `plan-delivery` | 创建、修订或审查实施计划、Sprint Backlog 或两份文档 | 工作包与总体验收、按 Sprint 组织的待执行任务、阶段或联合一致性检查 |
+| `plan-delivery` | 创建、修订或审查实施计划、Sprint Backlog 或两份文档 | 工作包、责任分工、依赖关系和验收标准，按 Sprint 组织的待执行任务，阶段或联合一致性检查 |
 | `draft-consensus-goal` | 已收敛讨论需要可评审或可执行合同 | alias-scoped GOAL、context、acceptance plan 与 manifest |
 | `run-closed-loop-verification` | GOAL 已声称完成，需要闭环验收、修补与最终证明 | execution plan、可恢复 campaign、定向复测、内联收尾核验 |
 

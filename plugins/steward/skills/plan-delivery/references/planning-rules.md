@@ -5,8 +5,9 @@ for the executing session model, not a document parser or execution protocol.
 
 ## Information ownership and baseline
 
-The implementation plan maintains requirement scope, work packages, responsibility
-boundaries, major dependencies, and overall acceptance. The Backlog maintains
+The implementation plan maintains work packages, responsibility assignments,
+dependencies, and acceptance criteria, including requirement scope and overall
+acceptance. The Backlog maintains
 task decomposition, task dependencies, iteration arrangements, and task completion
 conditions. It references the plan and preserves its necessary obligations.
 Priorities, available capacity, current inputs, and iteration goals inform the
@@ -51,11 +52,9 @@ the package or Sprint when unambiguous. Mark unknown people as unassigned. A
 single person may hold several roles, including acceptance when appropriate;
 roles do not imply extra people or independent review capacity.
 
-Responsibility groups are optional. Add them only when their boundaries,
-interfaces, and handoffs clarify collaboration. Keep role coverage, group
-organization, people, and available time distinct. State estimate and capacity
-assumptions; do not infer firm dates, durations, or staffing commitments from
-unknown resources.
+Keep role coverage, people, and available time distinct. State estimate and
+capacity assumptions; do not infer firm dates, durations, or staffing commitments
+from unknown resources.
 
 ## Dependencies, order, and readiness
 

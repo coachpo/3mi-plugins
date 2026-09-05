@@ -46,14 +46,16 @@ planning artifacts; they do not extend the canonical document set maintained by
 
 ## Implementation phase
 
-The implementation plan owns requirement scope, work packages, responsibility
-boundaries, major dependencies, and overall acceptance. Include:
+The implementation plan owns work packages, responsibility assignments,
+dependencies, and acceptance criteria, including requirement scope and overall
+acceptance. Include:
 
 - Goals, scope and exclusions, priorities, constraints, source baseline,
   accepted decisions, assumptions, risks, and open questions with affected work.
 - Stable work-package IDs, linked requirements, intended results, scope
   boundaries, necessary deliverables, accountable roles, collaborators, and
-  acceptance owners. Unknown people remain unassigned.
+  acceptance owners. Unknown people remain unassigned. Roles do not establish
+  staffing or parallel capacity.
 - Required upstream outputs or usable subsets, collaboration/interface
   relationships, and final integration dependencies, with clear handoffs.
 - Observable acceptance outcomes, verification methods, required conditions,
@@ -62,8 +64,6 @@ boundaries, major dependencies, and overall acceptance. Include:
 Use [the implementation template](assets/implementation-plan.md) for a new plan
 without an established structure. Adapt its presentation; keep detail
 proportional to the project and use concise prose or tables as appropriate.
-Add responsibility groups only when their boundaries and handoffs aid
-collaboration. Roles and groups do not establish staffing or parallel capacity.
 
 Cover each requirement with delivery and acceptance arrangements, or state what
 still needs clarification or decomposition. Supporting work has its own useful

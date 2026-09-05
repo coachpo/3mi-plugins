@@ -9,6 +9,8 @@
 - In scope: [boundaries and priorities]
 - Out of scope: [explicit exclusions]
 - Constraints: [technical, business, environment, access, or resource constraints]
+- People and capacity: [actual availability, assignments, and unknowns;
+  record separately from roles]
 - Related Backlog, if one exists: [path and baseline; absent or unread if applicable]
 
 | Reference | Assumption, suggestion, or open choice | Basis | Affected work | Decision or information needed |
@@ -42,11 +44,6 @@
 [Identify integration work and its accountable package, inputs, handoff
 conditions, and joint acceptance. Where substitutes are planned, distinguish
 their acceptance from the remaining real integration or device acceptance.]
-
-## Responsibility groups
-
-[Include only when useful for collaboration: group scope, deliverable boundaries,
-interfaces, and handoffs. Record actual capacity separately from the role map.]
 
 ## Risks and unresolved work
 
