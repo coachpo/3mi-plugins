@@ -30,7 +30,11 @@ Reuse project terminology and IDs. New entries need stable identifiers unique
 within the project's agreed scope; require no fixed prefixes. If requirements
 lack IDs, use durable source sections or clearly identified local references
 without silently renumbering the source. Qualify a reference when an ID is unique
-only within one document or Sprint.
+only within one document or Sprint. Where a task may later become a GOAL, prefer
+an ID that is already a valid alias — lowercase ASCII letters and digits joined
+by single hyphens, at most 64 characters — so the GOAL bundle can reuse it
+verbatim and stay traceable to this plan. This is a naming preference, not a
+requirement, and it adds no status field or progress tracking to these documents.
 
 Keep IDs stable across revisions and Sprint moves. If an entry is split, merged,
 or retired, preserve a mapping that makes earlier references understandable.

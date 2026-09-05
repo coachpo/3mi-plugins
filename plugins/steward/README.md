@@ -37,18 +37,20 @@ $steward:<skill-name>
 /steward:<skill-name>
 ```
 
-## 0.8.4 升级说明
+## 0.8.5 升级说明
 
-本版精简根 `AGENTS.md` 文档导航中的重复档位政策，按相关事实与约束的核实需要限定读取范围，并允许复用本轮任务中来源未变化且仍适用的信息。
+本版把规划任务标识与 GOAL alias 对齐：`plan-delivery` 在任务可能成为 GOAL 时优先采用合法 alias 形式的任务 ID，`draft-consensus-goal` 优先复用该任务 ID 作为 alias。于是 Backlog 中的任务、`.steward/goals/<alias>/` 中的 bundle 和验证 campaign 指向同一标识，进度由现有只读查询推导，而不是在规划文档中维护状态字段。
 
-插件升级不会自动刷新下游项目中已生成的导航区块。使用新版 `validate_project_docs.py` 检查旧区块时，会报告“根 AGENTS.md 的文档区块已漂移”错误（不是警告），并返回非零退出码。对需要升级导航的项目，使用新版技能附带的 updater 同步后再验证：
+本版只调整技能措辞，没有新增脚本、协议或目录，下游项目不需要迁移动作。已有 bundle 的 alias 不可变，保持原样即可；对齐只影响此后新建的任务与 GOAL。
+
+查询当前工作树中的 GOAL 与验证状态：
 
 ```bash
-python3 -B "<skill-dir>/scripts/update_agents_navigation.py" "<project-root>"
-python3 -B "<skill-dir>/scripts/validate_project_docs.py" "<project-root>"
+python3 -B "<plugin-dir>/scripts/goal_workspace.py" list
+python3 -B "<skill-dir>/scripts/campaign.py" status --goal <alias>
 ```
 
-`<skill-dir>` 指新版 `write-project-docs` 技能目录，`<project-root>` 指目标项目根目录。updater 整块替换现有根 `AGENTS.md` 的托管文档导航，并按既有规则修正托管块外的旧规范链接；不会创建缺失的根 `AGENTS.md`。同步后检查实际 diff；validator 仍会报告项目其他文档的既有问题。
+`<plugin-dir>` 指 steward 插件根目录，`<skill-dir>` 指 `run-closed-loop-verification` 技能目录。`.steward/` 是工作树本地且不进 Git，跨工作树的完成事实以 Git 主干记录为准。
 
 ## 四条工作流
 
@@ -82,7 +84,7 @@ python3 -B "<skill-dir>/scripts/validate_project_docs.py" "<project-root>"
 
 [`plan-delivery`](skills/plan-delivery/SKILL.md) 提供两个可分别进入的规划阶段。实施计划围绕工作包、责任分工、依赖关系和验收标准组织内容，并维护需求范围及总体验收。角色数量不代表实际人员或并行容量。
 
-Backlog 阶段可直接接收已有实施计划，结合优先级、容量、当前条件和迭代目标，维护任务分解、任务依赖、迭代安排及完成条件，并引用计划的范围和验收。任务以 Sprint 为主组织，工作包视图只保留追溯索引；工作包可跨 Sprint，Sprint 可包含多个工作包。容量或日期未知时提供建议顺序及成立条件。
+Backlog 阶段可直接接收已有实施计划，结合优先级、容量、当前条件和迭代目标，维护任务分解、任务依赖、迭代安排及完成条件，并引用计划的范围和验收。任务以 Sprint 为主组织，工作包视图只保留追溯索引；工作包可跨 Sprint，Sprint 可包含多个工作包。容量或日期未知时提供建议顺序及成立条件。任务可能后续成为 GOAL 时，任务 ID 优先取合法 alias 形式（小写字母、数字及单连字符，至多 64 字符），使 GOAL bundle 能直接复用同一标识；这只是命名偏好，不在规划文档中引入状态字段或进度跟踪。
 
 技能支持仅创建、修订或审查实施计划，直接创建、修订或审查 Backlog，连续交付两份文档，以及授权范围内的联合修订。仅请求计划不强制生成 Backlog，审查不写文件。保存位置和格式沿用项目约定，无既有约定时默认保存到仓库根下的 `docs/planning/implementation-plan.md` 和 `docs/planning/sprint-backlog.md`，不加入 `write-project-docs` 的 canonical 文档集。
 
@@ -110,7 +112,7 @@ Backlog 阶段可直接接收已有实施计划，结合优先级、容量、当
 
 ### GOAL 交付
 
-`draft-consensus-goal` 从当前会话 cwd 绑定精确 Git worktree，并把已收敛决定保存到 `.steward/goals/<alias>/`。不可变 bundle 包含 canonical 七行中文 `goal.txt`、唯一 `context.md`、Draft 冻结的 `acceptance-plan.json` 和摘要 manifest。alias 使用小写字母、数字及单连字符；目录协议允许多个 alias，但一个 worktree 只起草一个 GOAL 是调用方约定。容错只能由 Draft 事先声明：非必需 case 可携带 `onFailure: "waive-with-report"`（失败记录证据但不开修补窗口），case 副作用文件可声明进 `sourcePolicy.writable`（验证明确捕获并回滚，源码指纹排除它们）；其余全部保持严格。
+`draft-consensus-goal` 从当前会话 cwd 绑定精确 Git worktree，并把已收敛决定保存到 `.steward/goals/<alias>/`。不可变 bundle 包含 canonical 七行中文 `goal.txt`、唯一 `context.md`、Draft 冻结的 `acceptance-plan.json` 和摘要 manifest。alias 使用小写字母、数字及单连字符；工作来自计划任务时优先复用该任务 ID，使 bundle、计划和验证 campaign 指向同一项工作，无需单独的状态记录。目录协议允许多个 alias，但一个 worktree 只起草一个 GOAL 是调用方约定。容错只能由 Draft 事先声明：非必需 case 可携带 `onFailure: "waive-with-report"`（失败记录证据但不开修补窗口），case 副作用文件可声明进 `sourcePolicy.writable`（验证明确捕获并回滚，源码指纹排除它们）；其余全部保持严格。
 
 用户或执行代理随后按 GOAL 实施。声明完成后，`run-closed-loop-verification` 用同一 alias 和同一物理目录验收：它把 acceptance intent 解析成不可变的精确 execution plan，捕获 Git 可见源码基线，并维护一份原子写入的 campaign 状态文件、attempt 和 artifacts。被 Draft 声明 waive 的非必需 case 失败会记录在其所属 attempt 中，并在完成报告中列为未满足的可选意图；其余失败照旧进入修补闭环。旧平铺 GOAL、context、Adapter 与 Campaign 路径完全不参与新流程。
 

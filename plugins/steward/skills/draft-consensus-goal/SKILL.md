@@ -8,7 +8,10 @@ description: Persist an accepted seven-line Chinese GOAL, one verified context, 
 Create one immutable GOAL bundle at `.steward/goals/<alias>/` in the Git
 worktree containing the current session cwd. Require the caller to choose an
 alias matching lowercase ASCII letters/digits joined by single hyphens, at most
-64 characters. Always use that same alias when the GOAL is later verified.
+64 characters. Always use that same alias when the GOAL is later verified. When
+the work comes from a planned task, prefer that task's ID as the alias, so the
+bundle, the plan, and the verification campaign refer to the same work without a
+separate status record.
 
 Explicit invocation authorizes repository fact checking and creation of the
 selected ignored GOAL bundle. It does not authorize implementing the GOAL,
