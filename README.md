@@ -10,7 +10,7 @@ CoachPo 的 Codex 与 Claude Code 插件市场。两个宿主从同一个 Git �
 
 | Plugin | Category | 简介 |
 | --- | --- | --- |
-| [`steward`](plugins/steward/README.md) | Productivity | 六技能、三工作流：项目文档维护，只读调研分析，以及 GOAL 起草、手动实施后的可恢复闭环验收。 |
+| [`steward`](plugins/steward/README.md) | Productivity | 七技能、四工作流：项目文档维护、只读调研分析、实施与 Sprint 规划，以及 GOAL 起草、手动实施后的可恢复闭环验收。 |
 
 ## Steward 工作流
 
@@ -18,6 +18,7 @@ CoachPo 的 Codex 与 Claude Code 插件市场。两个宿主从同一个 Git �
 | --- | --- |
 | 项目文档 | `write-project-docs`、`write-agent-guides` |
 | 调研分析 | `parallel-repository-research`、`analyze-change-request` |
+| 开发规划 | `plan-delivery` |
 | GOAL 交付 | `draft-consensus-goal`、`run-closed-loop-verification` |
 
 完整用法、权限边界和 `.steward/` 工作树本地状态约定见 [Steward 文档](plugins/steward/README.md)。

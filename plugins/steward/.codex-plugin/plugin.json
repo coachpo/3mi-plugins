@@ -1,7 +1,7 @@
 {
   "name": "steward",
-  "version": "0.7.2",
-  "description": "面向 Codex 与 Claude Code 的六技能工程工作流，覆盖项目文档维护、只读需求调研，以及 GOAL 起草与闭环验收。",
+  "version": "0.8.0",
+  "description": "面向 Codex 与 Claude Code 的七技能工程工作流，覆盖项目文档维护、只读需求调研、实施与 Sprint 规划，以及 GOAL 起草与闭环验收。",
   "author": {
     "name": "coachpo",
     "url": "https://github.com/coachpo"
@@ -15,8 +15,10 @@
     "codex",
     "documentation",
     "goals",
+    "implementation-planning",
     "requirements-analysis",
     "repository-research",
+    "sprint-backlog",
     "verification",
     "workflows",
     "testing",
@@ -26,8 +28,8 @@
   "skills": "./skills/",
   "interface": {
     "displayName": "Steward",
-    "shortDescription": "项目文档、调研分析与 GOAL 验收工作流",
-    "longDescription": "Steward 用六个共享技能组织三条工程工作流：维护 canonical 项目文档与 AGENTS.md 层级，执行只读仓库调研与变更请求分析，以及按别名起草持久 GOAL、context 与验收意图，在手动实施后维护可恢复的同目录 campaign，依据证据修补并完成定向复测与收尾核验。Codex 与 Claude Code 读取同一套技能、合同和工作树本地证据。",
+    "shortDescription": "项目文档、调研分析、开发规划与 GOAL 验收",
+    "longDescription": "Steward 用七个共享技能组织四条工程工作流：维护 canonical 项目文档与 AGENTS.md 层级，执行只读仓库调研与变更请求分析，通过 plan-delivery 的两个阶段按需创建或修订实施计划与待执行 Sprint Backlog，完整交付两份文档时联合检查，以及按别名起草持久 GOAL、context 与验收意图，在手动实施后维护可恢复的同目录 campaign，依据证据修补并完成定向复测与收尾核验。Codex 与 Claude Code 读取同一套技能、合同和工作树本地证据。",
     "developerName": "CoachPo",
     "category": "Productivity",
     "capabilities": [
@@ -37,6 +39,7 @@
     "defaultPrompt": [
       "使用 $steward:write-project-docs 维护 canonical 项目文档，再用 $steward:write-agent-guides 同步 AGENTS.md 层级。",
       "使用 $steward:analyze-change-request 调研当前变更请求；需要复杂仓库搜索时使用 $steward:parallel-repository-research。",
+      "使用 $steward:plan-delivery 按需创建或修订实施计划与 Sprint Backlog；可仅处理一个阶段，交付两份文档时联合检查。",
       "使用 $steward:draft-consensus-goal 按别名写入 GOAL、context 与验收意图；手动执行完成后，用 $steward:run-closed-loop-verification 验收同一别名，修补有证据的问题并完成定向复测与收尾核验。"
     ],
     "brandColor": "#1A73E8",

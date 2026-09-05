@@ -1,10 +1,11 @@
 # Steward
 
-Steward 为 Codex 与 Claude Code 提供六个共享技能，组成三条彼此独立、可以按需衔接的工程工作流：
+Steward 为 Codex 与 Claude Code 提供七个共享技能，组成四条彼此独立、可以按需衔接的工程工作流：
 
 1. 维护 canonical 项目文档与 `AGENTS.md` 层级；
 2. 执行只读仓库调研与变更请求分析；
-3. 起草持久 GOAL，并在手动实施完成后维护可恢复的验证 campaign，完成修补、回归与 audit。
+3. 将需求与已确认方案转为实施计划，再按需细化为待执行的 Sprint Backlog；
+4. 起草持久 GOAL，并在手动实施完成后维护可恢复的验证 campaign，完成修补、回归与 audit。
 
 两个宿主加载同一个 `skills/` 目录。仓库事实、用户已接受的决定、七行 GOAL 和工作树本地验证证据各有明确职责；技能不会把搜索结果、聊天摘要或一次测试通过直接当作完成证明。
 
@@ -36,7 +37,7 @@ $steward:<skill-name>
 /steward:<skill-name>
 ```
 
-## 三条工作流
+## 四条工作流
 
 ### 项目文档
 
@@ -63,6 +64,36 @@ $steward:<skill-name>
 ```text
 使用 $steward:analyze-change-request 分析当前变更请求，输出带来源、验收标准、冲突和缺口的候选需求，不修改文件。
 ```
+
+### 开发规划
+
+[`plan-delivery`](skills/plan-delivery/SKILL.md) 提供两个可分别进入的规划阶段。实施计划维护需求范围、工作包、责任边界、主要依赖和总体验收；职责分组按协作需要启用，角色数量不代表实际人员或并行容量。
+
+Backlog 阶段可直接接收已有实施计划，结合优先级、容量、当前条件和迭代目标，维护任务分解、任务依赖、迭代安排及完成条件，并引用计划的范围和验收。任务以 Sprint 为主组织，工作包视图只保留追溯索引；工作包可跨 Sprint，Sprint 可包含多个工作包。容量或日期未知时提供建议顺序及成立条件。
+
+技能支持仅创建、修订或审查实施计划，直接创建、修订或审查 Backlog，连续交付两份文档，以及授权范围内的联合修订。仅请求计划不强制生成 Backlog，审查不写文件。保存位置和格式沿用项目约定，默认文件名为 `implementation-plan.md`、`sprint-backlog.md`，不加入 `write-project-docs` 的 canonical 文档集。
+
+修改前读取现有两份产物及输入基线，在授权范围内同步受影响内容。执行技能的会话模型按[共享规则和检查清单](skills/plan-delivery/references/planning-rules.md)核对标识、具体交付与验收覆盖、任务或交付物级前置依赖、顺序、责任及容量。启动前置、接口协作和最终集成关系分别处理，不要求工作包汇总图绝对无环，也不按 Sprint 名称推断全局顺序。验收记录实际所需条件与预期证据，分别保留 Placeholder 和真实接入义务。
+
+交付或联合修订两份文档时检查最终文档对；单阶段交付检查该阶段及相关已知关系。只改 Backlog 时保持主计划权威，关联文档缺失、不可读或尚未同步时明确限制。检查由模型完成，不新增文档校验脚本、解析协议、状态库或控制目录。
+
+```text
+使用 $steward:plan-delivery 将现有需求与已确认方案整理为实施计划并保存，暂不生成 Backlog。
+```
+
+```text
+使用 $steward:plan-delivery 直接基于已有实施计划修订待执行的 Sprint Backlog，只修改 Backlog。
+```
+
+```text
+使用 $steward:plan-delivery 交付实施计划和配套 Sprint Backlog，并联合检查两份文档。
+```
+
+```text
+使用 $steward:plan-delivery 根据已确认的需求变更同步修订实施计划和 Sprint Backlog，并检查受影响的交付、依赖及验收。
+```
+
+规划产物描述后续开发工作，交付文档不表示任务已启动或完成。规划流程不实施研究工作流、进度跟踪、任务派发、开发执行或 GOAL 自动生成，也不自动调用项目文档维护流程。本地验收标签不构成 GOAL case 契约或执行授权。
 
 ### GOAL 交付
 
@@ -92,10 +123,11 @@ $steward:<skill-name>
 | `write-project-docs` | 审查或维护 canonical 项目文档 | 单一事实权威、同步的索引与链接、范围内文档更新 |
 | `parallel-repository-research` | 至少两个独立检索 lane 才能有效回答的仓库问题 | 主会话复核的路径或符号证据、冲突、未搜索范围和缺口 |
 | `analyze-change-request` | 需要项目事实与外部证据的软件变更请求 | 带来源和验收标准、尚未接受的候选需求 |
+| `plan-delivery` | 创建、修订或审查实施计划、Sprint Backlog 或两份文档 | 工作包与总体验收、按 Sprint 组织的待执行任务、阶段或联合一致性检查 |
 | `draft-consensus-goal` | 已收敛讨论需要可评审或可执行合同 | alias-scoped GOAL、context、acceptance plan 与 manifest |
 | `run-closed-loop-verification` | GOAL 已声称完成，需要闭环验收、修补与最终证明 | execution plan、可恢复 campaign、定向复测、内联收尾核验 |
 
-Codex 可隐式选择 `write-agent-guides` 和 `parallel-repository-research`。`write-project-docs`、`analyze-change-request`、`draft-consensus-goal` 与 `run-closed-loop-verification` 只在明确请求相应工作流时调用。
+Codex 可隐式选择 `write-agent-guides`、`parallel-repository-research` 和 `plan-delivery`。`write-project-docs`、`analyze-change-request`、`draft-consensus-goal` 与 `run-closed-loop-verification` 只在明确请求相应工作流时调用。
 
 ## 工作树本地状态
 
@@ -107,13 +139,14 @@ Steward 的 GOAL 与验证控制产物位于当前 worktree 的 `.steward/goals/
 
 - 只读调研不会运行项目代码、修改文件或连接私人账户。
 - 文档技能只修改当前请求授权的项目文档或 `AGENTS.md`；不会创建或改写 `CLAUDE.md`。
+- 开发规划只创建、修订或检查请求中的规划文档；计划内的开发、外部依赖获取和验收另行执行。
 - GOAL 起草只写 alias-scoped GOAL、context 和 acceptance plan，不实施源码变化。
 - GOAL 验收只执行经过审查的本地 case，并只修补有证据支持且明确处于 GOAL 范围内的问题。
 - execution plan 中的 executable、完整 `argv`、`cwd`、timeout、环境需求和副作用必须在执行前审查。
 - 缺少可信 runner、必要平台、权限、证据或安全的本地替代时，技能报告准确 blocker 与最小下一步，不虚构命令或降低完成标准。
 - 提交、推送、发布、部署、真实服务或设备访问、凭据、购买、破坏性操作及其他外部写入始终需要单独授权。
 
-## 恢复与完成
+## GOAL 恢复与完成
 
 恢复时从 cwd 重新绑定 worktree，按 alias 校验 manifest、GOAL、context、两个 plan 和 campaign 状态文件，再从未闭合阶段继续。持久 bundle 与 campaign 状态是恢复和完成权威；聊天摘要不能替代精确 payload 或机器证据。
 

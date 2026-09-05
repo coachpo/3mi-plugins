@@ -1,0 +1,4 @@
+interface:
+  display_name: "Plan Delivery"
+  short_description: "按需创建或修订实施计划与 Sprint Backlog，并联合检查交付关系"
+  default_prompt: "使用 $steward:plan-delivery 按请求创建、修订或审查实施计划及 Sprint Backlog，可仅处理一个阶段；交付两份文档时联合检查范围、依赖、覆盖和验收。"
