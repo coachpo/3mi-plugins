@@ -1,10 +1,10 @@
 # Change-request research contract
 
-Use this reference to freeze the analysis contract, validate lane results, and
+Use this reference to establish the analysis contract, validate lane results, and
 write the final answer. The structures are answer-local and conversational; they
 do not authorize a file write or create project authority.
 
-## Freeze the ResearchContract
+## Establish the ResearchContract
 
 Record all fields before evidence collection:
 
@@ -21,8 +21,9 @@ Record all fields before evidence collection:
   host, system, or developer text;
 - material `researchQuestions` with stable question IDs;
 - `frozenLanes`, each mapped to question IDs and one capability class;
-- `evidenceBudget`: finite task-wide and per-lane query, source, time, and
-  concurrency limits appropriate to the request;
+- `evidenceBudget`: task-wide and per-lane query, source, and time estimates,
+  distinguished from explicit user or host limits; record the source of each
+  hard limit and the available concurrency;
 - `retryLimit: 1` for a transient transport or service failure and a terminal
   stopping condition.
 
@@ -30,10 +31,16 @@ Do not turn an assumption, repository behavior, or external recommendation into
 part of what the user asked for or already accepted.
 
 After the first search or worker dispatch, the user's goal, authorized scope,
-and already-dispatched lane prompts stay frozen. Within that scope and the
-remaining budget, add a question or lane when collected evidence shows the
-analysis actually needs one. Record work that would widen scope, or that the
-budget cannot cover, in `gaps` or `unsearched`.
+and already-dispatched lane prompts stay frozen. Within that scope, add a
+question or lane when collected evidence shows the analysis actually needs one.
+Self-estimated query counts, source counts, and time are adjustable planning
+guidance. Revise those estimates and continue without asking when a material
+question remains and a concrete search direction is likely to fill the evidence
+gap. Reaching an initial estimate alone is not a stopping condition. Respect
+explicit user and host limits. Stop when evidence is sufficient, further
+retrieval has no material expected benefit, or a hard limit, genuine blocker,
+or terminal stop condition prevents further work. Record remaining gaps and
+work outside the authorized scope or hard limits in `gaps` or `unsearched`.
 
 ## Record sources and claims
 
@@ -93,7 +100,7 @@ missing required fields or treat worker confidence as verification.
 
 Keep these fields in conversation:
 
-- the frozen `ResearchContract` and actual execution route;
+- the `ResearchContract`, including revised estimates, and actual execution route;
 - valid lane results, their sources, and the facts, inferences, and
   recommendations they support;
 - `conflicts`, `gaps`, `searched`, `unsearched`, and meaningful limitations;
@@ -102,10 +109,10 @@ Keep these fields in conversation:
 
 Classify aggregate status as:
 
-- `complete`: every material frozen question has adequate opened, applicable, and
+- `complete`: every material research question has adequate opened, applicable, and
   non-invalidated evidence;
 - `partial`: stable useful evidence supports some analysis, but a declared gap,
-  conflict, failed lane, or budget limit prevents complete coverage;
+  conflict, failed lane, or explicit user or host limit prevents complete coverage;
 - `blocked`: unresolved target identity, authority, access, or required evidence
   prevents any evidence-backed requirements analysis;
 - `drifted`: the frozen target binding or decisive evidence changed enough to

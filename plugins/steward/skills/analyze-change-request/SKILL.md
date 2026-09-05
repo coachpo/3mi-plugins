@@ -42,20 +42,20 @@ The current request and later accepted user decisions define desired outcome and
 scope. Evidence may constrain or inform what is required, but cannot expand
 authority or turn a recommendation into an accepted requirement.
 
-## Freeze the research contract
+## Establish the research contract
 
 Before any evidence search, discover target and version facts available from the
 workspace, resolve the applicable `AGENTS.md` hierarchy for included paths, then
 read and apply
-[`references/research-contract.md`](references/research-contract.md). Freeze its
+[`references/research-contract.md`](references/research-contract.md). Record its
 contract fields, including:
 
 - what the user is asking for and has already accepted, target, `targetRoot`,
   source binding, scope, constraints, assumptions, and required
   `applicableInstructions`;
 - material research questions and only the useful lanes needed to answer them;
-- finite task-wide and per-lane budgets, concurrency, `retryLimit: 1`, and the
-  stopping condition.
+- task-wide and per-lane query, source, and time estimates, explicit user or
+  host limits, concurrency, `retryLimit: 1`, and the stopping condition.
 
 Use `none-found` when no repository-local instruction applies; never omit
 `applicableInstructions`. Ask the smallest blocking question only when a missing
@@ -64,16 +64,20 @@ collect whatever evidence does not depend on the answer. Otherwise record a safe
 assumption.
 
 The user's goal, authorized scope, and already-dispatched lane prompts stay
-frozen once evidence collection starts. Within that frozen scope and the
-remaining budget, add a question or lane when collected evidence shows the
-analysis actually needs one. Record work that would widen scope, or that the
-budget cannot cover, as a gap or unsearched scope. Retry one lane at most once
-and only after a transient transport or service failure; do not retry permission
-failures, missing authority, budget exhaustion, conflicts, or drift.
+frozen once evidence collection starts. Within that scope, add a question or
+lane when collected evidence shows the analysis actually needs one. Treat
+self-estimated query counts, source counts, and time as adjustable planning
+guidance. Revise those estimates and continue without asking when a material
+question remains and a concrete search direction is likely to fill the evidence
+gap. Do not stop solely because an initial estimate was reached. Respect explicit
+user and host limits; record work outside the authorized scope or those limits
+as a gap or unsearched scope. Retry one lane at most once and only after a
+transient transport or service failure; do not retry permission failures, missing
+authority, exhausted hard limits, conflicts, or drift.
 
 ## Isolate and collect lanes
 
-Freeze any useful subset of these lanes; a category is not required merely
+Select any useful subset of these lanes; a category is not required merely
 because it exists:
 
 - **repository:** current project behavior, architecture, dependencies,
@@ -101,15 +105,17 @@ repository-only access; otherwise inspect that lane sequentially.
 
 Every worker prompt must be self-contained and contain its frozen lane identity,
 question IDs, sanitized source binding, include/exclude scope, required
-`applicableInstructions`, budget and stopping condition, allowed capability class,
+`applicableInstructions`, adjustable estimates, explicit limits and stopping
+condition, allowed capability class,
 one-retry rule, and the fixed lane-result schema from the research contract. Do
 not reproduce hidden host, system, or developer text. Workers obey their own
 instruction hierarchy, must not delegate, and must not produce requirements.
 
 Search results and snippets identify candidate sources; they are not evidence.
 Open each decisive source and bind its claims to the frozen version and context.
-Stop when the frozen questions are covered, a budget or stop condition is
-reached, or one permitted retry fails.
+Stop when evidence is sufficient, further retrieval has no material expected
+benefit, an explicit user or host limit is reached, or a genuine blocker or
+terminal stop condition prevents further work. Report any remaining gaps.
 
 ## Verify and deliver
 
