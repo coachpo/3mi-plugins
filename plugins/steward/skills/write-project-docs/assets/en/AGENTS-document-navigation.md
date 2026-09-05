@@ -1,7 +1,7 @@
 <!-- write-project-docs:document-navigation:start -->
 ## Project Documentation Navigation
 
-Before starting related work, read the authoritative documents that cover the scope of the task:
+Before starting related work, read only the sections needed to establish relevant facts, constraints, and acceptance criteria:
 
 - [Project Status](STATUS.md)
 - [Documentation Index](docs/README.md)
@@ -11,7 +11,9 @@ Before starting related work, read the authoritative documents that cover the sc
 - [Source Code Size and Responsibility Rules]({{SOURCE_SIZE_RULES_DOC}})
 - [Contributing Guide](CONTRIBUTING.md)
 
-When implementing, reviewing, or verifying an engineering change, use `STATUS.md` and the product overview for current facts and delivery intent, then read the [Current Development Strategy](CONTRIBUTING.md#current-development-strategy). Consume only the relevant "Must Complete at This Tier," "Not Pursued by Default," "Non-negotiable Boundaries," and "Tier Transition Conditions." New user requirements, an accepted seven-line GOAL, hard project rules or invariants, real or non-discardable data, existing users, and compatibility commitments take precedence over tier defaults. The `YOLO_LOCAL`, `EXPERIMENT`, and `MVP` tiers permanently forgo active investment in security, privacy, data, credential and key management, compatibility, audit/monitoring/SLO, and regulatory compliance requirements; the exemption does not override those precedence sources and does not change a tier's applicability, transition conditions, or existing prohibitions. A tier does not expand user authorization, create exclusion proof, or allow checks required by affected paths or core acceptance to be skipped. `YOLO_LOCAL` applies only to a user-declared disposable local workspace with no real data, production credentials, external users or traffic, or external side effects; change tiers before proceeding when any condition fails.
+Consult `STATUS.md` and the product overview when their facts, constraints, or delivery intent need confirmation. Before using tier defaults or exemptions, confirm that the [Current Development Strategy](CONTRIBUTING.md#current-development-strategy) exists, is valid, and applies to the task; read its relevant requirements, boundaries, and transition conditions. Tier defaults do not replace facts, expand user authorization, or override user requirements, hard project rules, or required checks.
+
+Reuse information verified in this task while its sources are unchanged and it remains applicable. Recheck affected information when facts, tier, scope, or requirements change, or conflicting evidence appears.
 
 ## Project Documentation Content Boundaries
 

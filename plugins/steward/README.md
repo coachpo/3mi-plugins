@@ -37,6 +37,19 @@ $steward:<skill-name>
 /steward:<skill-name>
 ```
 
+## 0.8.4 升级说明
+
+本版精简根 `AGENTS.md` 文档导航中的重复档位政策，按相关事实与约束的核实需要限定读取范围，并允许复用本轮任务中来源未变化且仍适用的信息。
+
+插件升级不会自动刷新下游项目中已生成的导航区块。使用新版 `validate_project_docs.py` 检查旧区块时，会报告“根 AGENTS.md 的文档区块已漂移”错误（不是警告），并返回非零退出码。对需要升级导航的项目，使用新版技能附带的 updater 同步后再验证：
+
+```bash
+python3 -B "<skill-dir>/scripts/update_agents_navigation.py" "<project-root>"
+python3 -B "<skill-dir>/scripts/validate_project_docs.py" "<project-root>"
+```
+
+`<skill-dir>` 指新版 `write-project-docs` 技能目录，`<project-root>` 指目标项目根目录。updater 整块替换现有根 `AGENTS.md` 的托管文档导航，并按既有规则修正托管块外的旧规范链接；不会创建缺失的根 `AGENTS.md`。同步后检查实际 diff；validator 仍会报告项目其他文档的既有问题。
+
 ## 四条工作流
 
 ### 项目文档
