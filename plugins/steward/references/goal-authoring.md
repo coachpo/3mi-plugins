@@ -9,9 +9,12 @@ binding precheck is never needed. Repository evidence constrains the contract
 but does not expand the user's result, scope, authorization, or completion
 criteria.
 
-Use only current and explicitly accepted decisions as consensus. Ask when a
-missing decision can materially change outcome, scope, authority, cost, or
-risk. Keep the canonical seven-line format from
+Use only current and explicitly accepted decisions as consensus. Write each of
+the seven lines for the executor receiving the task: what they must achieve,
+what they may do, what can block them, and what they must deliver. Describe the
+assigned work throughout, rather than your current work of drafting its GOAL.
+Ask when a missing decision can materially change outcome, scope, authority,
+cost, or risk. Keep the canonical seven-line format from
 [goal-template.txt](goal-template.txt) — its seven line labels are required
 exactly as written — and consecutive `C1...Cn` criteria.
 

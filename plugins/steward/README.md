@@ -37,6 +37,10 @@ $steward:<skill-name>
 /steward:<skill-name>
 ```
 
+## 0.8.6 升级说明
+
+GOAL 起草以接收任务的执行者为对象：目标、范围、授权、阻塞项和交付物都描述执行者的工作，起草者自身的职责限制不会写成执行任务的限制。仅调整技能说明，已有 GOAL 包保持原样。
+
 ## 0.8.5 升级说明
 
 本版把规划任务标识与 GOAL alias 对齐：`plan-delivery` 在任务可能成为 GOAL 时优先采用合法 alias 形式的任务 ID，`draft-consensus-goal` 优先复用该任务 ID 作为 alias。于是 Backlog 中的任务、`.steward/goals/<alias>/` 中的 bundle 和验证 campaign 指向同一标识，进度由现有只读查询推导，而不是在规划文档中维护状态字段。

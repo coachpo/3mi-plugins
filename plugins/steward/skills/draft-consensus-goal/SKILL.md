@@ -1,6 +1,6 @@
 ---
 name: draft-consensus-goal
-description: Persist an accepted seven-line Chinese GOAL, one verified context, and its acceptance intent under a caller-chosen alias in the current Git worktree, including declared waived non-required cases and writable case-byproduct files. Use only when explicitly asked to create or resume that contract; do not implement or verify it.
+description: Persist an accepted seven-line Chinese GOAL, one verified context, and its acceptance intent under a caller-chosen alias in the current Git worktree, including declared waived non-required cases and writable case-byproduct files. Use only when explicitly asked to create or resume drafting a task contract for an executor.
 ---
 
 # Draft Consensus Goal
@@ -13,10 +13,12 @@ the work comes from a planned task, prefer that task's ID as the alias, so the
 bundle, the plan, and the verification campaign refer to the same work without a
 separate status record.
 
-Explicit invocation authorizes repository fact checking and creation of the
-selected ignored GOAL bundle. It does not authorize implementing the GOAL,
-running acceptance cases, touching external state, or creating, starting, or
-activating a host-managed GOAL.
+Draft the GOAL as a task assigned to another executor. Its outcome, scope,
+authorization, blockers, and deliverables describe that executor's work using the
+user's accepted requirements. Your role in this skill is to check repository
+facts and create the ignored GOAL bundle; you do not implement or verify the
+target work, touch external state, or activate a host-managed GOAL. Those limits
+on your drafting role are not constraints on the executor's task.
 
 Explicit user instructions take precedence over this skill; when they conflict,
 follow the user and say which instruction here you set aside. If this skill
