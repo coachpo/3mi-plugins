@@ -23,10 +23,11 @@ that caused it.
 
 ## Plan the research lanes
 
-Resolve the exact target worktree, then define each lane's `laneId`, whether it
-is `required`, and its optional `crossCheckOf`. Give each lane a self-contained,
-non-overlapping objective; once a lane is dispatched, its own scope and prompt do
-not change — a lane that needs a different objective is a new lane, not an edit.
+Resolve the exact target worktree and give each lane a self-contained,
+non-overlapping objective. Distinguish optional lanes when aggregate completeness
+does not depend on them; otherwise treat each lane as required. Once a lane is
+dispatched, its own scope and prompt do not change — a lane that needs a different
+objective is a new lane, not an edit.
 
 Add a lane whenever the research actually needs one, including after an earlier
 lane's result opens a genuinely new, useful direction. Do not split or broaden a
@@ -38,22 +39,17 @@ sequential fallback.
 
 ### Worker input contract
 
-Give every lane a self-contained prompt with exactly these fields:
+Give every lane a self-contained prompt covering:
 
-- `laneId`: lane identifier;
-- `required`: whether aggregate completeness depends on this lane;
-- `crossCheckOf`: another lane identifier or `not-applicable`;
-- `targetRoot`: resolved worktree root; searches stay beneath it;
-- `researchGoal`: question the aggregate answer must resolve;
-- `include`: paths and file classes inside scope;
-- `exclude`: generated, vendor, or otherwise excluded scope;
-- `sourceBinding`: relevant revision, baseline, diff, or observed source identity;
-- `laneObjective`: one bounded, non-overlapping evidence question;
-- `applicableInstructions`: governing instructions needed to execute the lane;
-- `evidenceBudget`: search depth or evidence limit and stopping condition;
-- `outputContract`: the lane-result schema below;
-- `constraints`: `read-only`, `no-network`, `no-secrets`, and `no-delegation`.
+- **Objective:** the bounded evidence question and how it serves the research goal.
+- **Scope:** the resolved target worktree and included or excluded paths; searches
+  stay beneath that root.
+- **Constraints:** applicable instructions, `read-only`, `no-network`,
+  `no-secrets`, `no-delegation`, and any explicit limits or stopping conditions.
 
+Request the concise result described below. Add lane identifiers, source/version
+bindings, cross-check relationships, coverage records, or evidence budgets only
+when the task needs them; no fixed field names or empty placeholders are required.
 Do not invent a source binding when none applies. Repeat applicable instructions
 in the prompt rather than relying on inherited conversation context.
 
@@ -69,11 +65,19 @@ Read exactly one adapter for the current host and do not load the other:
 - Codex: [`references/codex.md`](references/codex.md)
 - Claude Code: [`references/claude-code.md`](references/claude-code.md)
 
-Use delegated workers only when the host mechanically restricts their tools to
-repository reads and read-only Git inspection with network access disabled. This
-is `delegationGate=mechanical-read-only-no-network`; prompt restrictions alone do
-not pass it. Otherwise use `fallbackRoute=sequential` and execute every lane in
-the coordinator without dropping or broadening scope.
+For ordinary read-only research, delegate independent lanes when current tool
+permissions and task authorization allow it. A dedicated read-only sandbox is
+not required; each worker must follow the scoped read-only constraints below.
+When the user, project instructions, or higher-priority rules explicitly require
+mechanical isolation, delegate only when the runtime restricts workers to
+repository reads and read-only Git with writes and network access disabled.
+If that requirement cannot be met, or delegation is otherwise unavailable, use
+the sequential fallback and execute every lane in the coordinator without
+dropping or broadening scope, subject to the same applicable requirements.
+
+Prompt constraints are not mechanical isolation and do not override runtime
+permissions. Delegation grants no additional read scope or execution authority.
+Disclose missing isolation capabilities when they affect the user's requirements.
 
 The coordinator and any worker may inspect files, configuration, tests as text,
 symbols, directories, and read-only Git history. The fixed constraints prohibit
@@ -83,19 +87,13 @@ secret values; and further delegation.
 
 ## Return the lane result
 
-Every lane returns all of these fields:
-
-- `laneId`: lane identifier;
-- `status`: `complete`, `partial`, `blocked`, or `drifted`;
-- `sourceBinding`: the binding actually searched and cited;
-- `directAnswer`: concise lane answer without cross-lane judgment;
-- `evidence`: project-relative `path:line` or symbol locators and the fact proved;
-- `searched`: paths, symbols, history, and strategies examined;
-- `unsearched`: requested or relevant scope not examined;
-- `conflicts`: contradictory repository evidence;
-- `gaps`: unanswered questions and the smallest missing evidence;
-- `stoppingReason`: satisfied, budget exhausted, transient retry exhausted,
-  blocked, or drifted.
+Each lane returns a concise conclusion, evidence locations (project-relative
+`path:line` or symbols and the facts they prove), and unresolved issues, if any.
+Keep the conclusion within the lane's scope. Include material conflicts,
+unsearched scope, blockers, or source drift among unresolved issues so the
+coordinator can judge completeness. Add source bindings, detailed coverage,
+explicit status, or stopping reasons when needed for the task or audit trail;
+a simple lookup does not require a full result schema.
 
 A lane is `complete` only when its objective and scope are satisfied, `partial`
 when useful evidence exists but material scope remains, `blocked` when it cannot
@@ -104,8 +102,9 @@ valid.
 
 ## Verify and aggregate
 
-The coordinator reopens decisive evidence, confirms it against the bound source,
-deduplicates overlaps, and preserves material conflicts. Always give the
+The coordinator reopens decisive evidence, confirms it against the inspected
+source and any applicable source binding, deduplicates overlaps, and preserves
+material conflicts. Always give the
 aggregate `status` — `complete`, `partial`, `blocked`, or `drifted` — and a
 `directAnswer` to the original research goal. Then add only what applies:
 coordinator-verified evidence with citations, combined searched coverage,

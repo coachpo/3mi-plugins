@@ -26,11 +26,13 @@ departure from the request, link this file, quote the rule, and explain its effe
 | Review either document or the pair | Inspect the relevant phase and relationships; return findings without writing files. |
 
 Read [planning rules and review checklist](references/planning-rules.md) for
-baseline, dependency, acceptance, coverage, and revision decisions. Before a
-relevant change, read the existing plan, Backlog, and their input baselines where
-available. Identify the authorized write set and affected scope, references,
-dependencies, and acceptance obligations. Missing or unreadable related inputs
-limit the checks you can claim; they do not stop independent planning.
+baseline, dependency, acceptance, coverage, and revision decisions. For a local
+change, first read the affected entries and directly related content. Expand to
+the relevant source baselines and counterpart planning document only when the
+change affects scope, dependencies, deliverables, or acceptance criteria.
+Identify the authorized write set and affected relationships. Missing or
+unreadable necessary inputs limit the checks you can claim; they do not stop
+independent planning.
 
 Distinguish accepted requirements and decisions from research suggestions,
 planning assumptions, and open choices. Use only source and conversation content
@@ -101,7 +103,7 @@ and eventual real acceptance when Placeholder work can proceed sooner.
 
 ## Review, save, and hand off
 
-Apply the shared checklist to the requested stage and its affected relationships.
+Apply the shared checklist to the requested scope and its affected relationships.
 When both documents are delivered or jointly revised, review the final document
 pair after edits. For a plan-only request, finish the implementation-phase check;
 do not generate a Backlog just to satisfy a joint check.

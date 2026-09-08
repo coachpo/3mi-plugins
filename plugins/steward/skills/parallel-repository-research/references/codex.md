@@ -2,11 +2,17 @@
 
 Read this adapter only when the current host is Codex.
 
-Delegate a lane only when the current runtime provides a worker sandbox or tool
-profile that mechanically exposes repository reads and read-only Git while
-disabling writes and network access. Standard prompt restrictions or a writable
-workspace sandbox are insufficient; use the sequential fallback when this tool
-surface is unavailable.
+For ordinary read-only research, delegate independent lanes when current tool
+permissions and task authorization allow it, even without a dedicated read-only
+sandbox. Give each worker a self-contained prompt limiting reads to the assigned
+scope and prohibiting writes, project-code execution, network access, and further
+delegation, as required by the shared skill.
+
+When applicable instructions explicitly require mechanical isolation, use a
+worker sandbox or tool profile that permits repository reads and read-only Git
+while disabling writes and network access; otherwise use the sequential fallback.
+Prompt constraints or a writable workspace sandbox do not establish that
+guarantee and cannot override runtime permissions.
 
 For an eligible delegated lane:
 
@@ -16,5 +22,5 @@ For an eligible delegated lane:
   `max` according to ambiguity and search depth;
 - batch lanes together when worker capacity is limited.
 
-When the sequential fallback applies, note the reason in the final answer only
-if it materially limited coverage.
+Disclose missing isolation capabilities when they affect the user's requirements;
+otherwise mention a sequential fallback only when it materially limited coverage.

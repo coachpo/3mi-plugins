@@ -120,9 +120,11 @@ loop is complete. Task criteria must not weaken the plan's required acceptance.
 
 ## Coordinated revision
 
-Before relevant modifications, read both existing planning artifacts and their
-source baselines where available. Respect the user's write scope and retain
-unrelated content and accepted decisions. Follow an input change through required
+For a local modification, first read the affected entries and directly related
+content. Expand to the relevant source baselines and counterpart planning
+document only when the change affects scope, dependencies, deliverables, or
+acceptance criteria. Respect the user's write scope and retain unrelated content
+and accepted decisions. Follow an input change through required
 deliverables, package/task references, successors, handoffs, Sprint placement,
 responsibility, and acceptance conditions and evidence.
 
@@ -142,10 +144,11 @@ or GOAL system.
 
 ## Model review before delivery
 
-Use the checklist at the level available to the requested deliverable. For a
-plan-only request, check the implementation phase and relevant known relationships.
-For a Backlog, check it against the available plan. For delivery or joint revision
-of both documents, check the final pair. Review-only requests write no files.
+Use the checklist within the requested scope and the reading scope established
+above. For a plan-only request, check the affected implementation content and
+relevant known relationships. For a Backlog, check against the available plan
+within that scope. For delivery or joint revision of both
+documents, check the final pair. Review-only requests write no files.
 
 1. **Identity and references:** IDs are stable and unique in their agreed scope;
    referenced entries exist; scope, terms, and authority agree across read inputs.

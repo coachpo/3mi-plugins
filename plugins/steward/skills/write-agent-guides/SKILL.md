@@ -12,9 +12,11 @@ local deltas.
 
 ## Outcome and authority
 
-Success means every written rule has repository evidence and a clear scope, the
-effective hierarchy has no harmful conflict or parent repetition, commands are
-verified, and changed files plus relevant checks are reported accurately.
+Success means every written rule has a clear scope and an appropriate basis:
+repository facts are verified against code, configuration, or existing documents;
+working preferences follow explicit user requirements. The effective hierarchy
+has no harmful conflict or parent repetition, commands are verified, and changed
+files plus relevant checks are reported accurately.
 
 Review, explanation, diagnosis, report, and planning requests are read-only.
 Create, repair, refresh, or update requests authorize the affected local
@@ -51,10 +53,13 @@ editing.
 
 ## Establish evidence
 
-For every proposed rule, identify repository evidence for its scope: component
-responsibility, entry points, change ownership, build/development/validation
-commands, generated/vendor boundaries, and non-obvious safety, compatibility, or
-high-risk constraints. Prefer structured code tools for symbols and boundaries;
+Use code, configuration, and existing documents to verify repository facts such
+as component responsibilities, entry points, commands, generated/vendor boundaries,
+and safety or compatibility constraints. Explicit user requirements are the basis
+for working preferences such as language, communication, and approval; they do
+not need code evidence. Beyond reading the effective guidance, search the
+repository only when a rule involves project facts or its scope is unclear.
+For those facts, prefer structured code tools for symbols and boundaries;
 cross-check commands against manifests, task definitions, tests, and CI. Omit or
 label facts that remain uncertain after one meaningful alternative check.
 
@@ -76,7 +81,8 @@ as a fallback for another language.
 Keep root independently useful, then add only necessary subtree deltas. Link
 canonical project documents rather than copying their prose. Write only guidance
 that changes agent behavior: responsibilities, change locations, verified
-commands, project-specific invariants, generated boundaries, and high-risk areas.
+commands, project-specific invariants, generated boundaries, high-risk areas,
+and explicit user working preferences.
 Omit generic software advice, timestamps, commits, exhaustive trees, and facts
 already obvious from names.
 
