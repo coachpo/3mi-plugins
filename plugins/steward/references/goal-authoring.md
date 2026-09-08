@@ -9,12 +9,16 @@ binding precheck is never needed. Repository evidence constrains the contract
 but does not expand the user's result, scope, authorization, or completion
 criteria.
 
-Use only current and explicitly accepted decisions as consensus. Write each of
+Use current user requirements and accepted decisions as consensus; do not ask
+the user to reconfirm requirements or authorization already established in the
+session. Resolve routine drafting details within that scope yourself, without
+treating them as new user decisions. Write each of
 the seven lines for the executor receiving the task: what they must achieve,
 what they may do, what can block them, and what they must deliver. Describe the
 assigned work throughout, rather than your current work of drafting its GOAL.
 Ask when a missing decision can materially change outcome, scope, authority,
-cost, or risk. Keep the canonical seven-line format from
+cost, or risk, and continue independent authorized preparation while awaiting
+the answer. Keep the canonical seven-line format from
 [goal-template.txt](goal-template.txt) — its seven line labels are required
 exactly as written — and consecutive `C1...Cn` criteria.
 
