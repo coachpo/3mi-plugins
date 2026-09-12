@@ -1,104 +1,55 @@
 ---
 name: write-agent-guides
-description: "Review or maintain an evidence-based AGENTS.md hierarchy for a code repository: shared root guidance and only material subtree differences. Use write-project-docs for canonical project documentation."
+description: Review or maintain an evidence-based AGENTS.md hierarchy with shared root guidance and material subtree differences. Use for agent instructions, not canonical project documentation or CLAUDE.md.
 ---
 
 # Write AGENTS.md Guides
 
-Produce durable, concise repository guidance that tells coding agents where to
-work, which project-specific constraints apply, and how to validate changes.
-Root guidance carries shared rules; nested files contain only evidence-backed
-local deltas.
+Maintain concise repository instructions that help agents choose where to work,
+respect project-specific constraints, and validate changes. Put shared rules at
+the root and only useful local differences in nested files. Review requests
+return findings without editing; maintenance requests change the affected
+`AGENTS.md` files. This skill does not maintain `CLAUDE.md`.
 
-## Outcome and authority
+## Resolve scope and evidence
 
-Success means every written rule has a clear scope and an appropriate basis:
-repository facts are verified against code, configuration, or existing documents;
-working preferences follow explicit user requirements. The effective hierarchy
-has no harmful conflict or parent repetition, commands are verified, and changed
-files plus relevant checks are reported accurately.
+Identify the repository boundaries and effective instruction hierarchy for each
+affected path. Account for the host's overrides, configured fallback files, and
+visibility limits where applicable. A shadowed or truncated file may not supply
+the guidance its author expects.
 
-Review, explanation, diagnosis, report, and planning requests are read-only.
-Create, repair, refresh, or update requests authorize the affected local
-`AGENTS.md` edits plus non-destructive validation. Confirm external writes,
-destructive replacement, unusually expensive actions, or material scope
-expansion.
+Ground repository facts in relevant code, configuration, manifests, CI, and
+existing documents. Verify commands, their working directories, component
+responsibilities, and constraints before publishing them as instructions.
+Explicit user requirements establish working preferences; they do not need code
+evidence. Preserve accurate existing rules and mark material facts that remain
+unverified.
 
-Explicit user instructions take precedence over this skill; when they conflict,
-follow the user and say which instruction here you set aside. If this skill
-makes you pause, ask, or leave requested work unfinished, name the instruction
-that caused it.
+## Choose and write the hierarchy
 
-`CLAUDE.md` is outside this skill's write set. Do not create, repair, rewrite,
-or delete it. Existing host-specific instruction files may be read when needed
-to resolve applicable guidance, but this skill maintains only the `AGENTS.md`
-hierarchy.
+Keep or create a nested file when the subtree has an evidenced command,
+responsibility, or constraint difference that would be misleading or cumbersome
+as shared root guidance. A directory inventory or repetition of the parent is
+not sufficient. A valid parent need not be rewritten for a subtree-only change;
+report any necessary parent correction outside the requested write scope.
 
-Root write permission is required only when the root file itself must change. If
-an existing effective parent is valid and the user requests a proven subtree-only
-delta, the authorized nested file may be updated without rewriting root. Stop
-when a nested file would become an ungrounded or misleading island.
+Write guidance that changes agent behavior: change locations, commands,
+non-obvious invariants, generated boundaries, and explicit working preferences.
+Link authoritative project documents instead of copying their contents. Avoid
+generic engineering advice and exhaustive repository descriptions.
 
-## Resolve the effective hierarchy
+Use the requested language, otherwise preserve the effective root language or
+the established repository-document language. Preserve unrelated content and
+managed regions; an authorized change to managed content must account for the
+mechanism that owns it.
 
-Detect the real repository root in multi-repository workspaces, submodules, and
-nested repositories. For each affected path, read effective
-`AGENTS.override.md`, `AGENTS.md`, and configured fallback files in inheritance
-order. Verify which non-empty file wins in each directory and how the merged
-size limit affects visibility.
+## Verify and hand off
 
-Preserve accurate user rules and other managed regions. Investigate shadowed
-files, parent/child conflict, active fallbacks, and uncertain provenance before
-editing.
+Re-read changed files in their effective hierarchy. Check scopes, conflicts,
+parent repetition, links, command accuracy, and the value of nested files. Use
+the smallest non-destructive checks that resolve uncertainty in the changed
+guidance; a prose or preference update does not require unrelated project tests.
 
-## Establish evidence
-
-Use code, configuration, and existing documents to verify repository facts such
-as component responsibilities, entry points, commands, generated/vendor boundaries,
-and safety or compatibility constraints. Explicit user requirements are the basis
-for working preferences such as language, communication, and approval; they do
-not need code evidence. Beyond reading the effective guidance, search the
-repository only when a rule involves project facts or its scope is unclear.
-For those facts, prefer structured code tools for symbols and boundaries;
-cross-check commands against manifests, task definitions, tests, and CI. Omit or
-label facts that remain uncertain after one meaningful alternative check.
-
-## Choose hierarchy and language
-
-Create or keep a nested `AGENTS.md` only when all are true: the subtree has a
-verified local command, constraint, responsibility, or risk difference; putting
-it in root would mislead other areas; and a delta-only file has independent
-value. Parent repetition, directory inventories, and guesses do not qualify.
-List obsolete nested files as removal candidates; deletion still needs authority.
-
-Use the user's requested language. Otherwise preserve the effective root
-guidance language, then the established repository-document language. New nested
-files follow root. Never infer Simplified Chinese from a CJK percentage or use it
-as a fallback for another language.
-
-## Write and verify
-
-Keep root independently useful, then add only necessary subtree deltas. Link
-canonical project documents rather than copying their prose. Write only guidance
-that changes agent behavior: responsibilities, change locations, verified
-commands, project-specific invariants, generated boundaries, high-risk areas,
-and explicit user working preferences.
-Omit generic software advice, timestamps, commits, exhaustive trees, and facts
-already obvious from names.
-
-Preserve all foreign managed blocks byte-for-byte; this skill owns no managed
-block of its own.
-
-Re-read every changed file and verify hierarchy, evidence, commands, managed
-boundaries, nested-file value, and merged visibility. Run
-the smallest relevant non-destructive repository checks and state what was not
-run. On resume, use the current working tree and effective instructions;
-revalidate after relevant drift and preserve non-overlapping user changes.
-
-## Deliver
-
-Complete only when the intended root or subtree result exists, hierarchy choices
-are evidence-backed, changed files are rechecked, and relevant validation passed
-or is precisely blocked. Lead with the outcome, then only applicable material
-details: changed `AGENTS.md` paths, evidence, language decision, validation,
-meaningful omissions, removal candidates, risks, and the smallest next action.
+Return the changed paths or review findings, meaningful hierarchy decisions,
+checks actually performed, and any remaining uncertainty or obsolete-file
+removal candidates. Do not describe an unexecuted command as successfully run.

@@ -1,153 +1,80 @@
 ---
 name: write-project-docs
-description: Review or maintain canonical repository documentation from verified project facts. Use for focused documentation work, initialization, or migration; use write-agent-guides for the AGENTS.md hierarchy.
+description: Review, create, update, or migrate canonical repository documentation from verified project facts. Use only for an explicit documentation request; a focused edit does not initialize a document suite. Use write-agent-guides for the AGENTS.md hierarchy.
 ---
 
 # Write Project Documentation
 
-Keep each verified project fact or policy in one canonical document and link it
-from other surfaces. A focused request changes only the affected documents; the
-complete canonical set is created only for an explicit initialization or
-migration request.
+Keep project documentation accurate, useful to its readers, and clear about
+where each fact or policy is authoritative. Review requests are read-only;
+documentation changes stay within the requested scope.
 
-This workflow requires an explicit documentation request; do not expand an
-ordinary engineering task into documentation maintenance.
+## Follow the repository's documentation model
 
-Resolve this skill directory as `<skill-dir>`; bundled resources and scripts are
-relative to it.
+Start with the affected documents, their readers, and the evidence needed for
+the request. Preserve established paths, structure, terminology, and language
+unless the user requests a change. New documents follow the user's language or
+the repository's existing convention, without restricting supported languages.
 
-## Canonical boundaries
+Use the existing authority map. When establishing one, these are useful roles,
+not required filenames or a mandatory document set:
 
-| Path | Authority |
+| Document role | Content it owns |
 | --- | --- |
-| `README.md` | Entry, installation, ordinary startup, derived status summary, and links. |
-| `STATUS.md` | Required development tier plus lifecycle, deployment, users, data, compatibility, and allowed/prohibited change facts. |
-| `CONTRIBUTING.md` | Development setup, commands, workflow, the validated static current development strategy, shared principles, and definition of done. |
-| `docs/README.md` | Documentation index and authority map. |
-| `docs/产品说明.md` or `docs/product.md` | Product problem, users, goals, scope, flows, requirements, and acceptance. |
-| `docs/架构说明.md` or `docs/architecture.md` | Current architecture, component responsibility, boundaries, dependencies, risks, and exceptions. |
-| `docs/开发规范.md` or `docs/development-rules.md` | Project-specific technical and review rules. |
-| `docs/源代码规模与职责规则.md` or `docs/source-code-size-and-responsibility-rules.md` | Shared source responsibility policy rendered from bundled assets. |
+| README / entry point | Purpose, getting started, and links to further documentation. |
+| Project status | Verified lifecycle, deployment, support, users, data, and compatibility facts. |
+| Contribution guide | Development setup, commands, workflow, and applicable completion checks. |
+| Product documentation | Users, goals, scope, requirements, flows, and acceptance criteria. |
+| Architecture documentation | Current components, responsibilities, dependencies, data flow, and design decisions. |
+| Development rules | Established project-specific implementation and review constraints. |
 
-Root `AGENTS.md` is a navigation/agent-behavior surface, not a ninth canonical
-document. `CLAUDE.md` is not a canonical document and is outside this skill's
-write and validation scope.
+Give shared facts and policies one authoritative home and link or summarize
+them where useful. Preserve valuable specialized documents and intentional
+translations. Add an index when it improves navigation. A focused edit does not
+require missing documents, development tiers, generic engineering policies, or
+new governance. Preserve existing project policy unless changing it is requested.
 
-## Mode and authority
+## Ground the content
 
-A review, explanation, diagnosis, or report request is read-only. A create,
-maintain, merge, standardize, repair, or migrate request authorizes local edits
-only to the documents and managed blocks affected by that request, plus relevant
-non-destructive validation. It does not authorize filling every missing canonical
-document.
+Inspect relevant source, manifests, configuration, tests, CI, and existing
+decisions. Check documented commands against their actual definitions and
+prerequisites. Use an authorized, non-destructive local check when needed to
+resolve a material uncertainty; documentation work does not require starting the
+whole application or running its entire test suite.
 
-File deletion, moves, archival, cleanup outside the authorized document or
-managed-block write set, external writes, source/configuration/CI edits, or
-material scope expansion require explicit authority. Preserve generated and
-other-skill managed regions. Root `AGENTS.md` writes owned here are exactly
-what its updater does: refresh the managed document-navigation block, append
-one when the file has none, and rewrite stale canonical link targets outside
-every managed block — body mentions that are not link targets are reported,
-not changed. Engineering routing belongs to `write-agent-guides`.
+Distinguish implemented behavior from accepted requirements, proposals, and
+unverified claims. Describe architecture from actual relationships rather than
+inferring a pattern from directory names. Repository contents alone may not
+establish deployment, external users, or data-retention obligations; preserve
+uncertainty rather than inventing status or permission. Link decisive evidence
+where it helps readers verify or maintain the document.
 
-Explicit user instructions take precedence over this skill; when they conflict,
-follow the user and say which instruction here you set aside. If this skill
-makes you pause, ask, or leave requested work unfinished, name the instruction
-that caused it.
+## Edit and migrate within scope
 
-## Preserve language intent
+Update the requested content and affected summaries, indexes, and links.
+For consolidation or migration, inspect incoming references and preserve unique,
+still-valid information before retiring its old location. Respect the requested
+migration and existing compatibility requirements; report affected references
+outside the authorized scope instead of silently changing source or CI.
 
-Use the user's explicit language when supplied. Otherwise preserve the effective
-root documentation/AGENTS language, then the repository's established document
-language. New files follow that language. Do not use a CJK percentage heuristic
-or silently convert Japanese, Traditional Chinese, or another language to
-Simplified Chinese.
+Preserve generated content and regions owned by other tools. For an affected
+managed region, inspect its current generator or checker and follow that
+contract. Existing `write-project-docs:*` regions can be edited directly when no
+active generator owns them; preserve markers and surrounding content. Ambiguous
+boundaries need resolution before replacing the region, not a whole-file rewrite.
 
-Bundled canonical paths and managed assets currently support Simplified Chinese
-and English. If a requested managed block or new canonical path requires an
-unsupported language, keep existing content unchanged, complete whatever does not
-depend on that decision, and ask for the smallest language/path decision rather
-than falling back to Chinese. Switching an existing
-project between supported canonical language sets is an explicit migration.
+Existing root `AGENTS.md` documentation links or navigation may be updated when
+affected by the requested documentation change. Agent behavior and hierarchy
+belong to `write-agent-guides`; `CLAUDE.md` is outside this skill's scope.
 
-## Route only the selected work
+## Verify and report
 
-1. Resolve the actual project root, applicable instructions, affected canonical
-   documents, managed boundaries, and exact write set.
-2. Inspect only repository evidence needed for those documents: relevant
-   manifests, source, configuration, tests, CI, commands, and existing docs.
-3. Read only the relevant sections of
-   [`document-rules.md`](references/document-rules.md) when detailed canonical
-   content or managed-block rules are needed. Read it completely only for full
-   initialization, consolidation, or migration.
-4. Read [`development-tiers.md`](references/development-tiers.md) completely
-   when the request creates, updates, validates, migrates, or consumes the
-   required development tier or managed strategy. The exact `STATUS.md` tier
-   selects one bundled static strategy and never creates new authority.
-5. For write tasks, update only affected and authorized files. Use the bundled
-   updaters for owned marker blocks; do not hand-edit those regions or copy their
-   implementation details into documentation.
-6. Validate the affected scope. For write tasks, inspect the exact diff and
-   correct only in-scope errors; read-only tasks report findings.
+Review affected facts, relative links and anchors, consistency with authoritative
+sources, and the exact diff. Run applicable existing documentation checks. Do
+not create static tests for wording or introduce a whole-repository validation
+gate solely for a documentation edit. Keep unrelated findings separate from
+in-scope failures.
 
-For a single-document request, steps concerning unrelated canonical documents,
-development tier/strategy, language migration, and managed navigation are
-skipped. Full initialization/migration may traverse the whole route because
-that outcome was explicitly requested.
-
-## Deterministic updates and validation
-
-For ordinary prose maintenance, check the affected facts and links and use
-relevant repository documentation checks. For a focused managed update, use its
-updater's checks of the block and required inputs. The development-rules updater
-requires the development rules and source-responsibility document; CONTRIBUTING
-and AGENTS navigation retain the canonical dependencies their assets reference.
-If an actual prerequisite is missing, complete independent authorized work and
-report that blocker without expanding the write set or bypassing updater errors.
-
-Use `python3 -B` for the bundled scripts. Before a requested managed update,
-update the source facts and development-tier line that the request affects.
-Use the dedicated development-rules, contributing, and AGENTS navigation
-updaters as applicable; each must preserve other managed regions and fail closed
-on ambiguous markers or drift.
-`update_contributing.py` is the only strategy updater and atomically migrates a
-structurally valid retired dynamic-strategy block.
-
-For full initialization/migration or validation of tier/catalog or cross-document
-managed consistency, run the whole-set validator:
-
-```text
-python3 -B "<skill-dir>/scripts/validate_project_docs.py" "<project-root>"
-```
-
-Use strict diagnostics for an authorized migration, file removal, archival, or
-other destructive cleanup. The whole-set validator proves structure, the complete
-static tier catalog, selected-strategy consistency, and managed-block consistency;
-it does not replace semantic review of the prose or check local link validity.
-Report broken or stale links you notice while reading, but do not treat
-link-checking as automated.
-
-The validator always reports the whole canonical set, so a focused task on a
-repository that never had that set exits non-zero on documents outside the
-request. Judge each error: fix only those covered by an authorized write request
-and report the rest with their scope and origin. A non-zero exit is not itself a
-reason to widen the write set.
-
-On resume, recheck inputs relevant to the selected work, including its write set
-and any changed language, path, tier, managed-boundary, or asset evidence. Reuse
-unchanged applicable evidence and preserve non-overlapping user changes; old
-validation is stale after a relevant input change.
-
-## Complete and report
-
-Complete a write task only when every affected required document has substantive
-content, affected owned blocks validate, in-scope validation errors are cleared,
-and the diff contains no out-of-set change. For migration or destructive cleanup,
-strict diagnostics must pass or the remaining unauthorized cleanup must be
-reported exactly.
-
-Lead with the outcome, then only the applicable material details: changed and
-deliberately preserved files, canonical evidence, language and development-tier
-decisions, validation results, cleanup candidates, unverified items, and the
-smallest remaining action. Write prose rather than a fixed section per item, and
-omit routine process narration.
+Report the resulting documents or review findings, meaningful evidence and
+validation, and any unresolved facts or required follow-up. State which commands
+were actually run; distinguish inspection from execution.

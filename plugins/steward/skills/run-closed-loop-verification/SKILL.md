@@ -5,15 +5,9 @@ description: Verify an existing Steward GOAL, repair confirmed in-scope failures
 
 # Closed-loop GOAL verification
 
-Require the alias of an existing `.steward/goals/<alias>/` bundle in the Git
-worktree containing the current session cwd. Draft and verification operate on
-that same physical directory. The workflow convention is one verified GOAL per
-worktree; no cross-alias selector or global lock enforces it.
-
-Explicit user instructions take precedence over this skill; when they conflict,
-follow the user and say which instruction here you set aside. If this skill
-makes you pause, ask, or leave requested work unfinished, name the instruction
-that caused it.
+Verify an existing `.steward/goals/<alias>/` bundle in the same physical Git
+worktree where it was drafted. Use the supplied alias or inspect
+`goal_workspace.py list` when the intended bundle is unambiguous.
 
 For an existing campaign, inspect `status --goal <alias>` and continue its saved
 execution binding with `advance --goal <alias>`. For first initialization, read
@@ -44,23 +38,12 @@ source root cause, make the smallest authorized repair and record it:
 python3 -B "<skill-dir>/scripts/campaign.py" record-repair --goal <alias> --repair -
 ```
 
-The payload accepts exactly these three fields, and `rootCauseSource` accepts
-exactly these keys plus an optional `symbol`:
+Use the repair payload in [state-and-evidence.md](references/state-and-evidence.md).
 
-```json
-{
-  "rootCause": "why the case failed, bound to the source location below",
-  "rootCauseSource": {"path": "src/x.py", "lineStart": 10, "lineEnd": 24},
-  "fixSummary": "the one smallest change made"
-}
-```
-
-An interrupted `advance` resumes its in-progress attempt. After recorded
-repairs, it runs targeted retests and then an all-cases sweep against the final
-source before the completion check. Any newly failing case returns the campaign
-to `REPAIR_REQUIRED`; campaigns with no repairs skip the extra sweep. A happy
-path is `init` plus one `advance`; a repair cycle is `record-repair` plus one
-`advance`.
+Continue through diagnosis, authorized repair, and `advance` until current
+acceptance is established or a concrete blocker needs user action. The engine
+resumes interrupted attempts and schedules targeted retests and the final
+regression after repairs; do not add duplicate test sweeps around it.
 
 Read [state-and-evidence.md](references/state-and-evidence.md) when diagnosing
 failure, interruption, source drift, artifact integrity, or a rejected

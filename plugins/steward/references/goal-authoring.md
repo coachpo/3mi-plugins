@@ -1,106 +1,70 @@
-# Alias-scoped GOAL authoring
+# GOAL bundle contract
 
-## Bind and establish consensus
+Draft from the user's accepted requirements and decisions. Repository evidence
+informs feasibility and acceptance; it does not authorize additional work.
+Resolve routine drafting choices yourself. Ask only for a missing decision that
+materially changes the executor's outcome, scope, authority, cost, or risk.
 
-Operate in the Git worktree containing the current session cwd. Every
-`goal_workspace.py` command re-resolves and revalidates its canonical root,
-Git directory, and common directory at invocation time, so a separate
-binding precheck is never needed. Repository evidence constrains the contract
-but does not expand the user's result, scope, authorization, or completion
-criteria.
+## Files and acceptance intent
 
-Use current user requirements and accepted decisions as consensus; do not ask
-the user to reconfirm requirements or authorization already established in the
-session. Resolve routine drafting details within that scope yourself, without
-treating them as new user decisions. Write each of
-the seven lines for the executor receiving the task: what they must achieve,
-what they may do, what can block them, and what they must deliver. Describe the
-assigned work throughout, rather than your current work of drafting its GOAL.
-Ask when a missing decision can materially change outcome, scope, authority,
-cost, or risk, and continue independent authorized preparation while awaiting
-the answer. Keep the canonical seven-line format from
-[goal-template.txt](goal-template.txt) — its seven line labels are required
-exactly as written — and consecutive `C1...Cn` criteria.
+The immutable bundle contains `manifest.json`, `goal.txt`, `context.md`, and
+`acceptance-plan.json` under `.steward/goals/<alias>/`.
 
-## Build the immutable bundle
+`goal.txt` uses the exact seven labels in [goal-template.txt](goal-template.txt),
+at most 4,000 Unicode code points, and consecutive `(C1)...(Cn)` criteria. Each
+line describes the executor's task, including authorized implementation and
+verification, rather than the drafter's role. The `证据与上下文` line references
+`.steward/goals/<alias>/context.md` exactly once.
 
-The selected alias identifies:
+`context.md` contains verified sources and useful background, without duplicating
+the GOAL or adding authority. Cite project-relative paths and relevant symbols;
+for external sources include URL, applicable version, and the supported fact.
+Use UTF-8 without BOM/NUL/CR and one final LF. Keep machine-specific absolute
+paths out of the GOAL and context. Do not invent evidence to fill the context.
 
-```text
-.steward/goals/<alias>/
-  manifest.json
-  goal.txt
-  context.md
-  acceptance-plan.json
-```
-
-The `证据与上下文` line must reference
-`.steward/goals/<alias>/context.md` exactly once. Read
-[goal-context.md](goal-context.md) for eligible content.
-
-Create acceptance plan schema version 1 with exactly:
+Acceptance plan version 1 has exactly these top-level fields:
 
 - `schemaVersion: 1`;
-- `sourcePolicy`, either `{"mode":"git-visible"}` or a non-empty safe
-  project-relative `files` set;
-- an ordered non-empty `cases` list.
+- `sourcePolicy`: either `{"mode":"git-visible"}` or
+  `{"mode":"files","files":["src/example.py"]}` with a non-empty safe
+  project-relative file set;
+- `cases`: an ordered, non-empty list.
 
-Each case contains only `id`, `required`, `platform`, `coversCriteria`,
-`assertion`, `runnerHint`, and `evidence`, plus an optional
-`onFailure: "waive-with-report"` that only a non-required case may carry: a
-failed waived case is reported but does not open the repair window or block a
-passing attempt. Evidence contains only `requiredFiles` and `nonEmptyFiles`;
-non-empty files must also be required. Every `C*` needs a required case. Freeze
-observable acceptance intent, not runtime argv: a runner may be planned even
-when implementation will create it, but placeholders and unverifiable
-assertions are invalid.
+Each case contains `id`, `required`, `platform`, `coversCriteria`, `assertion`,
+`runnerHint`, and `evidence`. Evidence contains `requiredFiles` and
+`nonEmptyFiles`; non-empty files must also be required. Every `C*` must be covered
+by a required case. Freeze observable acceptance intent, not runtime argv; the
+executor may still need to implement a runner. Avoid placeholders or assertions
+that cannot be checked.
 
-`sourcePolicy` accepts an optional `writable` list of safe project-relative
-files that cases may create or modify, such as coverage or lockfile byproducts
-or an ignored runner's outputs that verification must keep out of the source
-identity. `writable` files must be disjoint from an explicit `files` source
-set; a runner that is itself a repair target must instead be tracked or
-declared in a `files` source set, not hidden in `writable`.
+Two optional fields express accepted tolerance:
 
-Serialize one strict payload in memory:
+- A non-required case may carry `onFailure: "waive-with-report"`; its failure is
+  recorded and reported without blocking completion. Other failures remain strict.
+- `sourcePolicy.writable` lists safe project-relative byproduct files a case may
+  change. Verification captures and restores them, excluding them from the source
+  fingerprint. They must be disjoint from an explicit `files` set. A runner that
+  could need repair belongs in protected source, not this list.
 
-```json
-{"objective":"<seven lines>","context":"<verified Markdown>","acceptancePlan":{"schemaVersion":1,"sourcePolicy":{"mode":"git-visible"},"cases":[]}}
-```
+## Create and resume
 
-The GOAL must stay within 4,000 Unicode code points and follow the canonical
-seven-line template. The JSON transport normalizes the context string.
-
-Preflight and create with the current worktree as command cwd, choosing one
-transport for the whole flow:
+Write `goal.txt`, `context.md`, and `acceptance-plan.json` in a temporary staging
+directory, then run from the target worktree:
 
 ```text
-python3 -B "<plugin-dir>/scripts/goal_workspace.py" create --goal <alias> -
-```
-
-or the staged-file transport, which needs no JSON quoting at all. Write the
-canonical GOAL, context, and plan as three plain files, then create:
-
-```text
-<staging-dir>/goal.txt
-<staging-dir>/context.md
-<staging-dir>/acceptance-plan.json
 python3 -B "<plugin-dir>/scripts/goal_workspace.py" create-from --goal <alias> <staging-dir>
 ```
 
-`create-from` stages exactly what lands in the bundle: `goal.txt` is parsed
-with the same 4,000-code-point seven-line contract, `acceptance-plan.json` is
-parsed strictly, and `context.md` must already be canonical (UTF-8, LF only,
-no BOM/NUL/CR, one final LF). Relative staging paths resolve against the
-worktree root; keep the staged files until create confirms success.
+The creator validates the format, criterion coverage, paths, and exact worktree
+binding, then creates the manifest. Keep staging until success and remove your
+temporary files afterwards. `validate-create-from` is an optional dry run.
+Alternatively, `create --goal <alias> -` accepts a finite stdin JSON payload with
+`objective`, `context`, and `acceptancePlan` fields; normal shell redirection or
+a subprocess input pipe is sufficient.
 
-Use `validate-create` or `validate-create-from` with the same payload for an
-optional dry run that returns the canonical manifest view without writing
-anything. Freeze the exact successfully preflighted input before the single
-create call. Identical content is idempotent; any conflicting, partial,
-tracked, linked, moved, or tampered bundle blocks without replacement.
-
-The new implementation ignores legacy flat GOAL, context, Adapter, and
-Campaign paths. Their presence neither supplies authority nor blocks a valid
-alias-scoped bundle. The calling workflow convention is one drafted GOAL per
-worktree, but the storage contract deliberately permits independent aliases.
+Identical creation is idempotent. Conflicting, partial, tracked, linked, moved,
+or tampered bundles are rejected without replacement. Resume with
+`view --goal <alias>` and use the returned validated payload; do not reconstruct
+it from a chat summary. `list` discovers aliases in the current worktree.
+Commands resolve the worktree from cwd themselves. Existing bundles remain
+immutable and bound to their original physical worktree.

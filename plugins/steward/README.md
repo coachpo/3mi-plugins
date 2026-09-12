@@ -1,15 +1,12 @@
 # Steward
 
-Steward 为 Codex 与 Claude Code 提供七个共享技能，组成四条彼此独立、可以按需衔接的工程工作流：
+Steward 为 Codex 与 Claude Code 提供七个技能，按需支持项目文档、仓库调研、交付规划与 GOAL 验收。两个宿主读取同一份 `skills/` 目录。
 
-1. 维护 canonical 项目文档与 `AGENTS.md` 层级；
-2. 执行只读仓库调研与变更请求分析；
-3. 将需求与已确认方案转为实施计划，再按需细化为待执行的 Sprint Backlog；
-4. 起草持久 GOAL，并在手动实施完成后维护可恢复的验证 campaign，完成修补、回归与 audit。
+## 0.9.0 升级说明
 
-两个宿主加载同一个 `skills/` 目录。仓库事实、用户已接受的决定、七行 GOAL 和工作树本地验证证据各有明确职责；技能不会把搜索结果、聊天摘要或一次测试通过直接当作完成证明。
+精简七个技能的重复流程、模板和约束。文档生成／验证 helper CLI 已退役，文档维护改为沿用项目自身的语言、路径和检查器。已有文档与托管标记保持原样；直接调用旧 helper 的项目需调整调用方式。GOAL v1 格式、持久化和闭环验收运行时保持兼容。
 
-## 安装
+## 安装与调用
 
 Codex：
 
@@ -25,174 +22,94 @@ claude plugin marketplace add coachpo/plugins@main
 claude plugin install steward@coachpo
 ```
 
-安装或更新后，新建 Codex 任务或 Claude Code 会话以加载当前技能。
+安装或更新后，新建 Codex 任务或 Claude Code 会话加载技能。Codex 调用形式为 `$steward:<skill-name>`，Claude Code 为 `/steward:<skill-name>`。
 
-调用形式：
+## 技能用途与边界
+
+| 技能 | 主要结果与边界 |
+| --- | --- |
+| [analyze-change-request](skills/analyze-change-request/SKILL.md) | 结合仓库与公开来源分析变更需求，提供引用及可观察验收标准。显式调用；只读，不实施或执行项目。 |
+| [draft-consensus-goal](skills/draft-consensus-goal/SKILL.md) | 将已接受需求保存为供另一执行者使用的 GOAL、上下文及验收计划。显式调用；不实施或验收目标工作。 |
+| [parallel-repository-research](skills/parallel-repository-research/SKILL.md) | 至少两条独立调查线定位代码、梳理架构或追踪依赖，主代理核实证据。只读，不运行测试或判定行为风险。 |
+| [plan-delivery](skills/plan-delivery/SKILL.md) | 创建、修订或审查实施计划和／或 Sprint Backlog，明确交付、责任、依赖及验收。只规划，不执行开发。 |
+| [run-closed-loop-verification](skills/run-closed-loop-verification/SKILL.md) | 对已有 GOAL 进行可恢复验收，诊断失败、修复授权范围内的源码问题并复测。显式调用；不用于普通单次测试。 |
+| [write-agent-guides](skills/write-agent-guides/SKILL.md) | 维护有依据的 AGENTS.md 层级，共享规则在根文件，子树仅记录局部差异。不维护 CLAUDE.md。 |
+| [write-project-docs](skills/write-project-docs/SKILL.md) | 按仓库事实和既有约定维护正式项目文档，明确权威来源并同步相关链接。显式文档请求；局部更新不扩展为文档套件。 |
+
+Codex 可以隐式选择仓库调查、交付规划和代理指南技能，其余技能的 `agents/openai.yaml` 保持仅显式调用。审查请求只返回发现；创建、修改请求在指定范围内落盘。
+
+## 文档与规划
+
+文档维护沿用项目的语言、路径、信息结构和政策。README、项目状态、贡献指南、产品、架构与开发规范是可选文档角色，不是必建文件清单。旧文档中有用的内容、翻译和托管标记继续保留；有仓库生成器管理的区域遵循其契约。没有活动生成器的旧 `write-project-docs:*` 区域可直接维护。
+
+文档技能不再附带固定开发等级目录、双语模板、通用源码规模政策及对应生成／验证脚本。已有项目若直接调用这些 helper CLI，需要改用项目自己的生成器或直接维护相关文档；已有 GOAL bundle 和验证状态不受影响。
+
+规划可以只处理实施计划、只处理 Backlog，或联合维护两者。实施计划拥有范围、工作包与总体验收，Backlog 拥有任务拆分、具体依赖和迭代安排；未知容量以假设表达。采用用户及项目的格式，没有约定时默认放在 `docs/planning/`，不要求模板、状态库或自动创建 GOAL。
 
 ```text
-# Codex
-$steward:<skill-name>
-
-# Claude Code
-/steward:<skill-name>
+使用 $steward:write-project-docs 更新 README 中受本次变更影响的用法与链接。
+使用 $steward:write-agent-guides 维护 packages/api/AGENTS.md 的局部命令差异。
+使用 $steward:plan-delivery 根据已有实施计划创建 Sprint Backlog，只编写 Backlog。
 ```
 
-## 0.8.9 升级说明
+## 只读调研
 
-细化调研、文档维护与闭环验收的技能边界。开发规范规模规则更新仅要求本次操作依赖的文档，并在写入前核对源规则快照。验收恢复按持久状态和根因选择路径，重建 campaign 前保留证据；历史完成记录与当前工作树的验收结论分别核验。
+变更分析区分用户要求、实际约束和待决定建议，按目标版本核实代码与公开来源，并随用户纠正更新受影响证据。公开查询不携带私有源码、秘密或个人数据。
 
-## 0.8.8 升级说明
+仓库调查使用宿主可用的委派工具与模型默认值。子任务限定在仓库读取，主代理核实决定性证据；委派不可用时直接调查。并行能力不会扩大权限，提示词中的只读限制也不构成操作系统隔离。
 
-GOAL 起草在未提供别名时自行选择，优先复用符合格式要求的计划任务 ID；沿用会话中已明确的需求与授权，不重复确认，常规起草细节在既定范围内自行处理。技能导致暂停或偏离请求时须链接具体规则、引用原文并解释适用原因。完成标准明确记录可观察结果、验证方式和通过条件。
+```text
+使用 $steward:analyze-change-request 分析批量导入需求，给出来源和验收条件，不修改文件。
+使用 $steward:parallel-repository-research 调查两个独立服务的重试调用链，给出代码证据。
+```
 
-## 0.8.7 升级说明
+## GOAL 起草与验收
 
-精简仓库研究的输入与结果协议，按需补充版本绑定和覆盖记录。普通只读研究可在工具权限与任务授权允许时并行委派；明确要求机械隔离时仍保留隔离门槛和串行回退，提示词约束不视为机械保证。
+GOAL 起草在当前 cwd 所属 Git worktree 中创建 `.steward/goals/<alias>/`。alias 使用小写字母、数字及单连字符，至多 64 字符；未提供时自行选择。不可变 bundle 包含七行中文 `goal.txt`、`context.md`、`acceptance-plan.json` 与摘要 manifest。起草者的职责限制不写成执行者的任务限制。
 
-规划局部修改从受影响条目及直接关联内容开始读取，涉及范围、依赖、交付物或验收变化时再检查对应基线和另一份规划文档。`AGENTS.md` 规则区分仓库事实与用户明确的工作偏好，后者无需代码证据。模型选择、读取范围、禁止操作和核验责任保持不变。
+执行者完成目标工作后，验收技能用同一 alias、同一物理 worktree 将验收意图绑定到项目真实命令，保存 execution plan、campaign 状态、源码快照和证据。运行前核实命令、副作用与现有授权。存储与执行契约分别见 [GOAL 格式](references/goal-authoring.md)和[执行绑定](skills/run-closed-loop-verification/references/execution-plan.md)。
 
-## 0.8.6 升级说明
+```text
+使用 $steward:draft-consensus-goal 将已接受需求保存为 GOAL，不开始实施。
+使用 $steward:run-closed-loop-verification 验收当前 worktree 中的 goal-a，修复授权范围内的问题。
+```
 
-GOAL 起草以接收任务的执行者为对象：目标、范围、授权、阻塞项和交付物都描述执行者的工作，起草者自身的职责限制不会写成执行任务的限制。仅调整技能说明，已有 GOAL 包保持原样。
-
-## 0.8.5 升级说明
-
-本版把规划任务标识与 GOAL alias 对齐：`plan-delivery` 在任务可能成为 GOAL 时优先采用合法 alias 形式的任务 ID，`draft-consensus-goal` 优先复用该任务 ID 作为 alias。于是 Backlog 中的任务、`.steward/goals/<alias>/` 中的 bundle 和验证 campaign 指向同一标识，进度由现有只读查询推导，而不是在规划文档中维护状态字段。
-
-本版只调整技能措辞，没有新增脚本、协议或目录，下游项目不需要迁移动作。已有 bundle 的 alias 不可变，保持原样即可；对齐只影响此后新建的任务与 GOAL。
-
-查询当前工作树中的 GOAL 与验证状态：
+常用命令：
 
 ```bash
 python3 -B "<plugin-dir>/scripts/goal_workspace.py" list
+python3 -B "<plugin-dir>/scripts/goal_workspace.py" view --goal <alias>
 python3 -B "<skill-dir>/scripts/campaign.py" status --goal <alias>
+python3 -B "<skill-dir>/scripts/campaign.py" advance --goal <alias>
 ```
 
-`<plugin-dir>` 指 steward 插件根目录，`<skill-dir>` 指 `run-closed-loop-verification` 技能目录。`.steward/` 是工作树本地且不进 Git，跨工作树的完成事实以 Git 主干记录为准。
+这里 `<skill-dir>` 为 `run-closed-loop-verification` 目录。创建 bundle 可以使用 `create-from` 读取暂存文件；结构化 stdin 输入使用普通重定向或有限 pipe，不需要 PTY 桥接器。
 
-## 四条工作流
+`advance` 自动推进 case、定向复测、修补后的全量回归和完成检查。`REPAIR_REQUIRED` 只说明运行失败，需要先区分源码、环境与命令绑定原因；只对确认属于 GOAL 授权范围的源码问题记录修补。无修补的成功 campaign 不额外重跑全套测试。
 
-### 项目文档
+`COMPLETE` 是历史验收事实。报告当前源码通过前，还需比较当前源码指纹与完成记录；行为受影响或影响不明时必须重新证明。Draft 明确声明的非必需 case 豁免仍列为未满足的可选意图，不隐藏失败。
 
-先用 `write-project-docs` 维护 canonical 项目文档、索引和链接，再用 `write-agent-guides` 维护 `AGENTS.md` 层级。规范正文留在其权威文档中；根级 `AGENTS.md` 保存共享规则，子树文件只记录真实的局部差异和必要路由。
+## 本地状态与恢复
 
-```text
-使用 $steward:write-project-docs 基于仓库事实维护本次请求影响的 canonical 项目文档，并同步索引和链接。
+`.steward/` 被自身 ignore 规则排除在 Git 状态之外，是恢复事实源，完成后继续保留。bundle 不支持移动或重新绑定；聊天摘要不能替代持久合同或机器证据。
+
+临时环境阻塞解除后可继续 `advance`；同执行计划的 `init` 幂等加载现有 campaign。更换执行绑定或重新证明已完成目标时，先完整保留旧验证目录及证据，再在既有明确授权下替换活动 campaign；缺少删除授权时先完成准备再请求。细节见[恢复与证据](skills/run-closed-loop-verification/references/state-and-evidence.md)。
+
+技能遵循当前任务授权。提交、推送、发布、部署、外部写入、购买、破坏性操作和范围扩展需要明确授权；已经成立的授权可以继续使用。
+
+## 运行要求与维护检查
+
+文档、指南、研究和规划技能不依赖附带脚本。GOAL bundle 与验收引擎需要 `python3`、Git，以及目标项目实际使用的本地 runner。依赖或环境缺失时，按任务授权补齐或报告具体阻塞项。
+
+确定性运行时的回归检查使用临时仓库和本地 fixture：
+
+```bash
+python3 -B -m unittest discover -s plugins/steward/tests -p 'test_*.py'
+python3 -B -m unittest discover -s plugins/steward/skills/run-closed-loop-verification/tests -p 'test_*.py'
 ```
 
-```text
-使用 $steward:write-agent-guides 基于仓库事实维护本次请求影响的 AGENTS.md 层级，并验证命令、链接和作用域。
-```
-
-### 调研分析
-
-`parallel-repository-research` 负责复杂仓库问题的只读定位、架构映射、实现盘点和依赖追踪。它为互不重叠的检索 lane 保存输入快照，普通只读研究在工具权限和任务授权允许时可并发，子任务仅限范围内读取，禁止写入、执行项目代码、网络访问和继续委派。用户、项目指令或更高优先级规则明确要求机械隔离时，仍须由运行时限制写入和网络，无法满足则由主会话在适用约束下顺序执行。提示词约束不构成机械隔离，也不扩大权限；隔离能力缺失影响用户要求时须说明。最终结果必须说明证据、冲突、未搜索范围和缺口。
-
-`analyze-change-request` 负责分析一项明确的软件变更请求。它按决策相关性核实仓库事实、项目实际版本的官方资料和独立实践，必要时才纳入适用的强制性约束，输出带来源、可验收但尚未接受的候选需求。它不写文件、不生成 GOAL，也不开始实施。用户途中纠正目标、版本或范围时，在当前任务内更新绑定并补齐受影响证据；完成与否取决于实质证据覆盖，不由空缺的调度元数据决定。
-
-```text
-使用 $steward:parallel-repository-research 调研当前仓库中的实现位置、调用关系和测试覆盖，只返回可复核的仓库证据。
-```
-
-```text
-使用 $steward:analyze-change-request 分析当前变更请求，输出带来源、验收标准、冲突和缺口的候选需求，不修改文件。
-```
-
-### 开发规划
-
-[`plan-delivery`](skills/plan-delivery/SKILL.md) 提供两个可分别进入的规划阶段。实施计划围绕工作包、责任分工、依赖关系和验收标准组织内容，并维护需求范围及总体验收。角色数量不代表实际人员或并行容量。
-
-Backlog 阶段可直接接收已有实施计划，结合优先级、容量、当前条件和迭代目标，维护任务分解、任务依赖、迭代安排及完成条件，并引用计划的范围和验收。任务以 Sprint 为主组织，工作包视图只保留追溯索引；工作包可跨 Sprint，Sprint 可包含多个工作包。容量或日期未知时提供建议顺序及成立条件。任务可能后续成为 GOAL 时，任务 ID 优先取合法 alias 形式（小写字母、数字及单连字符，至多 64 字符），使 GOAL bundle 能直接复用同一标识；这只是命名偏好，不在规划文档中引入状态字段或进度跟踪。
-
-技能支持仅创建、修订或审查实施计划，直接创建、修订或审查 Backlog，连续交付两份文档，以及授权范围内的联合修订。仅请求计划不强制生成 Backlog，审查不写文件。保存位置和格式沿用项目约定，无既有约定时默认保存到仓库根下的 `docs/planning/implementation-plan.md` 和 `docs/planning/sprint-backlog.md`，不加入 `write-project-docs` 的 canonical 文档集。
-
-局部修改先读取受影响条目及直接关联内容；只有变更影响范围、依赖、交付物或验收标准时，才扩大到对应源基线及另一份规划文档。在授权范围内同步受影响内容。执行技能的会话模型按[共享规则和检查清单](skills/plan-delivery/references/planning-rules.md)核对标识、具体交付与验收覆盖、任务或交付物级前置依赖、顺序、责任及容量。启动前置、接口协作和最终集成关系分别处理，不要求工作包汇总图绝对无环，也不按 Sprint 名称推断全局顺序。验收记录实际所需条件与预期证据，分别保留 Placeholder 和真实接入义务。
-
-交付或联合修订两份文档时检查最终文档对；单阶段交付检查该阶段及相关已知关系。只改 Backlog 时保持主计划权威，关联文档缺失、不可读或尚未同步时明确限制。检查由模型完成，不新增文档校验脚本、解析协议、状态库或控制目录。
-
-```text
-使用 $steward:plan-delivery 将现有需求与已确认方案整理为实施计划并保存，暂不生成 Backlog。
-```
-
-```text
-使用 $steward:plan-delivery 直接基于已有实施计划修订待执行的 Sprint Backlog，只修改 Backlog。
-```
-
-```text
-使用 $steward:plan-delivery 交付实施计划和配套 Sprint Backlog，并联合检查两份文档。
-```
-
-```text
-使用 $steward:plan-delivery 根据已确认的需求变更同步修订实施计划和 Sprint Backlog，并检查受影响的交付、依赖及验收。
-```
-
-规划产物描述后续开发工作，交付文档不表示任务已启动或完成。规划流程不实施研究工作流、进度跟踪、任务派发、开发执行或 GOAL 自动生成，也不自动调用项目文档维护流程。本地验收标签不构成 GOAL case 契约或执行授权。
-
-### GOAL 交付
-
-`draft-consensus-goal` 从当前会话 cwd 绑定精确 Git worktree，并把已收敛决定保存到 `.steward/goals/<alias>/`。不可变 bundle 包含 canonical 七行中文 `goal.txt`、唯一 `context.md`、Draft 冻结的 `acceptance-plan.json` 和摘要 manifest。alias 使用小写字母、数字及单连字符；工作来自计划任务时优先复用该任务 ID，使 bundle、计划和验证 campaign 指向同一项工作，无需单独的状态记录。目录协议允许多个 alias，但一个 worktree 只起草一个 GOAL 是调用方约定。容错只能由 Draft 事先声明：非必需 case 可携带 `onFailure: "waive-with-report"`（失败记录证据但不开修补窗口），case 副作用文件可声明进 `sourcePolicy.writable`（验证明确捕获并回滚，源码指纹排除它们）；其余全部保持严格。
-
-用户或执行代理随后按 GOAL 实施。声明完成后，`run-closed-loop-verification` 用同一 alias 和同一物理目录验收：它把 acceptance intent 解析成不可变的精确 execution plan，捕获 Git 可见源码基线，并维护一份原子写入的 campaign 状态文件、attempt 和 artifacts。被 Draft 声明 waive 的非必需 case 失败会记录在其所属 attempt 中，并在完成报告中列为未满足的可选意图；其余失败照旧进入修补闭环。旧平铺 GOAL、context、Adapter 与 Campaign 路径完全不参与新流程。
-
-项目源码失败只能在 repair 窗口内凭失败快照、根因位置和真实 delta 接受修补；随后只定向复测被修补的 case，换来快速反馈，其余 case 先沿用已有证据。但修补证明不了它没碰过的 case 是否还成立，所以只要这次 campaign 发生过修补，等全部失败项都解决后，收尾核验前会自动补一次针对当前基线的全量回归；这一趟如果又测出别的 case 被连带弄坏，会重新回到 `REPAIR_REQUIRED` 走同一套流程。全程零修补时不需要这一步，初次通过本身就是对最终源码的证明。一条 `advance` 会连续执行全部机械阶段（case、定向复测、按需的全量回归、内联完成检查），只在需要执行方介入或决策的停点返回：`REPAIR_REQUIRED`、`BLOCKED`（含未通过的完成检查）或 `COMPLETE`；每个阶段仍各自保存状态，中断后原地续跑。两次 `advance` 之间发生的源码改动会被记录为漂移提示并自动纳入新基线，不阻塞流程；但某个 case 在自身运行过程中修改了受保护源码，会被当作需要修补的失败处理。只有每个 case 的最新证据都满足要求、且所有 required `C*` 都有当前有效的 PASS 证据时才报告完成。
-
-```text
-使用 $steward:draft-consensus-goal 在当前工作树以 goal-a 别名保存 canonical GOAL、context 和 acceptance plan；不要开始执行。
-```
-
-```text
-重新使用 $steward:draft-consensus-goal 恢复 goal-a；只重放同一 worktree 中可精确恢复并重新校验的 payload，不执行 GOAL。
-```
-
-```text
-使用 $steward:run-closed-loop-verification 验收当前工作树中的 goal-a；绑定其 acceptance plan，在 GOAL 范围内依据证据修补并定向复测，完成内联的收尾核验。
-```
-
-## 技能一览
-
-| 技能 | 适用请求 | 主要结果 |
-| --- | --- | --- |
-| `write-agent-guides` | 审查或维护 `AGENTS.md` 层级 | 共享根规则、真实子树差异、可验证的导航 |
-| `write-project-docs` | 审查或维护 canonical 项目文档 | 单一事实权威、同步的索引与链接、范围内文档更新 |
-| `parallel-repository-research` | 至少两个独立检索 lane 才能有效回答的仓库问题 | 主会话复核的路径或符号证据、冲突、未搜索范围和缺口 |
-| `analyze-change-request` | 需要项目事实与外部证据的软件变更请求 | 带来源和验收标准、尚未接受的候选需求 |
-| `plan-delivery` | 创建、修订或审查实施计划、Sprint Backlog 或两份文档 | 工作包、责任分工、依赖关系和验收标准，按 Sprint 组织的待执行任务，阶段或联合一致性检查 |
-| `draft-consensus-goal` | 已收敛讨论需要可评审或可执行合同 | alias-scoped GOAL、context、acceptance plan 与 manifest |
-| `run-closed-loop-verification` | GOAL 已声称完成，需要闭环验收、修补与最终证明 | execution plan、可恢复 campaign、定向复测、内联收尾核验 |
-
-Codex 可隐式选择 `write-agent-guides`、`parallel-repository-research` 和 `plan-delivery`。`write-project-docs`、`analyze-change-request`、`draft-consensus-goal` 与 `run-closed-loop-verification` 只在明确请求相应工作流时调用。
-
-## 工作树本地状态
-
-Steward 的 GOAL 与验证控制产物位于当前 worktree 的 `.steward/goals/<alias>/` 中。整个 `.steward/` 由自身 ignore 规则挡在 Git 状态与源码指纹之外；bundle 绑定其创建时的精确 worktree，不支持复制、移动或重新绑定。
-
-`.steward/` 是恢复事实源，不是普通缓存。Steward 在 GOAL 执行、阻塞、恢复、验收成功或 Git merge 后都保留它；创建新 GOAL 时使用新的 worktree。确需重新建立验证 campaign 时，先在同一 worktree 的忽略目录中保存并核实完整验证记录，再沿用已有明确删除授权或取得该授权，替换活动验证目录。删除整个 worktree 会一并移除其中的本地控制状态。
-
-## 权限与停止边界
-
-- 只读调研不会运行项目代码、修改文件或连接私人账户。
-- 文档技能只修改当前请求授权的项目文档或 `AGENTS.md`；不会创建或改写 `CLAUDE.md`。
-- 开发规划只创建、修订或检查请求中的规划文档；计划内的开发、外部依赖获取和验收另行执行。
-- GOAL 起草只写 alias-scoped GOAL、context 和 acceptance plan，不实施源码变化。
-- GOAL 验收只执行经过审查的本地 case，并只修补有证据支持且明确处于 GOAL 范围内的问题。
-- execution plan 中的 executable、完整 `argv`、`cwd`、timeout、环境需求和副作用必须在执行前审查。
-- 缺少可信 runner、必要平台、权限、证据或安全的本地替代时，技能报告准确 blocker 与最小下一步，不虚构命令或降低完成标准。
-- 提交、推送、发布、部署、真实服务或设备访问、凭据、购买、破坏性操作及其他外部写入始终需要单独授权。
-
-## GOAL 恢复与完成
-
-恢复时从 cwd 重新绑定 worktree，按 alias 校验 manifest、GOAL、context、两个 plan 和 campaign 状态文件，再从未闭合阶段继续。持久 bundle 与 campaign 状态是恢复和完成权威；聊天摘要不能替代精确 payload 或机器证据。临时环境问题形成的 `BLOCKED` 在环境恢复后直接 `advance`，保留已完成 case；相同 execution plan 的 `init` 幂等加载现有 campaign，只有更换绑定才冲突。
-
-快速检查和定向复测只能证明局部反馈。完成检查为每个 case 取其跨 attempt 的最新证据，再校验 bundle、两个 plan、相关 artifact 与 required `C*` 映射；发生过修补的 campaign，这份"最新证据"在完成检查前已经来自同一次全量回归，不是东拼西凑的旧结果——不要求每次修补后都立刻重跑全部 case，但收尾前必须补齐这一趟。`COMPLETE` 保留历史验收结果；报告当前源码通过前，还必须比较当前与完成记录的源码指纹。发生变化时检查实际改动及其依赖；影响验收行为或影响不明时，当前验收仍未完成，需要保留旧证据后建立新 campaign，不能把历史通过当作重新验证。
-
-## 运行要求
-
-- 技能脚本需要 PATH 中可用的 `python3`。
-- worktree 绑定、源码观察和本地状态隔离需要 Git。
-- 仅能通过 PTY 延迟输入的宿主需要 POSIX `termios` 运行内存 stdin bridge；能直接提供有限 pipe 的宿主不需要该兼容路径。
-- 项目 case 使用项目已有工具与依赖；Steward 不替项目安装依赖或配置远程 runner。
-- 安装后若技能入口没有出现，请新建宿主任务或会话再试。
+以上命令从本插件仓库根执行，验证 bundle 完整性、worktree 绑定、修补与恢复、证据和完成条件；它们不证明所有自然语言技能任务均能成功。
 
 ## 许可证
 
-Steward 按 [`MIT`](LICENSE) 许可证发布。
+Steward 按 [MIT](LICENSE) 许可证发布。

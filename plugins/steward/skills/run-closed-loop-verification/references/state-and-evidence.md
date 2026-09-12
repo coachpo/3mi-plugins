@@ -1,101 +1,71 @@
-# Campaign state and evidence v1
+# Campaign recovery and evidence
 
-All verification state lives below
-`.steward/goals/<alias>/verification/`. The execution plan is immutable after
-initialization. `campaign/state.json` is the durable state authority,
-rewritten atomically (write-temp-then-replace) after every phase. A per-GOAL
-lock protects state mutations. One `advance` chains the mechanical phases and
-stops only at human decision points: `REPAIR_REQUIRED`, `BLOCKED` (including a
-rejected completion check), or `COMPLETE`; each phase still saves the current
-state, and interruption resumes the in-progress attempt exactly where it
-stopped.
+Verification lives below `.steward/goals/<alias>/verification/`. The execution
+plan is immutable; `campaign/state.json` is the durable state authority. The
+engine atomically records phases under a per-GOAL lock and resumes interrupted
+attempts. Each assigned case gets a result even when another case fails.
 
-An attempt runs every case_id assigned to it to a terminal result; one case
-failing does not stop the others, so every case in that attempt gets recorded
-evidence. Any case left failing without a declared waiver opens a repair
-window for that case specifically. `record-repair` proves the root-cause
-location against the failed snapshot, records the exact source delta, accepts
-the new baseline, and schedules only that one case for a targeted retest, for
-fast feedback on the fix. Repeated machine-bound failures without a new
-source/evidence fingerprint stop.
+## Diagnose and repair
 
-A fix proves nothing about the cases it did not touch. So once every
-outstanding failure is resolved, a campaign that recorded at least one repair
-owes exactly one more all-cases sweep against the current baseline before the
-completion check — the targeted retests that got there stay cheap, but the
-last mile is not allowed to run on evidence older than the final repair. That
-sweep can itself find a case the repair broke; if it does, the campaign
-returns to `REPAIR_REQUIRED` for that case and the same cycle applies again.
-A campaign that never needed a repair skips this sweep entirely: its one
-clean pass already stands against the source about to be accepted, so the
-happy path pays nothing extra.
+Use `lastFailure` and its artifacts to distinguish a source defect from an
+environment or execution-binding problem. `REPAIR_REQUIRED` alone does not prove
+that source needs changing. For a confirmed, authorized source fix, submit:
 
-Source identity defaults to HEAD, index, tracked files, and non-ignored
-untracked files; `.steward` and ignored build products are excluded. Explicit
-file-set plans bind only the declared files plus HEAD/index. Source edits
-observed between calls are absorbed as the new baseline and recorded as a
-drift warning rather than blocking the campaign; the verifier never discards
-or overwrites a user's edits to do this. A case that modifies protected
-source during its own run is instead treated as a failure requiring a fix,
-routed through the same repair window as any other failure, not a silent
-baseline change. Correcting the runner is the in-campaign fix while the runner
-is tracked source. Adding the path to `sourcePolicy.writable` is not:
-`sourcePolicy` lives in the immutable acceptance plan, so editing it
-mid-campaign breaks the bundle manifest and every later command fails to load
-the campaign at all. That case takes the redraft route below.
+```json
+{
+  "rootCause": "why the case failed",
+  "rootCauseSource": {"path": "src/x.py", "lineStart": 10, "lineEnd": 24},
+  "fixSummary": "the change made"
+}
+```
 
-Choose recovery from the persisted state and diagnosed cause:
+These three fields are exact; `rootCauseSource` additionally allows `symbol`.
+`record-repair` checks the location against the failed source snapshot and
+records the actual delta, then schedules that case for targeted retesting.
+Once failures are resolved, any campaign with repairs runs all cases against
+the final baseline before completion. New failures reopen the repair loop.
+Repeated failures without new source or evidence stop rather than looping.
 
-- For `BLOCKED` caused by a temporary environment problem, restore the needed
-  prerequisite within existing authorization and run `advance` with the saved
-  binding. It resumes the attempt, retaining completed cases and retrying the
-  blocked case. A rejected completion check needs its specific evidence or
-  integrity problem resolved before continuing.
-- Repeating `init` with the same normalized execution plan loads the existing
-  campaign without resetting or rerunning it. A different plan is rejected as
-  `CAMPAIGN_CONFLICT`.
-- `REPAIR_REQUIRED` accepts only a proven project-source repair. If its cause
-  is environmental or the binding itself, or a recovery requires changing the
-  immutable `argv`, `cwd`, or `timeoutSeconds`, prepare a fresh campaign using
-  the corrected binding. Re-proving a completed campaign also needs this route.
+## Choose the recovery route
 
-Before replacing a campaign, preserve its entire `verification/` directory and
-evidence in a verified, ignored archive in the same worktree. Reuse explicit
-authorization for removing the active directory if already granted; otherwise
-request it after preparing the binding and preserving the evidence. Only then
-remove `.steward/goals/<alias>/verification/` and initialize the fresh campaign.
-The GOAL bundle and acceptance intent stay unchanged, and the new campaign
-starts from `PENDING`. If the acceptance intent itself is wrong — an assertion,
-a waiver, or `sourcePolicy` — redraft the GOAL within the user's authorization,
-preserving the existing immutable bundle.
+- Temporary environment `BLOCKED`: restore the prerequisite within existing
+  authority and `advance`. Completed cases remain recorded.
+- Completion-check `BLOCKED`: resolve the reported evidence or integrity issue
+  before advancing. Restore original evidence only when its exact bytes are
+  available; never manufacture a passing artifact.
+- Same-plan `init`: loads the existing campaign idempotently. A different plan
+  is rejected as `CAMPAIGN_CONFLICT`.
+- Environment or binding failure recorded as `REPAIR_REQUIRED`, changed argv,
+  cwd or timeout, or re-proving a completed campaign: use a fresh campaign.
+- Wrong acceptance intent, waiver, or source policy: redraft within the user's
+  authority, preserving the existing immutable GOAL bundle.
 
-Cases run directly, with a bounded timeout and output size, and a private
-evidence directory. Artifacts, results, and their manifest are write-once and
-digest-bound. Files listed in `sourcePolicy.writable` are snapshotted before
-each case and restored byte-exact afterwards; the snapshot and the recorded
-mutations live in the case artifact, and the protected source fingerprint
-excludes them by construction. A non-required case that Draft declared
-`onFailure: "waive-with-report"` may fail without opening a repair window for
-it; its evidence stays attached to the attempt that produced it, independent
-of whether that same attempt also has an unrelated blocking failure.
+Before replacing a campaign, preserve and verify its entire `verification/`
+directory in an ignored archive in the same worktree. Prepare the corrected
+binding, then use existing explicit removal authority or request it before
+removing the active directory. Initialize the fresh campaign with the unchanged
+GOAL and acceptance plan. A status query or repeated `advance` does not reset a
+completed campaign.
 
-The completion check assembles each acceptance case's most recent evidence
-across attempts, then revalidates the GOAL bundle, both plans, every
-relied-upon artifact, and required `C*` coverage. It runs inline as soon as
-no case is left with an unwaived failure and, for a campaign with any repair,
-that all-cases sweep against the current baseline has already happened —
-immediately after the initial pass when nothing needed repairing, or after
-that final sweep when something did — rather than as a separate resumable
-phase.
-Completion is current only while those bindings remain valid; a later tamper
-or authority change shows up as `INCOMPLETE` on the next check without
-changing the persisted campaign status. Restoring exact bytes restores current
-completion without creating a new campaign epoch.
+## Interpret source and completion evidence
 
-Protected source is deliberately not one of those bindings: `COMPLETE` records
-historical acceptance. Every status report observes source at call time, and
-the root skill requires comparing it with the completion fingerprint before
-reporting acceptance of the current worktree. When they differ, inspect changes
-against the recorded source snapshot, including dependencies of the accepted
-behavior. Re-proving affected or uncertain behavior uses the fresh-campaign
-route above; `init` or `advance` alone does not rerun a completed campaign.
+Source identity normally includes HEAD, index, tracked files, and non-ignored
+untracked files; `.steward/` and ignored build outputs are excluded. Explicit
+file-set plans bind only the declared files plus HEAD/index. Between-call edits
+become a new baseline with a drift warning; they do not overwrite user changes.
+A case changing protected source during execution fails. Repairing an ignored
+runner cannot count as a protected-source fix: it must be tracked or declared
+in the original file set.
+
+Artifacts and manifests are write-once and digest-bound. Draft-declared writable
+byproducts are captured and restored byte-exactly; waived non-required failures
+remain recorded as unmet optional intent. The completion check revalidates the
+bundle, both plans, relied-upon artifacts, and required criterion coverage. With
+repairs, its latest case evidence comes from the final regression.
+
+`COMPLETE` records historical acceptance. Compare the current report's
+`sourceFingerprint` with `completion.sourceFingerprint` before claiming the
+current worktree passes. For a mismatch, inspect actual changes and dependencies;
+if behavior is affected or uncertain, current acceptance remains incomplete and
+needs a fresh campaign. Artifact or binding tampering can likewise yield current
+`INCOMPLETE` despite the persisted historical status.
