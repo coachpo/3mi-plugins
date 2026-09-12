@@ -7,6 +7,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 SKILL_ROOT = Path(__file__).resolve().parents[1]
 SCRIPTS = SKILL_ROOT / "scripts"
@@ -246,6 +247,98 @@ class VerificationV1Tests(unittest.TestCase):
         # No repair ever happened, so the campaign owes no extra regression
         # sweep: the one initial attempt is the only attempt.
         self.assertEqual(["initial"], [a["mode"] for a in report["attempts"]])
+
+    def test_same_execution_binding_preserves_completed_campaign(self) -> None:
+        campaign = Campaign.initialize("goal-a", execution())
+        with campaign_lock(campaign):
+            report, code = advance(Campaign.load("goal-a"))
+        self.assertEqual(0, code)
+        saved_state = campaign.state_path.read_bytes()
+
+        equivalent = json.dumps(json.loads(execution()), indent=2).encode()
+        resumed = Campaign.initialize("goal-a", equivalent)
+        self.assertEqual(saved_state, resumed.state_path.read_bytes())
+        self.assertEqual(report["attempts"], status_report(resumed)["attempts"])
+
+        changed = json.loads(execution())
+        changed["cases"][0]["timeoutSeconds"] = 60
+        with self.assertRaisesRegex(VerificationError, "CAMPAIGN_CONFLICT"):
+            Campaign.initialize("goal-a", json.dumps(changed).encode())
+        self.assertEqual(saved_state, resumed.state_path.read_bytes())
+
+    def test_blocked_case_resumes_with_existing_evidence(self) -> None:
+        plan = acceptance()
+        second_case = dict(plan["cases"][0], id="second")
+        plan["cases"].append(second_case)
+        goal_workspace.create_goal_bundle(
+            "goal-b",
+            json.dumps(
+                {
+                    "objective": goal_text("goal-b"),
+                    "context": "# 已核实背景\n\n- 当前测试请求与 app.txt。\n",
+                    "acceptancePlan": plan,
+                },
+                ensure_ascii=False,
+            ).encode(),
+            self.root,
+        )
+        binding = json.loads(execution())
+        second_command = [*marker_command(), "second"]
+        binding["cases"].append(
+            dict(binding["cases"][0], id="second", argv=second_command)
+        )
+        campaign = Campaign.initialize("goal-b", json.dumps(binding).encode())
+        start_process = subprocess.Popen
+
+        def start_with_unavailable_runner(argv, **kwargs):
+            if argv == second_command:
+                raise FileNotFoundError("runner is temporarily unavailable")
+            return start_process(argv, **kwargs)
+
+        with patch("verifier.subprocess.Popen", side_effect=start_with_unavailable_runner):
+            with campaign_lock(campaign):
+                blocked, code = advance(Campaign.load("goal-b"))
+        self.assertEqual(1, code)
+        self.assertEqual("BLOCKED", blocked["executionStatus"])
+        attempt = blocked["attempts"][0]
+        self.assertEqual(["PASS", "BLOCKED"], [run["status"] for run in attempt["runs"]])
+        first_run = attempt["runs"][0]
+        proof_path = campaign.campaign_root / first_run["artifactDir"] / "proof.txt"
+        original_proof = proof_path.read_bytes()
+
+        with campaign_lock(Campaign.load("goal-b")):
+            resumed, code = advance(Campaign.load("goal-b"))
+        self.assertEqual(0, code)
+        self.assertEqual("COMPLETE", resumed["completionStatus"])
+        self.assertEqual(1, len(resumed["attempts"]))
+        self.assertEqual(attempt["id"], resumed["attempts"][0]["id"])
+        self.assertEqual(first_run, resumed["attempts"][0]["runs"][0])
+        self.assertEqual(original_proof, proof_path.read_bytes())
+        self.assertEqual(
+            ["PASS", "PASS"],
+            [run["status"] for run in resumed["attempts"][0]["runs"]],
+        )
+
+    def test_completed_campaign_exposes_source_change_without_retesting(self) -> None:
+        campaign = Campaign.initialize("goal-a", execution())
+        with campaign_lock(campaign):
+            completed, code = advance(Campaign.load("goal-a"))
+        self.assertEqual(0, code)
+        saved_state = campaign.state_path.read_bytes()
+        (self.root / "app.txt").write_text("bad\n", encoding="utf-8")
+
+        observed = status_report(Campaign.load("goal-a"))
+        self.assertEqual("COMPLETE", observed["completionStatus"])
+        self.assertNotEqual(
+            observed["sourceFingerprint"], observed["completion"]["sourceFingerprint"]
+        )
+        with campaign_lock(Campaign.load("goal-a")):
+            advanced, code = advance(Campaign.load("goal-a"))
+        self.assertEqual(0, code)
+        self.assertEqual("COMPLETE", advanced["completionStatus"])
+        self.assertEqual(completed["attempts"], advanced["attempts"])
+        self.assertEqual(observed["sourceFingerprint"], advanced["sourceFingerprint"])
+        self.assertEqual(saved_state, campaign.state_path.read_bytes())
 
     def test_failed_case_repair_and_targeted_retest_completes(self) -> None:
         (self.root / "app.txt").write_text("bad\n", encoding="utf-8")

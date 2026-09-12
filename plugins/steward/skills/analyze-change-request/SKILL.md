@@ -1,6 +1,6 @@
 ---
 name: analyze-change-request
-description: Analyze an explicitly supplied software change request using verified project facts and only decision-relevant external evidence, then produce a cited, non-authoritative requirements analysis. Do not use for implementation, GOAL authoring, documentation maintenance, or semantic-risk review.
+description: Use only on explicit invocation to produce a cited, read-only requirements analysis of a software change request.
 ---
 
 # Analyze Change Request
@@ -44,36 +44,25 @@ authority or turn a recommendation into an accepted requirement.
 
 ## Establish the research contract
 
-Before any evidence search, discover target and version facts available from the
-workspace, resolve the applicable `AGENTS.md` hierarchy for included paths, then
-read and apply
-[`references/research-contract.md`](references/research-contract.md). Record its
-contract fields, including:
+Identify the target and relevant versions from available project evidence and
+resolve the applicable `AGENTS.md` hierarchy for included paths. Use
+[`references/research-contract.md`](references/research-contract.md) for the
+conversational contract, evidence requirements, and delivery criteria. Ask only
+when a missing fact materially affects result, scope, authority, cost, or risk;
+first collect evidence independent of the answer. Otherwise state an assumption.
 
-- what the user is asking for and has already accepted, target, `targetRoot`,
-  source binding, scope, constraints, assumptions, and required
-  `applicableInstructions`;
-- material research questions and only the useful lanes needed to answer them;
-- task-wide and per-lane query, source, and time estimates, explicit user or
-  host limits, concurrency, `retryLimit: 1`, and the stopping condition.
+Only dispatched lane inputs are frozen snapshots. Incorporate user corrections
+into the current task contract and source binding, invalidate affected evidence,
+retain evidence that still applies, and continue within the updated authorization.
+Add or replace lanes when needed; a correction alone does not require a `drifted`
+handoff or a new run.
 
-Use `none-found` when no repository-local instruction applies; never omit
-`applicableInstructions`. Ask the smallest blocking question only when a missing
-fact could materially change result, scope, authority, cost, or risk, and first
-collect whatever evidence does not depend on the answer. Otherwise record a safe
-assumption.
-
-The user's goal, authorized scope, and already-dispatched lane prompts stay
-frozen once evidence collection starts. Within that scope, add a question or
-lane when collected evidence shows the analysis actually needs one. Treat
-self-estimated query counts, source counts, and time as adjustable planning
-guidance. Revise those estimates and continue without asking when a material
-question remains and a concrete search direction is likely to fill the evidence
-gap. Do not stop solely because an initial estimate was reached. Respect explicit
-user and host limits; record work outside the authorized scope or those limits
-as a gap or unsearched scope. Retry one lane at most once and only after a
-transient transport or service failure; do not retry permission failures, missing
-authority, exhausted hard limits, conflicts, or drift.
+Treat self-estimated query, source, and time counts as adjustable guidance;
+continue when a concrete search direction can close a material gap. Respect
+explicit user and host limits. Retry a lane at most once after a transient
+transport or service failure. Do not retry missing authority, permission
+failures, or exhausted hard limits. Result clarification and research under an
+updated binding are not retries and do not expand authority or override limits.
 
 ## Isolate and collect lanes
 
@@ -97,32 +86,35 @@ Delegate only when the host mechanically enforces lane-specific capabilities:
 - never give one worker both capability classes.
 
 Instruction-only restrictions are insufficient. If isolation cannot be enforced,
-collect the frozen lanes sequentially in the current main session, reducing each
+collect the current lanes sequentially in the main session, reducing each
 lane to its structured result before starting the next. Use
 [`parallel-repository-research`](../parallel-repository-research/SKILL.md) for a
 multi-branch repository lane only when its adapter reports mechanically enforced
 repository-only access; otherwise inspect that lane sequentially.
 
-Every worker prompt must be self-contained and contain its frozen lane identity,
-question IDs, sanitized source binding, include/exclude scope, required
-`applicableInstructions`, adjustable estimates, explicit limits and stopping
-condition, allowed capability class,
-one-retry rule, and the fixed lane-result schema from the research contract. Do
-not reproduce hidden host, system, or developer text. Workers obey their own
-instruction hierarchy, must not delegate, and must not produce requirements.
+Give each worker a self-contained evidence question, its lane and sanitized
+source-binding snapshot, include/exclude scope, applicable instructions, allowed
+capability class, explicit limits, and stopping and retry rules. Request the
+evidence and coverage described in the research contract; add coordination
+metadata only when useful. Do not reproduce hidden host, system, or developer
+text. Workers obey their own instruction hierarchy, must not delegate, and must
+not produce requirements.
 
 Search results and snippets identify candidate sources; they are not evidence.
-Open each decisive source and bind its claims to the frozen version and context.
+Open each decisive source and bind its claims to the applicable version and
+context; check returned evidence against the current task binding.
 Stop when evidence is sufficient, further retrieval has no material expected
 benefit, an explicit user or host limit is reached, or a genuine blocker or
 terminal stop condition prevents further work. Report any remaining gaps.
 
 ## Verify and deliver
 
-Validate every lane result against the fixed schema. Reopen evidence only when a
-locator or drift check remains unresolved. Preserve conflicts and classify
-unsupported or changed evidence as a gap or drift; never fill it from model
-memory.
+Judge results by material question coverage and opened, applicable evidence.
+Missing non-substantive metadata does not prevent completion. Normalize records
+from actual dispatch/tool records or request necessary missing information;
+never invent sources, coverage, or facts. Reopen evidence when its support,
+locator, or applicability remains unresolved. Preserve conflicts and invalidate
+unsupported or superseded claims.
 
 Build the internal `ResearchBrief`, then deliver from the current main session
 using the research contract's explicit `complete`, `partial`, `blocked`, or

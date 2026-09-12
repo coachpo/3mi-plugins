@@ -44,16 +44,30 @@ is tracked source. Adding the path to `sourcePolicy.writable` is not:
 mid-campaign breaks the bundle manifest and every later command fails to load
 the campaign at all. That case takes the redraft route below.
 
-Not every failure has a project-source root cause, and `record-repair` accepts
-only that kind. When the cause is the execution binding itself — wrong `argv`,
-`cwd`, or `timeoutSeconds` — or the machine, no repair can move the campaign
-forward. Delete `.steward/goals/<alias>/verification/` and `init` again with
-the corrected execution plan: the GOAL bundle is untouched, the accepted
-acceptance intent still stands, and the campaign restarts from `PENDING`.
-Re-running `init` without deleting that directory is refused as
-`CAMPAIGN_CONFLICT`. When the acceptance intent itself is wrong — an
-assertion, a waiver, or `sourcePolicy` — that is a redraft of the GOAL, not a
-verification step.
+Choose recovery from the persisted state and diagnosed cause:
+
+- For `BLOCKED` caused by a temporary environment problem, restore the needed
+  prerequisite within existing authorization and run `advance` with the saved
+  binding. It resumes the attempt, retaining completed cases and retrying the
+  blocked case. A rejected completion check needs its specific evidence or
+  integrity problem resolved before continuing.
+- Repeating `init` with the same normalized execution plan loads the existing
+  campaign without resetting or rerunning it. A different plan is rejected as
+  `CAMPAIGN_CONFLICT`.
+- `REPAIR_REQUIRED` accepts only a proven project-source repair. If its cause
+  is environmental or the binding itself, or a recovery requires changing the
+  immutable `argv`, `cwd`, or `timeoutSeconds`, prepare a fresh campaign using
+  the corrected binding. Re-proving a completed campaign also needs this route.
+
+Before replacing a campaign, preserve its entire `verification/` directory and
+evidence in a verified, ignored archive in the same worktree. Reuse explicit
+authorization for removing the active directory if already granted; otherwise
+request it after preparing the binding and preserving the evidence. Only then
+remove `.steward/goals/<alias>/verification/` and initialize the fresh campaign.
+The GOAL bundle and acceptance intent stay unchanged, and the new campaign
+starts from `PENDING`. If the acceptance intent itself is wrong — an assertion,
+a waiver, or `sourcePolicy` — redraft the GOAL within the user's authorization,
+preserving the existing immutable bundle.
 
 Cases run directly, with a bounded timeout and output size, and a private
 evidence directory. Artifacts, results, and their manifest are write-once and
@@ -78,9 +92,10 @@ or authority change shows up as `INCOMPLETE` on the next check without
 changing the persisted campaign status. Restoring exact bytes restores current
 completion without creating a new campaign epoch.
 
-Protected source is deliberately not one of those bindings — an unrelated
-later edit should not retroactively reject a campaign. Every status report
-instead observes source at call time, so `sourceFingerprint` differing from
-`completion.sourceFingerprint` means the accepted evidence predates the
-current working tree. Read that difference and judge whether the edit touches
-what the cases actually proved; re-proving it is a new campaign.
+Protected source is deliberately not one of those bindings: `COMPLETE` records
+historical acceptance. Every status report observes source at call time, and
+the root skill requires comparing it with the completion fingerprint before
+reporting acceptance of the current worktree. When they differ, inspect changes
+against the recorded source snapshot, including dependencies of the accepted
+behavior. Re-proving affected or uncertain behavior uses the fresh-campaign
+route above; `init` or `advance` alone does not rerun a completed campaign.

@@ -6,11 +6,12 @@ do not authorize a file write or create project authority.
 
 ## Establish the ResearchContract
 
-Record all fields before evidence collection:
+Keep the following information in the conversational contract. Field names are
+organizing aids, not a parser contract:
 
-- `requestRaw`: the request as given, plus a plain-language restatement of what
-  the user is asking for and has already accepted (outcome, included/excluded
-  scope, constraints, priorities, and prior approvals). No ID scheme is needed —
+- `requestRaw`: the request and subsequent user corrections, plus a plain-language
+  restatement of what the user is asking for and has already accepted (outcome,
+  included/excluded scope, constraints, priorities, and prior approvals). No ID scheme is needed —
   keep it in your own words and point back to it directly when you rely on it;
 - target, exact `targetRoot` when repository evidence applies, actors,
   environment, constraints, assumptions, `include`, and `exclude`;
@@ -20,27 +21,31 @@ Record all fields before evidence collection:
   applicable `AGENTS.md` sources and rules, or `none-found`; never copy hidden
   host, system, or developer text;
 - material `researchQuestions` with stable question IDs;
-- `frozenLanes`, each mapped to question IDs and one capability class;
-- `evidenceBudget`: task-wide and per-lane query, source, and time estimates,
-  distinguished from explicit user or host limits; record the source of each
-  hard limit and the available concurrency;
-- `retryLimit: 1` for a transient transport or service failure and a terminal
-  stopping condition.
+- lanes and their dispatched input snapshots, each mapped to the relevant
+  questions and one capability class;
+- explicit user or host limits, their sources, and the stopping condition;
+  record query, source, time, and concurrency estimates when useful for
+  coordination, keeping these estimates distinct from hard limits.
 
 Do not turn an assumption, repository behavior, or external recommendation into
 part of what the user asked for or already accepted.
 
-After the first search or worker dispatch, the user's goal, authorized scope,
-and already-dispatched lane prompts stay frozen. Within that scope, add a
-question or lane when collected evidence shows the analysis actually needs one.
-Self-estimated query counts, source counts, and time are adjustable planning
-guidance. Revise those estimates and continue without asking when a material
-question remains and a concrete search direction is likely to fill the evidence
-gap. Reaching an initial estimate alone is not a stopping condition. Respect
-explicit user and host limits. Stop when evidence is sufficient, further
-retrieval has no material expected benefit, or a hard limit, genuine blocker,
-or terminal stop condition prevents further work. Record remaining gaps and
-work outside the authorized scope or hard limits in `gaps` or `unsearched`.
+Only already-dispatched lane inputs remain frozen as evidence snapshots. When
+the user corrects the target, version, or scope, update the task contract and
+`sourceBinding`. Invalidate affected claims, preserve evidence that still applies,
+stop superseded lanes when possible, and collect necessary replacement evidence
+within the updated authorization. Check any late results against the current
+binding before using them. Continue in the same task; a user correction alone
+does not invalidate unrelated evidence or require a new run.
+
+Add questions or lanes when evidence reveals a material need within scope.
+Estimates are adjustable; explicit user and host limits remain binding. A lane
+may be retried once after a transient transport or service failure. Correcting
+result format, requesting necessary missing information, or researching an
+updated binding is not such a retry and grants no additional authority or budget.
+Stop when evidence is sufficient, further retrieval has no material expected
+benefit, or a hard limit or genuine blocker prevents further work. Record
+remaining gaps and work outside authorized scope or hard limits.
 
 ## Record sources and claims
 
@@ -76,25 +81,27 @@ Never record or return secrets or credentials. Prefer locators and paraphrases.
 Use private code or personal data only as a minimum authorized sanitized excerpt
 when its wording is necessary to a decision.
 
-## Require the LaneResult schema
+## Assess lane results
 
-Every worker returns every field below; use an empty list or explicit `none` when
-there is no value. A prose summary or arbitrary subset is invalid.
+Each result must establish its answer, the opened sources and claims they
+support, applicability to its assigned target and version, searched coverage,
+and any material unsearched scope, conflicts, or gaps. Keep the answer within
+the lane's question; workers do not make cross-lane judgments or requirements.
+Use concise prose or structured fields as appropriate. Empty placeholders and
+fixed field names are not required.
 
-- `laneId` and `laneKind`: `repository`, `official`, or `practice`;
-- `status`: `complete`, `partial`, `blocked`, or `drifted`;
-- `questionIds`, sanitized `sourceBinding`, and
-  `applicableInstructionsApplied`;
-- `directAnswer`, without cross-lane judgment or requirements;
-- `sources`: the link/locator plus one-line takeaway from above, one per
-  decisive source;
-- `searched`, `unsearched`, `conflicts`, and `gaps`;
-- `budgetUsed`, `stopReason`, and `attempts` (`1` or `2`; attempt two requires a
-  recorded transient failure).
+The coordinator may normalize lane identity, source-binding snapshots, and
+dispatch metadata from actual records, or request necessary missing information.
+Do not invent sources, coverage, facts, or compliance with instructions, and do
+not treat worker confidence as verification. Missing non-substantive metadata
+such as `budgetUsed` or `attempts` does not invalidate adequate evidence or
+prevent completion. When a limit or applicability decision depends on missing
+information, resolve it or report the resulting material gap. Format
+clarification does not count as a transient-failure retry.
 
-Only the current main-session coordinator may reject malformed results, reopen
-decisive evidence, reconcile sources, and synthesize the answer. It must not infer
-missing required fields or treat worker confidence as verification.
+Only the current main-session coordinator reconciles sources and synthesizes
+the requirements analysis. Reopen evidence when its support, locator, or
+applicability remains unresolved.
 
 ## Build and classify the ResearchBrief
 
@@ -111,15 +118,16 @@ Classify aggregate status as:
 
 - `complete`: every material research question has adequate opened, applicable, and
   non-invalidated evidence;
-- `partial`: stable useful evidence supports some analysis, but a declared gap,
-  conflict, failed lane, or explicit user or host limit prevents complete coverage;
+- `partial`: stable useful evidence supports some analysis, but a material gap,
+  conflict, or explicit user or host limit prevents complete coverage;
 - `blocked`: unresolved target identity, authority, access, or required evidence
   prevents any evidence-backed requirements analysis;
-- `drifted`: the frozen target binding or decisive evidence changed enough to
-  invalidate the analysis.
+- `drifted`: a changed target binding or decisive source still invalidates the
+  analysis and cannot be resolved within the current task's authority and limits.
 
-Do not report `complete` when a required lane result is malformed, a decisive
-source has unresolved drift, or a material conflict or gap remains.
+Do not report `complete` when a decisive source has unresolved drift or a
+material conflict or gap remains. Format omissions and resolved user corrections
+are not completion failures; assess coverage against the current task contract.
 
 ## Attribute each requirement
 
@@ -138,9 +146,9 @@ Link each requirement to its supporting source(s) or to the restated request
 directly above it — a separate ID-cross-reference table is not needed. Project
 evidence does not make the current design immutable; external evidence does not
 prove user acceptance. A user may change scope to avoid an otherwise applicable
-constraint, but the analysis must not label that condition a suggestion while its
-applicability remains frozen. State what is needed and how success is observed
-without prematurely fixing an implementation.
+constraint, but the analysis must not label that condition a suggestion while the
+current binding still establishes its applicability. State what is needed and
+how success is observed without prematurely fixing an implementation.
 
 ## Deliver by overall status
 
@@ -157,8 +165,8 @@ only the matching branch:
   authority, access, or evidence and the smallest user or environment action that
   would unblock analysis;
 - **drifted:** do not present invalidated requirements as current; identify the
-  changed binding or source, affected claims, and the smallest rebind and research
-  needed for a new run.
+  changed binding or source, affected claims, and the exact authority, access,
+  evidence, or environment change needed to resume the unresolved research.
 
 For every branch, preserve material assumptions and conflicts, place citations
 next to supported claims, omit empty boilerplate, and distinguish user-owned

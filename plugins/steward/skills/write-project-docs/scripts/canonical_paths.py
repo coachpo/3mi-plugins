@@ -155,9 +155,10 @@ def select_canonical_paths(
     root: Path,
     *,
     require_existing: bool = True,
+    required_keys: frozenset[str] | None = None,
     language: DocumentLanguage | None = None,
 ) -> tuple[dict[str, str], list[str]]:
-    """Select one path per authority, defaulting missing ones to the project language."""
+    """Resolve all paths, requiring only selected keys when a scope is supplied."""
 
     errors: list[str] = []
     if language is None:
@@ -182,7 +183,9 @@ def select_canonical_paths(
             selected[document.key] = present[0]
         else:
             selected[document.key] = document.path_for(language)
-            if require_existing:
+            if require_existing and (
+                required_keys is None or document.key in required_keys
+            ):
                 errors.append(
                     f"缺少固定文档：{document.chinese_path} 或 "
                     f"{document.english_path}"
@@ -229,9 +232,10 @@ def resolve_project_docs(
     root: Path,
     *,
     require_existing: bool = True,
+    required_keys: frozenset[str] | None = None,
     language: DocumentLanguage | None = None,
 ) -> ProjectDocsContext:
-    """Resolve language and canonical paths once for a single managed operation."""
+    """Scope missing-file checks while retaining project-wide language conflicts."""
 
     if language is None:
         language, language_errors = detect_document_language(root)
@@ -239,7 +243,10 @@ def resolve_project_docs(
         language_errors = requested_language_errors(root, language)
     errors = list(language_errors)
     selected, path_errors = select_canonical_paths(
-        root, require_existing=require_existing, language=language
+        root,
+        require_existing=require_existing,
+        required_keys=required_keys,
+        language=language,
     )
     errors.extend(path_errors)
     return ProjectDocsContext(

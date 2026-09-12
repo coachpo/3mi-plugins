@@ -1,6 +1,6 @@
 ---
 name: run-closed-loop-verification
-description: Verify one existing alias-scoped Steward GOAL in the current Git worktree through a frozen execution binding, a durable resumable campaign state, proven repairs, and targeted retests with an integrated completion check. Honors Draft-declared waived non-required cases and writable files; use only for explicit GOAL acceptance, not ordinary one-off testing.
+description: Verify an existing Steward GOAL, repair confirmed in-scope failures, and resume its acceptance campaign. Use only for explicit GOAL acceptance, not ordinary one-off testing.
 ---
 
 # Closed-loop GOAL verification
@@ -15,9 +15,10 @@ follow the user and say which instruction here you set aside. If this skill
 makes you pause, ask, or leave requested work unfinished, name the instruction
 that caused it.
 
-Read [execution-plan.md](references/execution-plan.md) before initialization.
-Create the exact execution binding from the immutable acceptance intent, then
-initialize with a finite stdin pipe:
+For an existing campaign, inspect `status --goal <alias>` and continue its saved
+execution binding with `advance --goal <alias>`. For first initialization, read
+[execution-plan.md](references/execution-plan.md), bind the immutable acceptance
+intent to exact commands, and initialize with a finite stdin pipe:
 
 ```text
 python3 -B "<skill-dir>/scripts/campaign.py" init --goal <alias> --execution-plan -
@@ -54,20 +55,25 @@ exactly these keys plus an optional `symbol`:
 }
 ```
 
-A crash mid-advance resumes the in-progress attempt exactly where it stopped.
-A repair's own retest only reruns the case(s) it fixed, for fast
-feedback — but a fix proves nothing about the cases it did not touch, so once
-every outstanding failure is resolved, a campaign that repaired anything owes
-exactly one more all-cases sweep against the final source before the
-completion check runs; that sweep can itself surface a case the repair broke,
-sending the campaign back to `REPAIR_REQUIRED` for it. A campaign that never
-needed a repair skips this — its one clean pass already stands against the
-source being accepted. A happy path is `init` plus one `advance`; a repair
-cycle is `record-repair` plus one `advance`.
+An interrupted `advance` resumes its in-progress attempt. After recorded
+repairs, it runs targeted retests and then an all-cases sweep against the final
+source before the completion check. Any newly failing case returns the campaign
+to `REPAIR_REQUIRED`; campaigns with no repairs skip the extra sweep. A happy
+path is `init` plus one `advance`; a repair cycle is `record-repair` plus one
+`advance`.
 
 Read [state-and-evidence.md](references/state-and-evidence.md) when diagnosing
 failure, interruption, source drift, artifact integrity, or a rejected
 completion check.
+
+Before reporting completion, require `completionStatus: COMPLETE` and compare
+the report's `sourceFingerprint` with `completion.sourceFingerprint`. A completed
+campaign preserves its historical result and `advance` does not rerun it. If
+the fingerprints differ, inspect the actual changes and state which acceptance
+evidence still applies. Report current acceptance as incomplete if relevant
+behavior changed or its effect is uncertain; re-proving it requires a new
+campaign through the recovery route above. If the changes cannot affect the
+accepted behavior, explain that basis in the completion report.
 
 Explicit invocation authorizes reviewed local cases, per-GOAL ignored controls,
 and evidence-backed source repairs inside the accepted GOAL. It does not grant

@@ -23,6 +23,8 @@ from safe_write import AtomicWriteCommittedError, read_snapshot, write_atomicall
 
 START_MARKER = "<!-- write-project-docs:development-source-size:start -->"
 END_MARKER = "<!-- write-project-docs:development-source-size:end -->"
+# The block links only the source policy; its target is the development rules.
+REQUIRED_CANONICAL_KEYS = frozenset({"development_rules", "source_size_rules"})
 
 
 def parse_args() -> argparse.Namespace:
@@ -103,7 +105,11 @@ def main() -> int:
         print(f"错误：项目根目录不存在或不是目录：{root}")
         return 2
 
-    context = resolve_project_docs(root, language=requested_language(args.language))
+    context = resolve_project_docs(
+        root,
+        required_keys=REQUIRED_CANONICAL_KEYS,
+        language=requested_language(args.language),
+    )
     if context.errors:
         print("错误：")
         for error in context.errors:
@@ -121,6 +127,7 @@ def main() -> int:
         return 2
 
     development_path = root / selected["development_rules"]
+    source_size_path = root / selected["source_size_rules"]
     if development_path.is_symlink():
         print("错误：开发规范是符号链接；未修改")
         return 1
@@ -131,6 +138,7 @@ def main() -> int:
     try:
         asset_snapshot = read_snapshot(asset_path)
         development_snapshot = read_snapshot(development_path)
+        source_size_snapshot = read_snapshot(source_size_path)
         asset = render_template(
             asset_snapshot.data, selected, "开发规范规模规则 asset"
         ).decode("utf-8")
@@ -168,7 +176,9 @@ def main() -> int:
 
     def precommit_validate() -> None:
         current_context = resolve_project_docs(
-            root, language=requested_language(args.language)
+            root,
+            required_keys=REQUIRED_CANONICAL_KEYS,
+            language=requested_language(args.language),
         )
         if (
             current_context.errors
@@ -177,14 +187,19 @@ def main() -> int:
         ):
             raise ValueError("写入前固定文档路径或语言发生变化")
 
+    input_snapshots = (
+        (asset_path, asset_snapshot),
+        (source_size_path, source_size_snapshot),
+    )
+
     if updated == original:
         try:
             precommit_validate()
-            if (
-                read_snapshot(development_path) != development_snapshot
-                or read_snapshot(asset_path) != asset_snapshot
-            ):
-                raise ValueError("开发规范或 asset 在校验期间发生变化")
+            if read_snapshot(development_path) != development_snapshot:
+                raise ValueError("开发规范在校验期间发生变化")
+            for path, snapshot in input_snapshots:
+                if read_snapshot(path) != snapshot:
+                    raise ValueError(f"{path.name} 在校验期间发生变化")
         except (OSError, UnicodeDecodeError, ValueError) as error:
             print(f"错误：{error}；未修改")
             return 1
@@ -197,7 +212,7 @@ def main() -> int:
             updated,
             development_snapshot,
             precommit_validate,
-            input_snapshots=((asset_path, asset_snapshot),),
+            input_snapshots=input_snapshots,
         )
     except AtomicWriteCommittedError as error:
         print(f"错误：{error}；文件已替换")

@@ -1,6 +1,6 @@
 ---
 name: draft-consensus-goal
-description: Persist an accepted seven-line Chinese GOAL, one verified context, and its acceptance intent under a task alias in the current Git worktree, including declared waived non-required cases and writable case-byproduct files. Use only when explicitly asked to create or resume drafting a task contract for an executor.
+description: Create or resume drafting a persistent Steward GOAL from accepted requirements for another executor. Use only when explicitly asked to draft that task contract; does not implement the work.
 ---
 
 # Draft Consensus Goal

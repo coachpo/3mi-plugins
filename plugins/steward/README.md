@@ -82,9 +82,9 @@ python3 -B "<skill-dir>/scripts/campaign.py" status --goal <alias>
 
 ### 调研分析
 
-`parallel-repository-research` 负责复杂仓库问题的只读定位、架构映射、实现盘点和依赖追踪。它冻结互不重叠的检索 lane，普通只读研究在工具权限和任务授权允许时可并发，子任务仅限范围内读取，禁止写入、执行项目代码、网络访问和继续委派。用户、项目指令或更高优先级规则明确要求机械隔离时，仍须由运行时限制写入和网络，无法满足则由主会话在适用约束下顺序执行。提示词约束不构成机械隔离，也不扩大权限；隔离能力缺失影响用户要求时须说明。最终结果必须说明证据、冲突、未搜索范围和缺口。
+`parallel-repository-research` 负责复杂仓库问题的只读定位、架构映射、实现盘点和依赖追踪。它为互不重叠的检索 lane 保存输入快照，普通只读研究在工具权限和任务授权允许时可并发，子任务仅限范围内读取，禁止写入、执行项目代码、网络访问和继续委派。用户、项目指令或更高优先级规则明确要求机械隔离时，仍须由运行时限制写入和网络，无法满足则由主会话在适用约束下顺序执行。提示词约束不构成机械隔离，也不扩大权限；隔离能力缺失影响用户要求时须说明。最终结果必须说明证据、冲突、未搜索范围和缺口。
 
-`analyze-change-request` 负责分析一项明确的软件变更请求。它按决策相关性核实仓库事实、项目实际版本的官方资料和独立实践，必要时才纳入适用的强制性约束，输出带来源、可验收但尚未接受的候选需求。它不写文件、不生成 GOAL，也不开始实施。
+`analyze-change-request` 负责分析一项明确的软件变更请求。它按决策相关性核实仓库事实、项目实际版本的官方资料和独立实践，必要时才纳入适用的强制性约束，输出带来源、可验收但尚未接受的候选需求。它不写文件、不生成 GOAL，也不开始实施。用户途中纠正目标、版本或范围时，在当前任务内更新绑定并补齐受影响证据；完成与否取决于实质证据覆盖，不由空缺的调度元数据决定。
 
 ```text
 使用 $steward:parallel-repository-research 调研当前仓库中的实现位置、调用关系和测试覆盖，只返回可复核的仓库证据。
@@ -162,7 +162,7 @@ Codex 可隐式选择 `write-agent-guides`、`parallel-repository-research` 和 
 
 Steward 的 GOAL 与验证控制产物位于当前 worktree 的 `.steward/goals/<alias>/` 中。整个 `.steward/` 由自身 ignore 规则挡在 Git 状态与源码指纹之外；bundle 绑定其创建时的精确 worktree，不支持复制、移动或重新绑定。
 
-`.steward/` 是恢复事实源，不是普通缓存。Steward 在 GOAL 执行、阻塞、恢复、验收成功或 Git merge 后都保留它；创建新 GOAL 时使用新的 worktree。删除整个 worktree 会一并移除其中的本地控制状态。
+`.steward/` 是恢复事实源，不是普通缓存。Steward 在 GOAL 执行、阻塞、恢复、验收成功或 Git merge 后都保留它；创建新 GOAL 时使用新的 worktree。确需重新建立验证 campaign 时，先在同一 worktree 的忽略目录中保存并核实完整验证记录，再沿用已有明确删除授权或取得该授权，替换活动验证目录。删除整个 worktree 会一并移除其中的本地控制状态。
 
 ## 权限与停止边界
 
@@ -177,9 +177,9 @@ Steward 的 GOAL 与验证控制产物位于当前 worktree 的 `.steward/goals/
 
 ## GOAL 恢复与完成
 
-恢复时从 cwd 重新绑定 worktree，按 alias 校验 manifest、GOAL、context、两个 plan 和 campaign 状态文件，再从未闭合阶段继续。持久 bundle 与 campaign 状态是恢复和完成权威；聊天摘要不能替代精确 payload 或机器证据。
+恢复时从 cwd 重新绑定 worktree，按 alias 校验 manifest、GOAL、context、两个 plan 和 campaign 状态文件，再从未闭合阶段继续。持久 bundle 与 campaign 状态是恢复和完成权威；聊天摘要不能替代精确 payload 或机器证据。临时环境问题形成的 `BLOCKED` 在环境恢复后直接 `advance`，保留已完成 case；相同 execution plan 的 `init` 幂等加载现有 campaign，只有更换绑定才冲突。
 
-快速检查和定向复测只能证明局部反馈。完成检查为每个 case 取其跨 attempt 的最新证据，再校验 bundle、两个 plan、相关 artifact 与 required `C*` 映射；发生过修补的 campaign，这份"最新证据"在完成检查前已经来自同一次全量回归，不是东拼西凑的旧结果——不要求每次修补后都立刻重跑全部 case，但收尾前必须补齐这一趟。
+快速检查和定向复测只能证明局部反馈。完成检查为每个 case 取其跨 attempt 的最新证据，再校验 bundle、两个 plan、相关 artifact 与 required `C*` 映射；发生过修补的 campaign，这份"最新证据"在完成检查前已经来自同一次全量回归，不是东拼西凑的旧结果——不要求每次修补后都立刻重跑全部 case，但收尾前必须补齐这一趟。`COMPLETE` 保留历史验收结果；报告当前源码通过前，还必须比较当前与完成记录的源码指纹。发生变化时检查实际改动及其依赖；影响验收行为或影响不明时，当前验收仍未完成，需要保留旧证据后建立新 campaign，不能把历史通过当作重新验证。
 
 ## 运行要求
 

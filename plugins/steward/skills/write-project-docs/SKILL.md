@@ -1,6 +1,6 @@
 ---
 name: write-project-docs
-description: Review or maintain a repository's canonical product, status, architecture, development, contributing, and source-responsibility documentation from verified project facts. Use for focused document work, full documentation initialization/migration, or STATUS-controlled static development-tier strategies; use write-agent-guides for AGENTS.md hierarchy.
+description: Review or maintain canonical repository documentation from verified project facts. Use for focused documentation work, initialization, or migration; use write-agent-guides for the AGENTS.md hierarchy.
 ---
 
 # Write Project Documentation
@@ -76,17 +76,19 @@ project between supported canonical language sets is an explicit migration.
    documents, managed boundaries, and exact write set.
 2. Inspect only repository evidence needed for those documents: relevant
    manifests, source, configuration, tests, CI, commands, and existing docs.
-3. Read [`document-rules.md`](references/document-rules.md) completely only when
-   detailed canonical content, managed-block, merge, or migration rules are
-   needed. A narrow task that does not need those details does not load it.
+3. Read only the relevant sections of
+   [`document-rules.md`](references/document-rules.md) when detailed canonical
+   content or managed-block rules are needed. Read it completely only for full
+   initialization, consolidation, or migration.
 4. Read [`development-tiers.md`](references/development-tiers.md) completely
    when the request creates, updates, validates, migrates, or consumes the
    required development tier or managed strategy. The exact `STATUS.md` tier
    selects one bundled static strategy and never creates new authority.
-5. Update only affected and authorized files. Use the bundled updaters for owned
-   marker blocks; do not hand-edit those regions or copy their implementation
-   details into documentation.
-6. Validate, inspect the exact diff, and correct only in-scope errors.
+5. For write tasks, update only affected and authorized files. Use the bundled
+   updaters for owned marker blocks; do not hand-edit those regions or copy their
+   implementation details into documentation.
+6. Validate the affected scope. For write tasks, inspect the exact diff and
+   correct only in-scope errors; read-only tasks report findings.
 
 For a single-document request, steps concerning unrelated canonical documents,
 development tier/strategy, language migration, and managed navigation are
@@ -95,43 +97,54 @@ that outcome was explicitly requested.
 
 ## Deterministic updates and validation
 
-Use `python3 -B` for the bundled scripts. Update source facts and the exact
-development-tier line before managed blocks. When applicable, use the dedicated
-development-rules, contributing, and AGENTS navigation updaters; each must
-preserve other managed regions and fail closed on ambiguous markers or drift.
+For ordinary prose maintenance, check the affected facts and links and use
+relevant repository documentation checks. For a focused managed update, use its
+updater's checks of the block and required inputs. The development-rules updater
+requires the development rules and source-responsibility document; CONTRIBUTING
+and AGENTS navigation retain the canonical dependencies their assets reference.
+If an actual prerequisite is missing, complete independent authorized work and
+report that blocker without expanding the write set or bypassing updater errors.
+
+Use `python3 -B` for the bundled scripts. Before a requested managed update,
+update the source facts and development-tier line that the request affects.
+Use the dedicated development-rules, contributing, and AGENTS navigation
+updaters as applicable; each must preserve other managed regions and fail closed
+on ambiguous markers or drift.
 `update_contributing.py` is the only strategy updater and atomically migrates a
 structurally valid retired dynamic-strategy block.
 
-Run:
+For full initialization/migration or validation of tier/catalog or cross-document
+managed consistency, run the whole-set validator:
 
 ```text
 python3 -B "<skill-dir>/scripts/validate_project_docs.py" "<project-root>"
 ```
 
-Also run relevant repository documentation checks. Use strict diagnostics for an
-authorized migration, file removal, archival, or other destructive cleanup. A
-validator proves structure, the complete static tier catalog, selected-strategy
-consistency, and managed-block consistency; it does not replace semantic review
-of the prose or check local link validity — report broken or stale links you
-notice while reading, but do not treat link-checking as automated.
+Use strict diagnostics for an authorized migration, file removal, archival, or
+other destructive cleanup. The whole-set validator proves structure, the complete
+static tier catalog, selected-strategy consistency, and managed-block consistency;
+it does not replace semantic review of the prose or check local link validity.
+Report broken or stale links you notice while reading, but do not treat
+link-checking as automated.
 
 The validator always reports the whole canonical set, so a focused task on a
 repository that never had that set exits non-zero on documents outside the
-request. Judge each error: fix the ones the request covers, report the rest as
-pre-existing. A non-zero exit is not itself a reason to widen the write set.
+request. Judge each error: fix only those covered by an authorized write request
+and report the rest with their scope and origin. A non-zero exit is not itself a
+reason to widen the write set.
 
-On resume, re-resolve the project, language, canonical paths, exact development
-tier, write set, managed boundaries, and affected asset snapshots. Preserve
-non-overlapping user changes; old validation is stale after a relevant input
-change.
+On resume, recheck inputs relevant to the selected work, including its write set
+and any changed language, path, tier, managed-boundary, or asset evidence. Reuse
+unchanged applicable evidence and preserve non-overlapping user changes; old
+validation is stale after a relevant input change.
 
 ## Complete and report
 
 Complete a write task only when every affected required document has substantive
-content, owned blocks validate, in-scope validation errors are cleared, and the
-diff contains no out-of-set change. For migration or destructive cleanup, strict
-diagnostics must pass or the remaining unauthorized cleanup must be reported
-exactly.
+content, affected owned blocks validate, in-scope validation errors are cleared,
+and the diff contains no out-of-set change. For migration or destructive cleanup,
+strict diagnostics must pass or the remaining unauthorized cleanup must be
+reported exactly.
 
 Lead with the outcome, then only the applicable material details: changed and
 deliberately preserved files, canonical evidence, language and development-tier
