@@ -18,7 +18,8 @@ do not turn them into behavioral-risk findings, severity ratings, or test cases.
 
 Resolve the target worktree. Give each worker a bounded question, the relevant
 paths and exclusions, applicable instructions, and the read-only boundaries
-above. Use available host delegation tools and their current model defaults;
+above. In Codex, use `gpt-6-luna` for bounded read-only workers when the
+delegation tool supports a model override. Otherwise use the host default;
 avoid redundant searches unless independent corroboration helps resolve an
 uncertainty.
 
