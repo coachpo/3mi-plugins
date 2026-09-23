@@ -1,6 +1,12 @@
 # Steward
 
-Steward 为 Codex 与 Claude Code 提供七个技能，按需支持项目文档、仓库调研、交付规划与 GOAL 验收。两个宿主读取同一份 `skills/` 目录。
+Steward 为 Codex 与 Claude Code 提供项目文档、仓库调研、交付规划、代码级任务交接和既有 GOAL 验收技能。两个宿主读取同一份 `skills/` 目录。
+
+## 0.10.0 升级说明
+
+`draft-consensus-goal` 已由 `plan-execution` 一次性替换。旧的 `$steward:draft-consensus-goal` 与 `/steward:draft-consensus-goal` 调用失效，没有别名或兼容入口。新技能产出包含共享决策、任务卡、执行与恢复协议、状态和结果的 `task-plan.md`，不创建或激活宿主 GOAL，也不创建 Steward GOAL bundle。请按新格式重新规划要交给执行者的工作；已有 `.steward` bundle 和 campaign 不会自动迁移或删除，其历史 `COMPLETE` 不能直接作为新任务的完成证据。
+
+`run-closed-loop-verification` 仍只验收已有 GOAL bundle，不能读取新任务合同。此次升级保留其共享运行时和回归检查；没有重设计 `acceptance-plan v1`。两个插件 manifest 的版本同步到 0.10.0；本仓库修改不等于发布或安装更新。
 
 ## 0.9.1 升级说明
 
@@ -33,14 +39,14 @@ claude plugin install steward@coachpo
 | 技能 | 主要结果与边界 |
 | --- | --- |
 | [analyze-change-request](skills/analyze-change-request/SKILL.md) | 结合仓库与公开来源分析变更需求，提供引用及可观察验收标准。显式调用；只读，不实施或执行项目。 |
-| [draft-consensus-goal](skills/draft-consensus-goal/SKILL.md) | 将已接受需求保存为供另一执行者使用的 GOAL、上下文及验收计划。显式调用；不实施或验收目标工作。 |
+| [plan-execution](skills/plan-execution/SKILL.md) | 根据已定需求与仓库证据创建、修订或审查供另一执行者使用的代码级任务合同；只规划和交接，不实施或验收。 |
 | [parallel-repository-research](skills/parallel-repository-research/SKILL.md) | 至少两条独立调查线定位代码、梳理架构或追踪依赖，主代理核实证据。只读，不运行测试或判定行为风险。 |
 | [plan-delivery](skills/plan-delivery/SKILL.md) | 创建、修订或审查实施计划和／或 Sprint Backlog，明确交付、责任、依赖及验收。只规划，不执行开发。 |
 | [run-closed-loop-verification](skills/run-closed-loop-verification/SKILL.md) | 对已有 GOAL 进行可恢复验收，诊断失败、修复授权范围内的源码问题并复测。显式调用；不用于普通单次测试。 |
 | [write-agent-guides](skills/write-agent-guides/SKILL.md) | 维护有依据的 AGENTS.md 层级，共享规则在根文件，子树仅记录局部差异。不维护 CLAUDE.md。 |
 | [write-project-docs](skills/write-project-docs/SKILL.md) | 按仓库事实和既有约定维护正式项目文档，明确权威来源并同步相关链接。显式文档请求；局部更新不扩展为文档套件。 |
 
-Codex 可以隐式选择仓库调查、交付规划和代理指南技能，其余技能的 `agents/openai.yaml` 保持仅显式调用。审查请求只返回发现；创建、修改请求在指定范围内落盘。
+Codex 可以按意图隐式选择仓库调查、交付规划、代码级任务交接和代理指南技能；其他技能保持各自的调用策略。审查请求只返回发现；创建、修改请求在指定范围内落盘。
 
 ## 文档与规划
 
@@ -50,10 +56,15 @@ Codex 可以隐式选择仓库调查、交付规划和代理指南技能，其�
 
 规划可以只处理实施计划、只处理 Backlog，或联合维护两者。实施计划拥有范围、工作包与总体验收，Backlog 拥有任务拆分、具体依赖和迭代安排；未知容量以假设表达。采用用户及项目的格式，没有约定时默认放在 `docs/planning/`，不要求模板、状态库或自动创建 GOAL。
 
+`plan-execution` 接受已定需求，也可引用现有计划或 Backlog 的条目及版本，不强制先创建 Sprint 文档。它为下一批稳定工作固定代码级实现、兼容和错误语义、允许裁量、可观察验收、验证命令及反证回交规则；未来未知工作保持 `draft`。默认从一个 `task-plan.md` 开始，包含执行／恢复协议、任务状态和绑定版本与代码状态的结果。规划者指定最终集成验收负责人；执行者不能用修改合同或降低标准来接受自己的实现。单纯需求分析、Sprint 排期与普通小修复不必走此交接。
+
+计划文件沿用用户或项目指定位置；若放在本仓库被 `.gitignore` 忽略的 `/docs/` 下，跨工作区交付时必须另行传送该文件、代码差异和必要证据，不能假定 Git 会同步它。
+
 ```text
 使用 $steward:write-project-docs 更新 README 中受本次变更影响的用法与链接。
 使用 $steward:write-agent-guides 维护 packages/api/AGENTS.md 的局部命令差异。
 使用 $steward:plan-delivery 根据已有实施计划创建 Sprint Backlog，只编写 Backlog。
+使用 $steward:plan-execution 根据已定需求和当前代码创建下一批任务合同，供另一执行者实施。
 ```
 
 ## 只读调研
@@ -67,14 +78,11 @@ Codex 可以隐式选择仓库调查、交付规划和代理指南技能，其�
 使用 $steward:parallel-repository-research 调查两个独立服务的重试调用链，给出代码证据。
 ```
 
-## GOAL 起草与验收
+## 既有 GOAL 验收
 
-GOAL 起草在当前 cwd 所属 Git worktree 中创建 `.steward/goals/<alias>/`。alias 使用小写字母、数字及单连字符，至多 64 字符；未提供时自行选择。不可变 bundle 包含七行中文 `goal.txt`、`context.md`、`acceptance-plan.json` 与摘要 manifest。起草者的职责限制不写成执行者的任务限制。
-
-执行者完成目标工作后，验收技能用同一 alias、同一物理 worktree 将验收意图绑定到项目真实命令，保存 execution plan、campaign 状态、源码快照和证据。运行前核实命令、副作用与现有授权。存储与执行契约分别见 [GOAL 格式](references/goal-authoring.md)和[执行绑定](skills/run-closed-loop-verification/references/execution-plan.md)。
+旧 GOAL bundle 保存在创建时的 Git worktree 的 `.steward/goals/<alias>/`，包含 `goal.txt`、`context.md`、`acceptance-plan.json` 与摘要 manifest。验收技能仅针对这种既有合同工作，在同一物理 worktree 将验收意图绑定到项目真实命令，保存 execution plan、campaign 状态、源码快照和证据。运行前核实命令、副作用与现有授权。旧格式与验收执行契约分别见 [GOAL 格式](references/goal-authoring.md)和[执行绑定](skills/run-closed-loop-verification/references/execution-plan.md)。新 `task-plan.md` 不由此验收器消费。
 
 ```text
-使用 $steward:draft-consensus-goal 将已接受需求保存为 GOAL，不开始实施。
 使用 $steward:run-closed-loop-verification 验收当前 worktree 中的 goal-a，修复授权范围内的问题。
 ```
 
@@ -87,7 +95,7 @@ python3 -B "<skill-dir>/scripts/campaign.py" status --goal <alias>
 python3 -B "<skill-dir>/scripts/campaign.py" advance --goal <alias>
 ```
 
-这里 `<skill-dir>` 为 `run-closed-loop-verification` 目录。创建 bundle 可以使用 `create-from` 读取暂存文件；结构化 stdin 输入使用普通重定向或有限 pipe，不需要 PTY 桥接器。
+这里 `<skill-dir>` 为 `run-closed-loop-verification` 目录。验收绑定的结构化 stdin 输入使用普通重定向或有限 pipe。
 
 `advance` 自动推进 case、定向复测、修补后的全量回归和完成检查。`REPAIR_REQUIRED` 只说明运行失败，需要先区分源码、环境与命令绑定原因；只对确认属于 GOAL 授权范围的源码问题记录修补。无修补的成功 campaign 不额外重跑全套测试。
 
@@ -103,7 +111,7 @@ python3 -B "<skill-dir>/scripts/campaign.py" advance --goal <alias>
 
 ## 运行要求与维护检查
 
-文档、指南、研究和规划技能不依赖附带脚本。GOAL bundle 与验收引擎需要 `python3`、Git，以及目标项目实际使用的本地 runner。依赖或环境缺失时，按任务授权补齐或报告具体阻塞项。
+文档、指南、研究、规划与任务交接技能不依赖附带脚本。既有 GOAL bundle 的验收引擎需要 Python 3.10 或更新版本、Git，以及目标项目实际使用的本地 runner；以下命令中的 `python3` 须指向兼容版本。依赖或环境缺失时，按任务授权补齐或报告具体阻塞项。
 
 确定性运行时的回归检查使用临时仓库和本地 fixture：
 

@@ -78,5 +78,7 @@ responsibility, capacity assumptions, and acceptance. When both documents change
 check their final versions together. Report paths or findings and material gaps,
 including unread or unavailable inputs that limit the consistency review.
 
-This workflow ends at planning. It does not dispatch tasks, implement changes,
-perform the planned acceptance, or create a GOAL.
+This workflow ends at delivery planning. Use `plan-execution` when the request
+needs repository-grounded, code-level contracts for a separate executor; that
+handoff can also start directly from accepted requirements. This skill does not
+dispatch tasks, implement changes, perform acceptance, or create a GOAL.

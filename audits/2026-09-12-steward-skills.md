@@ -11,7 +11,7 @@
 | 技能 | 消融和删除 | 保留的必要功能 | 入口行数 |
 | --- | --- | --- | ---: |
 | [analyze-change-request](../plugins/steward/skills/analyze-change-request/SKILL.md) | 删除重复 research-contract、固定 ResearchBrief／状态协议、冻结调查线、固定重试次数及额外机械隔离门槛。 | 显式调用；仓库与公开资料、版本适用性、脱敏查询、用户纠正、来源与可观察验收标准；只读不执行项目。 | 129 → 63 |
-| [draft-consensus-goal](../plugins/steward/skills/draft-consensus-goal/SKILL.md) | 合并单独的 context 参考；删除无人调用的 PTY 桥接器及其参数测试、重复且没有消费者的 JSON schema；精简重复授权及格式说明。 | 为执行者起草任务；持久 bundle、验收意图、别名、同 worktree 恢复及格式校验。共享格式参考和真实创建脚本继续保留。 | 48 → 28 |
+| [draft-consensus-goal（审核时版本）](https://github.com/coachpo/3mi-plugins/blob/180c0eb8945b6013b2ef4a9a0b3234a077b1d1aa/plugins/steward/skills/draft-consensus-goal/SKILL.md) | 合并单独的 context 参考；删除无人调用的 PTY 桥接器及其参数测试、重复且没有消费者的 JSON schema；精简重复授权及格式说明。 | 为执行者起草任务；持久 bundle、验收意图、别名、同 worktree 恢复及格式校验。共享格式参考和真实创建脚本继续保留。 | 48 → 28 |
 | [parallel-repository-research](../plugins/steward/skills/parallel-repository-research/SKILL.md) | 删除两份宿主适配器、硬编码模型、固定重试次数、冻结调查线及结果状态仪式。 | 至少两条独立调查线、宿主当前工具与模型默认值、只读、不运行测试、不判定行为风险；主代理复核与必要回退。 | 124 → 45 |
 | [plan-delivery](../plugins/steward/skills/plan-delivery/SKILL.md) | 删除两个模板、重复 planning-rules 清单、与 GOAL 命名的无关耦合及重复流程规定。 | 计划／Backlog 权威区分，工作包、责任、交接、真实前置依赖和验收；保持用户格式、容量假设与局部修订范围，只规划。 | 124 → 82 |
 | [run-closed-loop-verification](../plugins/steward/skills/run-closed-loop-verification/SKILL.md) | 压缩状态参考与重复流程描述，按需读取修补载荷；取消无执行器支持的单 worktree 单 GOAL 惯例。 | 显式 GOAL 验收、先诊断后修复、恢复、定向复测、修补后的最终回归、当前源码与历史完成区分、证据完整性。未删除真实运行时或其回归测试。 | 85 → 68 |

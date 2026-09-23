@@ -1,0 +1,4 @@
+interface:
+  display_name: "Plan Execution"
+  short_description: "基于仓库证据编写可交接、可修订的代码实施任务合同"
+  default_prompt: "使用 $steward:plan-execution 根据已定需求和当前仓库编写下一批可执行任务合同，明确实现决策、验收及反证回交规则。"
