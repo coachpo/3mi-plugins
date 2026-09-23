@@ -2,8 +2,8 @@
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "steward",
   "displayName": "Steward",
-  "version": "0.10.0",
-  "description": "面向 Codex 与 Claude Code 的工程技能，覆盖项目文档、只读调研、交付规划、代码级任务交接及既有 GOAL 验收。",
+  "version": "0.11.0",
+  "description": "面向 Codex 与 Claude Code 的工程技能，覆盖项目文档、只读调研、交付规划与代码级任务交接。",
   "author": {
     "name": "coachpo",
     "url": "https://github.com/coachpo"
@@ -16,16 +16,12 @@
     "claude-code",
     "codex",
     "documentation",
-    "goals",
     "implementation-planning",
     "task-contracts",
     "requirements-analysis",
     "repository-research",
     "sprint-backlog",
-    "verification",
     "workflows",
-    "testing",
-    "regression",
     "steward"
   ],
   "skills": "./skills/"

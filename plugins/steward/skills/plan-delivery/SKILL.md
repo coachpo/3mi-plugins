@@ -81,4 +81,4 @@ including unread or unavailable inputs that limit the consistency review.
 This workflow ends at delivery planning. Use `plan-execution` when the request
 needs repository-grounded, code-level contracts for a separate executor; that
 handoff can also start directly from accepted requirements. This skill does not
-dispatch tasks, implement changes, perform acceptance, or create a GOAL.
+dispatch tasks, implement changes, or perform acceptance.

@@ -8,7 +8,7 @@ description: Analyze a software change request using repository evidence and pub
 Produce an evidence-backed analysis of the requested software change. Use this
 skill only when the user explicitly requests it. Keep the analysis in the
 conversation; do not modify files, run project code or tests, implement the
-change, or create a Steward GOAL.
+change.
 
 ## Establish what needs to be decided
 

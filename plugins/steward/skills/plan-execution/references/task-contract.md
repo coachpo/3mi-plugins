@@ -42,7 +42,7 @@ when the executor has not loaded this skill.
 | Acceptance | Observable successful and failure behavior, boundary cases, compatibility, and evidence required. Do not equate a checklist title with proof. |
 | Validation | Commands, cwd, environment/preconditions, pass criteria, evidence location, and what remains unrun. Include a final integration check where needed. |
 | Exception and handback | Relevant drift, missing prerequisites, failed checks, and decisions that must return to the planner. |
-| Result | Executor-owned record: plan/task revisions, actual dependency result versions, code state or diff identity, actions, commands and results, evidence, remaining differences, status, and next action after interruption. |
+| Result | Executor-owned record: result ID/version, plan/task revisions, actual dependency result versions, code state or diff identity, actions, commands and results, evidence, remaining differences, status, and next action after interruption. |
 
 ## Protocol to copy into the handoff
 
@@ -86,135 +86,136 @@ when the executor has not loaded this skill.
    step 1. Mark `done` only with the stated evidence. Complete the final
    integration task before claiming the overall request is complete.
 
-## Worked example: Steward skill replacement
+## Worked example: Add a read-only metadata review skill
 
-Illustration of a contract at the historical `fcbb072` baseline, not an active
-task or a statement that this request has already passed validation. The source
-paths and entry points below were inspected at that baseline. A real planner
-would record the current revision and update any changed line locators.
+This illustrates a contract for an *assumed, accepted* request to add an
+explicitly invoked skill that reviews Steward's plugin metadata, then document
+how to invoke it. This is not an active request or a claim of completed
+validation. The repository facts below were inspected at `478e595`; a planner
+using this example must capture the actual code state and recheck affected
+facts before marking work ready.
 
-**Plan:** `STEW-HANDOFF`, revision 1, overall status `draft`; `STEW-01` is the
-ready next task. Source: accepted
-request to replace the GOAL drafting skill with a code-level handoff skill.
-Authority: local plugin source and documentation edits, including deletion of
-the old skill; no commit, publication, external write, or deletion of user
-`.steward` state. Baseline: `fcbb072`; no tests run when this example was
-written. Git delivery: tracked `plugins/steward/` and root README diff; if a
-plan is instead saved under ignored `/docs/`, transfer its file separately.
-Overall coverage: `STEW-01` provides the new skill and contract format;
-`STEW-02` removes the old entry and updates active descriptions; `INT-01`
-checks their integration and the preserved verifier. Final integration owner:
-the planner. Execute serially, with one writer.
+**Plan:** `STEW-META`, revision 1, overall status `draft`; `META-01` is the ready
+next task. Source: the example's accepted request for a read-only review of
+Steward metadata across its two host manifests and repository marketplace,
+with invocation by name only.
+Authority: local skill and documentation edits only; no commit, installation,
+publication, external write, or mutation of installed plugin copies. Baseline:
+`478e595`, with affected paths inspected and no validation run for this example.
+Deliver the tracked code diff and this `task-plan.md` together; if the plan is
+saved under the repository's ignored `/docs/`, transfer it and its evidence
+explicitly. `META-01` provides the review behavior, `META-02` makes it visible
+in product documentation, and `INT-01` checks the integrated result. Execute
+serially with one writer; the planner owns final integration acceptance.
 
-**Task `STEW-01`, revision 1, `ready`: Add the new handoff skill.**
+**Task `META-01`, revision 1, `ready`: Add the metadata review skill.**
 
-- **Source and dependencies:** accepted replacement decision above; no prior
-  task output. Entry requires the unchanged `fcbb072` skill layout or a drift
-  review before editing.
-- **Observed facts:** `plugins/steward/skills/draft-consensus-goal/SKILL.md`
-  creates an immutable GOAL bundle; its `agents/openai.yaml` disables implicit
-  invocation. `plugins/steward/skills/plan-delivery/SKILL.md` owns plans and
-  Backlogs. Both plugin manifests discover `./skills/`; no per-skill registry
-  edit is needed. `plugins/steward/skills/run-closed-loop-verification/scripts/verifier.py`
-  calls `goal_workspace.view_goal_bundle()` and still needs that shared runtime.
-  These are file observations, not test results.
+- **Source and dependencies:** the accepted request above; no predecessor
+  output. Entry requires the observed manifest and skill layout at `478e595`,
+  or a drift review before editing.
+- **Observed facts:** both `plugins/steward/.codex-plugin/plugin.json` and
+  `plugins/steward/.claude-plugin/plugin.json` use `"skills": "./skills/"`.
+  `.claude-plugin/marketplace.json` points its Steward entry to
+  `./plugins/steward`. Existing skill folders contain `SKILL.md` and
+  `agents/openai.yaml`; `analyze-change-request` shows an explicit-only policy.
+  These are inspected file facts, not loader or validation results.
 - **Scope and preservation:** add only
-  `plugins/steward/skills/plan-execution/{SKILL.md,agents/openai.yaml,references/task-contract.md}`
-  in this card. Preserve the existing verifier and GOAL runtime. Deletion of
-  the old skill and documentation changes belong to later cards.
-- **Fixed implementation:** normal implicit discovery; planning and handoff
-  only; no GOAL bundle or executor engine. The entrypoint must route to a
-  single-file task contract with plan/task revisions, evidence, fixed decisions,
-  bounded executor latitude, observable acceptance, the recovery protocol,
-  and a final integration owner. Keep execution results separate from
-  planner-owned decisions. The new format is not `acceptance-plan v1`.
-- **Local discretion:** concise wording and headings, and the illustrative
-  fixture values within these files. No alternate architecture or state store.
-- **Acceptance:** a replacement executor can use the delivered artifact and
-  repository alone to identify permitted edits, exact validation, drift
-  handback, and completion evidence; a missing prerequisite or contradicted
-  fact blocks only affected work. The skill validator accepts the new entry;
-  the old verifier remains operable on its own GOAL contract.
-- **Validation:** from repository root, with skill-creator installed at the
-  standard Codex location, run
-  `python3 "${CODEX_HOME:-$HOME/.codex}/skills/.system/skill-creator/scripts/quick_validate.py" plugins/steward/skills/plan-execution`;
-  pass is exit 0. Inspect links and perform an independent executor scenario
-  review, saving observations with the handoff. Runtime suites are assigned to
-  final integration, so they are not claimed by this card before being run.
-- **Handback:** if the skill loader requires an undocumented registration or
-  existing callers require GOAL compatibility, report the exact caller and
-  decision needed. Do not add an alias or GOAL adapter on this task.
-- **Result:** pending. Executor records plan revision, task revision, dependency
-  output versions (`none` here), worktree diff identity, actual commands and
-  evidence, status, and next action if interrupted.
+  `plugins/steward/skills/review-steward-metadata/SKILL.md` and its
+  `agents/openai.yaml`. Preserve existing skill invocation policies and
+  manifest values. Documentation belongs to `META-02`.
+- **Fixed implementation:** the skill is explicit-only and read-only. It
+  accepts a repository root (defaulting to the current directory) and compares
+  the two host manifests' `name`, `version`, and `description`, checks that
+  each `skills` path resolves to the shared directory, and checks that the
+  repository marketplace entry names Steward, resolves to its plugin
+  directory, and has the same `description` as the manifests. Report each
+  mismatch with both source paths and the observed values; distinguish absent
+  or unreadable inputs from a match. Do not make automatic repairs or create a
+  helper script.
+- **Local discretion:** concise wording, section headings, and the UI display
+  text in `agents/openai.yaml`; no change to the compared fields or write policy.
+- **Acceptance:** when invoked for this repository, the skill directs a
+  reviewer to inspect all three sources and report their actual agreement or
+  specific differences with file evidence. A missing file produces a stated
+  evidence gap, never a clean result. Its frontmatter and UI metadata validate.
+- **Validation:** from the repository root, with the bundled skill-creator
+  available, run
+  `python3 "${CODEX_HOME:-$HOME/.codex}/skills/.system/skill-creator/scripts/quick_validate.py" plugins/steward/skills/review-steward-metadata`;
+  require exit 0. Invoke the skill against the actual repository and a
+  temporary copy of its three metadata files with the marketplace
+  `description` changed; record both reports without changing repository
+  manifests. Record which checks were performed; no result is assumed here.
+- **Handback:** if discovery requires a registration entry despite the
+  inspected directory settings, report the loader evidence and affected
+  acceptance to the planner. Do not widen the card to change manifests.
+- **Result:** pending. Assign a result ID/version when work is recorded; bind
+  it to plan revision 1, task revision 1, dependency result versions (`none`),
+  code-state or diff identity, commands and findings, status, and the next
+  action after interruption.
 
-**Task `STEW-02`, revision 1, `draft`: Replace the old entry and documentation.**
+**Task `META-02`, revision 1, `draft`: Document the new review entry.**
 
-- **Source and dependencies:** same accepted replacement decision; consume the
-  actual `STEW-01` revision 1 skill files and validation result. If unavailable,
-  this task cannot start. The design below is settled, but the task cannot move
-  to `ready` until this result exists and is checked.
-- **Observed facts:** at `fcbb072`, the root README, Steward README, Codex and
-  Claude manifests, and Claude marketplace description advertise GOAL drafting.
-  The Codex default prompt calls the old skill. Both manifests discover the
-  whole `./skills/` directory. `audits/2026-09-12-steward-skills.md` links the
-  old file as historical evidence. The repo `.gitignore` ignores `/docs/`.
-  These are inspected files, not passing validation results.
-- **Scope and preservation:** remove only the two files under
-  `plugins/steward/skills/draft-consensus-goal/`; edit `README.md`,
-  `plugins/steward/README.md`, the two plugin manifests,
-  `.claude-plugin/marketplace.json`, and the one historical audit link. A
-  one-sentence routing change in `plan-delivery/SKILL.md` is allowed. Preserve
-  all shared GOAL scripts, references, and verifier tests; do not touch user
-  `.steward` state or the per-plugin Codex marketplace entry.
-- **Fixed implementation:** set both plugin versions to `0.10.0`; replace every
-  active old-skill invocation with `plan-execution`. Explain that the old call
-  fails, new `task-plan.md` is a different format, old state is not migrated,
-  and the independent verifier still accepts only GOAL bundles. Pin the audit
-  link to the historical `180c0eb` file rather than changing its conclusion.
-  Do not introduce an alias, adapter, or changed `acceptance-plan v1`.
-- **Local discretion:** concise wording, section placement, and link labels;
-  the compatibility and routing claims above are fixed.
-- **Acceptance:** a reader can select the new handoff skill for code-level
-  planning and cannot find a live old-skill entry. JSON manifests parse, local
-  links resolve, and the audit still points to the reviewed historical file.
-- **Validation:** from repository root run `python3 -m json.tool` separately on
-  `plugins/steward/.codex-plugin/plugin.json`,
-  `plugins/steward/.claude-plugin/plugin.json`, and
-  `.claude-plugin/marketplace.json`, redirecting formatted output to `/dev/null`;
-  each must exit 0. Run
-  `python3 "${CODEX_HOME:-$HOME/.codex}/skills/.system/plugin-creator/scripts/validate_plugin.py" plugins/steward`;
-  require exit 0. Resolve each relative Markdown link in changed active docs
-  against its containing directory, and inspect
-  `rg -n 'draft-consensus-goal' README.md plugins/steward .claude-plugin/marketplace.json`
-  so only upgrade and historical example mentions remain. Save outputs with
-  the result. The verifier suites belong to `INT-01`.
-- **Handback:** a newly discovered live caller or incompatible plugin loader
-  requires a planner decision; do not create a compatibility entry.
-- **Result:** pending. Bind to plan revision 1, task revision 1, actual
-  `STEW-01` result version and code state; record commands, diff, evidence,
-  status, and interruption handoff.
+- **Source and dependencies:** the same accepted request; consume the actual
+  result ID/version produced under `META-01` task revision 1, skill files, and
+  successful validation evidence. The executor may mark this settled card
+  `ready` only after recording that `META-01` is `done`, those outputs exist,
+  and they remain applicable to the current code state.
+- **Observed facts:** `README.md` has a Steward workflow table and links to
+  `plugins/steward/README.md`; that plugin README has a skill table and example
+  invocations. The manifest directory setting already covers a new skill
+  folder. The repository `.gitignore` ignores `/docs/`. These observations
+  do not establish that the proposed skill works.
+- **Scope and preservation:** edit `README.md` and
+  `plugins/steward/README.md` only. Keep the existing workflows and links
+  accurate; do not change plugin manifests or marketplace metadata in this
+  card.
+- **Fixed implementation:** add the explicit invocation
+  `$steward:review-steward-metadata` and
+  `/steward:review-steward-metadata` to the Steward
+  README, describe its read-only checks and evidence-gap behavior, and give the
+  root README a concise link to that entry. Do not imply that it repairs
+  metadata or that a review has already passed.
+- **Local discretion:** placement and Chinese wording of the new documentation.
+- **Acceptance:** a reader can find the skill's purpose, invocation, and
+  read-only boundary from the two READMEs; relative links resolve to tracked
+  files, and the description agrees with the actual `META-01` output.
+- **Validation:** from the repository root, inspect the changed Markdown links
+  against their containing directories and compare the usage text with the
+  delivered `SKILL.md` and `agents/openai.yaml`. Run `git diff --check` and
+  require exit 0; save the inspected paths and command result. Do not claim a
+  review result before this card is executed.
+- **Handback:** if the delivered skill name or invocation policy differs from
+  the fixed contract, provide the files and discrepancy to the planner; do not
+  silently redefine the documentation target.
+- **Result:** pending. Assign a result ID/version and bind it to plan revision
+  1, task revision 1, the actual `META-01` result ID/version and code state;
+  record the diff, checks, status, and next action after interruption.
 
 **Task `INT-01`, revision 1, `draft`: Integrated acceptance.**
 
-- **Source and dependencies:** the full replacement request; consume the
-  actual revision 1 results and code states of `STEW-01` and `STEW-02`. Mark
-  `ready` only after both outputs actually exist and remain applicable.
-- **Observed facts and scope:** at `fcbb072`, the verifier calls
-  `goal_workspace.view_goal_bundle()`; its shared runtime and the two existing
-  unittest suites must remain. Inspect the final diff and run checks, without
-  changing planner-owned decisions or user state.
-- **Fixed acceptance and discretion:** verify overall requirement coverage,
-  no active old skill or alias, the new handoff/recovery protocol, correct
-  versions and links, and unchanged independent GOAL consumption. The owner
-  may choose evidence formatting only. Component completion is insufficient.
-- **Validation:** from repository root, using Python 3.10 or newer, run
-  `python3 -B -m unittest discover -s plugins/steward/tests -p 'test_*.py'`
-  and `python3 -B -m unittest discover -s plugins/steward/skills/run-closed-loop-verification/tests -p 'test_*.py'`;
-  both must exit 0. Also require `git diff --check` exit 0 and inspect the
-  complete diff. Record the interpreter version and actual command results.
-- **Handback and result:** a failing existing test needs diagnosis, not a
-  relaxed gate. Return design or requirement gaps to the planner; fix only
-  in-contract implementation defects. Result pending, bound to plan/task
-  revisions, both actual dependency result versions, final code state, and
-  evidence. Mark overall done only after this task is done.
+- **Source and dependencies:** the full example request; consume the actual
+  result IDs/versions and code-state identities of `META-01` and `META-02`.
+  The executor may mark this card `ready` only after both tasks are `done` and
+  their evidence still applies.
+- **Observed facts and scope:** the three metadata sources are the two plugin
+  manifests and `.claude-plugin/marketplace.json`. Check their actual contents,
+  the new skill, both README entries, and the complete diff. Integration may
+  record results, but it may not change planner-owned decisions.
+- **Fixed acceptance and discretion:** confirm that both manifests point to the
+  shared skill folder, all three `description` values agree, the skill reports
+  matched values or precise mismatches without writing files, and both
+  documented invocations match its policy.
+  Confirm the request's full coverage; component completion alone is not
+  sufficient. Evidence formatting is the only local choice.
+- **Validation:** from the repository root, run the same `quick_validate.py`
+  command from `META-01` and
+  `python3 "${CODEX_HOME:-$HOME/.codex}/skills/.system/plugin-creator/scripts/validate_plugin.py" plugins/steward`;
+  both must exit 0. Run `git diff --check`, resolve changed relative links,
+  and inspect the complete diff and the review-scenario evidence. Record actual
+  command outputs and any checks not run.
+- **Handback and result:** diagnose failed checks without lowering acceptance.
+  Fix defects inside the accepted cards; return contradicted design assumptions
+  or requirement gaps to the planner. Result pending; assign its ID/version
+  and bind it to plan/task revisions, both actual dependency result versions,
+  final code state, and evidence. Mark the overall plan `done` only after this
+  card is `done`.

@@ -1,6 +1,6 @@
 # plugins
 
-CoachPo 的 Codex 与 Claude Code 插件市场。两个宿主从同一个 Git 仓库安装插件，并共享插件内的技能、机器合同和项目状态约定。
+CoachPo 的 Codex 与 Claude Code 插件市场。两个宿主从同一个 Git 仓库安装插件，并共享插件内的技能。
 
 ## 插件市场
 
@@ -10,7 +10,7 @@ CoachPo 的 Codex 与 Claude Code 插件市场。两个宿主从同一个 Git �
 
 | Plugin | Category | 简介 |
 | --- | --- | --- |
-| [`steward`](plugins/steward/README.md) | Productivity | 项目文档、只读调研、交付规划、代码级任务交接，以及既有 GOAL 的闭环验收。 |
+| [`steward`](plugins/steward/README.md) | Productivity | 项目文档、只读调研、交付规划与代码级任务交接。 |
 
 ## Steward 工作流
 
@@ -20,9 +20,8 @@ CoachPo 的 Codex 与 Claude Code 插件市场。两个宿主从同一个 Git �
 | 调研分析 | `parallel-repository-research`、`analyze-change-request` |
 | 开发规划 | `plan-delivery` |
 | 代码级交接 | `plan-execution` |
-| 既有 GOAL 验收 | `run-closed-loop-verification` |
 
-完整用法、权限边界和 `.steward/` 工作树本地状态约定见 [Steward 文档](plugins/steward/README.md)。
+完整用法和权限边界见 [Steward 文档](plugins/steward/README.md)。
 
 ## Codex 安装
 

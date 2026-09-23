@@ -14,10 +14,9 @@ bounded investigation first, and tightly coupled exploratory work may be better
 completed by the planner.
 
 This skill plans and hands off. It does not dispatch tasks, implement changes,
-run acceptance, activate a host GOAL, or create a Steward GOAL bundle. A request
-to analyze or review is read-only; create or revise files only in the requested
-scope. Follow existing authorization for local writes and seek separate authority
-for external or destructive actions.
+or run acceptance. A request to analyze or review is read-only; create or revise
+files only in the requested scope. Follow existing authorization for local writes
+and seek separate authority for external or destructive actions.
 
 ## Establish authority and evidence
 
@@ -78,8 +77,6 @@ evidence, and preserve prior results. Bind every result to plan and task
 revisions, actual dependency output versions, and code state. Keep interrupted
 work recoverable. A file ignored by Git does not travel between workspaces:
 state how the plan, diff, and necessary evidence will actually be delivered.
-Do not migrate or infer completion from existing `.steward` bundles or
-campaigns; the legacy verifier consumes a different contract.
 
 Review the final contract for requirement coverage, decisions left to the
 executor, executable validation, drift and failure handling, and integration

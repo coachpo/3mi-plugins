@@ -1,7 +1,7 @@
 {
   "name": "steward",
-  "version": "0.10.0",
-  "description": "面向 Codex 与 Claude Code 的工程技能，覆盖项目文档、只读调研、交付规划、代码级任务交接及既有 GOAL 验收。",
+  "version": "0.11.0",
+  "description": "面向 Codex 与 Claude Code 的工程技能，覆盖项目文档、只读调研、交付规划与代码级任务交接。",
   "author": {
     "name": "coachpo",
     "url": "https://github.com/coachpo"
@@ -14,23 +14,19 @@
     "claude-code",
     "codex",
     "documentation",
-    "goals",
     "implementation-planning",
     "task-contracts",
     "requirements-analysis",
     "repository-research",
     "sprint-backlog",
-    "verification",
     "workflows",
-    "testing",
-    "regression",
     "steward"
   ],
   "skills": "./skills/",
   "interface": {
     "displayName": "Steward",
-    "shortDescription": "项目文档、调研、交付规划、任务交接与既有 GOAL 验收",
-    "longDescription": "Steward 的共享技能维护项目文档与 AGENTS.md，执行只读仓库调研和需求分析，通过 plan-delivery 规划实施计划与 Sprint Backlog，并通过 plan-execution 将已定需求和代码证据写成供另一执行者使用的任务合同。独立的 run-closed-loop-verification 继续验收已有 GOAL bundle，保留可恢复的 campaign、证据、修补与复测。新任务合同不由旧 GOAL 验收器消费。Codex 与 Claude Code 读取同一套技能。",
+    "shortDescription": "项目文档、调研、交付规划与任务交接",
+    "longDescription": "Steward 的共享技能维护项目文档与 AGENTS.md，执行只读仓库调研和需求分析，通过 plan-delivery 规划实施计划与 Sprint Backlog，并通过 plan-execution 将已定需求和代码证据写成供另一执行者使用的任务合同。Codex 与 Claude Code 读取同一套技能。",
     "developerName": "CoachPo",
     "category": "Productivity",
     "capabilities": [
@@ -41,8 +37,7 @@
       "使用 $steward:write-project-docs 维护 canonical 项目文档，再用 $steward:write-agent-guides 同步 AGENTS.md 层级。",
       "使用 $steward:analyze-change-request 调研当前变更请求；需要复杂仓库搜索时使用 $steward:parallel-repository-research。",
       "使用 $steward:plan-delivery 按需创建或修订实施计划与 Sprint Backlog；可仅处理一个阶段，交付两份文档时联合检查。",
-      "使用 $steward:plan-execution 基于仓库证据编写下一批代码级执行合同，明确实现决策、验证和反证回交规则。",
-      "使用 $steward:run-closed-loop-verification 验收已有 GOAL bundle，按独立的 GOAL 合同诊断、修补并复测。"
+      "使用 $steward:plan-execution 基于仓库证据编写下一批代码级执行合同，明确实现决策、验证和反证回交规则。"
     ],
     "brandColor": "#1A73E8",
     "websiteURL": "https://github.com/coachpo/plugins/tree/main/plugins/steward"
