@@ -7,11 +7,10 @@ description: Create, revise, or review repository-grounded implementation task c
 
 Turn accepted requirements into a bounded implementation contract that a qualified
 executor can complete from the contract and repository without choosing the
-architecture or reinterpreting the request. Use a stronger planning model when
-the work justifies a handoff; do not hard-code model names or assume that every
-task should be delegated. Simple work can be done directly, major unknowns need
-bounded investigation first, and tightly coupled exploratory work may be better
-completed by the planner.
+architecture or reinterpreting the request. Not every task warrants a handoff:
+simple work can be done directly, major unknowns need bounded investigation
+first, and tightly coupled exploratory work may be better completed by the
+planner.
 
 This skill plans, hands off, and decides acceptance from returned evidence. It
 does not dispatch tasks, implement changes, or run the executor's validation. A
@@ -59,7 +58,7 @@ split it only when size warrants. Include the execution and recovery protocol in
 the artifact itself. Assign final integration acceptance, an owner, and coverage
 of the overall requirements during planning. Completing component tasks does
 not establish overall completion. Ordinary tasks with mechanical acceptance do
-not each need another planning-model signature.
+not each need a separate planner sign-off.
 
 ## Hand off, revise, and accept
 

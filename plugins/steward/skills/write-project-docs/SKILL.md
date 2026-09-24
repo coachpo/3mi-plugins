@@ -1,6 +1,6 @@
 ---
 name: write-project-docs
-description: Review, create, update, or migrate canonical repository documentation from verified project facts. Use only for an explicit documentation request; a focused edit does not initialize a document suite. Use write-agent-guides for the AGENTS.md hierarchy.
+description: Review, create, update, or migrate canonical repository documentation from verified project facts. Use only for an explicit documentation request. Use write-agent-guides for the AGENTS.md hierarchy.
 ---
 
 # Write Project Documentation
@@ -30,9 +30,9 @@ not required filenames or a mandatory document set:
 
 Give shared facts and policies one authoritative home and link or summarize
 them where useful. Preserve valuable specialized documents and intentional
-translations. Add an index when it improves navigation. A focused edit does not
-require missing documents, development tiers, generic engineering policies, or
-new governance. Preserve existing project policy unless changing it is requested.
+translations. Add an index when it improves navigation. A focused edit changes
+only the documents it affects; add documents or policies only when the request
+calls for them. Preserve existing project policy unless changing it is requested.
 
 ## Ground the content
 
