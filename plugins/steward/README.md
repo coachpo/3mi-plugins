@@ -2,6 +2,10 @@
 
 Steward 为 Codex 与 Claude Code 提供项目文档、仓库调研、交付规划和代码级任务交接技能。两个宿主读取同一份 `skills/` 目录。
 
+## 0.12.0 升级说明
+
+`plan-execution` 更名为 `plan-handoff`，旧的 `$steward:plan-execution` 与 `/steward:plan-execution` 调用失效，没有别名或兼容入口。该技能新增验收职责：验收负责人依据结果记录和实际 diff 决定结项、退回任务或修订合同。任务合同头部新增两项要求：只在对话中确认的需求要写进合同，验收结论写入验收记录；`plan-delivery` 的实施计划与 Backlog 增加修订号。已有 `task-plan.md` 可继续使用，验收时补写验收记录。两个插件 manifest 的版本同步到 0.12.0。
+
 ## 0.9.1 升级说明
 
 Codex 中的只读调研工作代理在委派工具支持模型覆盖时使用 `gpt-6-luna`；其他宿主和不支持模型覆盖的工具继续使用宿主默认模型。主任务模型不受技能控制。
@@ -33,13 +37,24 @@ claude plugin install steward@coachpo
 | 技能 | 主要结果与边界 |
 | --- | --- |
 | [analyze-change-request](skills/analyze-change-request/SKILL.md) | 结合仓库与公开来源分析变更需求，提供引用及可观察验收标准。显式调用；只读，不实施或执行项目。 |
-| [plan-execution](skills/plan-execution/SKILL.md) | 根据已定需求与仓库证据创建、修订或审查供另一执行者使用的代码级任务合同；只规划和交接，不实施或验收。 |
 | [parallel-repository-research](skills/parallel-repository-research/SKILL.md) | 至少两条独立调查线定位代码、梳理架构或追踪依赖，主代理核实证据。只读，不运行测试或判定行为风险。 |
 | [plan-delivery](skills/plan-delivery/SKILL.md) | 创建、修订或审查实施计划和／或 Sprint Backlog，明确交付、责任、依赖及验收。只规划，不执行开发。 |
+| [plan-handoff](skills/plan-handoff/SKILL.md) | 根据已定需求与仓库证据创建、修订或审查供另一执行者使用的代码级任务合同，并依据回交证据验收或修订合同；不实施，也不替执行者运行验证。 |
 | [write-agent-guides](skills/write-agent-guides/SKILL.md) | 维护有依据的 AGENTS.md 层级，共享规则在根文件，子树仅记录局部差异。不维护 CLAUDE.md。 |
 | [write-project-docs](skills/write-project-docs/SKILL.md) | 按仓库事实和既有约定维护正式项目文档，明确权威来源并同步相关链接。显式文档请求；局部更新不扩展为文档套件。 |
 
 Codex 可以按意图隐式选择仓库调查、交付规划、代码级任务交接和代理指南技能；其他技能保持各自的调用策略。审查请求只返回发现；创建、修改请求在指定范围内落盘。
+
+## 交付链路
+
+一次代码变更可按下列顺序使用技能；每一步都可单独调用，不需要的步骤可以跳过。
+
+1. `analyze-change-request` 在对话中给出带来源和验收标准的需求分析，复杂仓库搜索配合 `parallel-repository-research`；由用户确认需求和决策。
+2. 需要拆工作包或排 Sprint 时，用 `plan-delivery` 编写带修订号的实施计划和／或 Backlog。
+3. `plan-handoff` 把已确认的需求或计划条目写成 `task-plan.md` 任务合同。
+4. 另一执行者按合同内的协议实施并记录结果，无需加载 Steward；合同前提不成立时交回规划者修订。
+5. 验收负责人用 `plan-handoff` 核对结果记录和实际 diff，决定结项、退回任务或修订合同。
+6. 变更影响文档时，用 `write-project-docs`、`write-agent-guides` 同步，也可以直接把文档更新写进任务卡。
 
 ## 文档与规划
 
@@ -49,7 +64,7 @@ Codex 可以按意图隐式选择仓库调查、交付规划、代码级任务�
 
 规划可以只处理实施计划、只处理 Backlog，或联合维护两者。实施计划拥有范围、工作包与总体验收，Backlog 拥有任务拆分、具体依赖和迭代安排；未知容量以假设表达。采用用户及项目的格式，没有约定时默认放在 `docs/planning/`。
 
-`plan-execution` 接受已定需求，也可引用现有计划或 Backlog 的条目及版本，不强制先创建 Sprint 文档。它为下一批稳定工作固定代码级实现、兼容和错误语义、允许裁量、可观察验收、验证命令及反证回交规则；未来未知工作保持 `draft`。默认从一个 `task-plan.md` 开始，包含执行／恢复协议、任务状态和绑定版本与代码状态的结果。规划者指定最终集成验收负责人；执行者不能用修改合同或降低标准来接受自己的实现。单纯需求分析、Sprint 排期与普通小修复不必走此交接。
+`plan-handoff` 接受已定需求，也可引用现有计划或 Backlog 的条目及修订号，不强制先创建 Sprint 文档；只在对话中确认的需求，连同验收标准和确认来源写进合同。它为下一批稳定工作固定代码级实现、兼容和错误语义、允许裁量、可观察验收、验证命令及反证回交规则；未来未知工作保持 `draft`。默认从一个 `task-plan.md` 开始，包含执行／恢复协议、任务状态和绑定版本与代码状态的结果。规划者指定最终集成验收负责人；负责人依据结果记录和实际 diff 验收，证据缺失或无法核验不算通过，写下验收记录后计划才标为 `done`。执行者不能用修改合同或降低标准来接受自己的实现。单纯需求分析、Sprint 排期与普通小修复不必走此交接。
 
 计划文件沿用用户或项目指定位置；若放在本仓库被 `.gitignore` 忽略的 `/docs/` 下，跨工作区交付时必须另行传送该文件、代码差异和必要证据，不能假定 Git 会同步它。
 
@@ -57,7 +72,9 @@ Codex 可以按意图隐式选择仓库调查、交付规划、代码级任务�
 使用 $steward:write-project-docs 更新 README 中受本次变更影响的用法与链接。
 使用 $steward:write-agent-guides 维护 packages/api/AGENTS.md 的局部命令差异。
 使用 $steward:plan-delivery 根据已有实施计划创建 Sprint Backlog，只编写 Backlog。
-使用 $steward:plan-execution 根据已定需求和当前代码创建下一批任务合同，供另一执行者实施。
+使用 $steward:plan-handoff 根据已定需求和当前代码创建下一批任务合同，供另一执行者实施。
+按 task-plan.md 中的执行协议实施下一个 ready 任务并记录结果；合同前提不成立时交回规划者。
+使用 $steward:plan-handoff 验收 task-plan.md 的执行结果，决定结项、退回任务或修订合同。
 ```
 
 ## 只读调研

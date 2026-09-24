@@ -16,12 +16,12 @@ CoachPo 的 Codex 与 Claude Code 插件市场。两个宿主从同一个 Git �
 
 | 工作流 | 技能 |
 | --- | --- |
-| 项目文档 | `write-project-docs`、`write-agent-guides` |
 | 调研分析 | `parallel-repository-research`、`analyze-change-request` |
 | 开发规划 | `plan-delivery` |
-| 代码级交接 | `plan-execution` |
+| 代码级交接与验收 | `plan-handoff` |
+| 项目文档 | `write-project-docs`、`write-agent-guides` |
 
-完整用法和权限边界见 [Steward 文档](plugins/steward/README.md)。
+一次代码变更通常依次经过需求分析、交付规划（按需）、代码级交接、执行者实施和验收；文档技能可在任一阶段单独使用。各步交接物、完整用法和权限边界见 [Steward 文档](plugins/steward/README.md)。
 
 ## Codex 安装
 

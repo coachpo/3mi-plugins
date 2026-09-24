@@ -15,7 +15,10 @@ when the executor has not loaded this skill.
   tasks instead of inventing a composite status.
 - **Requirements and decisions:** authoritative request or upstream plan and
   Backlog entries with versions; map each overall requirement to a task or the
-  final integration check. State exclusions and open questions separately.
+  final integration check. When a requirement or decision was accepted only in
+  conversation, record its accepted wording, acceptance criteria, and who
+  accepted it and when, so later sessions need not rely on the transcript.
+  State exclusions and open questions separately.
 - **Authority and delivery:** authorized writes and prohibited external effects;
   plan location and how this file, code diff, and evidence reach the executor or
   another workspace. An ignored path needs an explicit transfer, not an
@@ -27,6 +30,10 @@ when the executor has not loaded this skill.
   of final integrated acceptance, and what proves the whole request is done.
   Plan final integration now, but keep its task `draft` until required outputs
   actually exist; a condition on future outputs does not make it `ready`.
+- **Acceptance record:** written only by the acceptance owner: decision,
+  reviewed plan/task revisions, result versions and code state, evidence
+  examined, and reopened or revised tasks. The plan becomes `done` only with an
+  accepting record.
 
 ## Task card (repeat for each cohesive change)
 
@@ -83,8 +90,9 @@ when the executor has not loaded this skill.
    evidence no longer applies.
 5. After interruption, record the last validation actually run and its result,
    unfinished diff, current code state, and next action. On resumption repeat
-   step 1. Mark `done` only with the stated evidence. Complete the final
-   integration task before claiming the overall request is complete.
+   step 1. Mark `done` only with the stated evidence. After the final
+   integration task is `done`, hand its evidence to the acceptance owner; only
+   an accepting record completes the overall request.
 
 ## Worked example: Add a read-only metadata review skill
 
@@ -106,7 +114,8 @@ Deliver the tracked code diff and this `task-plan.md` together; if the plan is
 saved under the repository's ignored `/docs/`, transfer it and its evidence
 explicitly. `META-01` provides the review behavior, `META-02` makes it visible
 in product documentation, and `INT-01` checks the integrated result. Execute
-serially with one writer; the planner owns final integration acceptance.
+serially with one writer; the planner owns final integration acceptance, and
+the acceptance record stays empty until `INT-01` is reviewed.
 
 **Task `META-01`, revision 1, `ready`: Add the metadata review skill.**
 
@@ -217,5 +226,6 @@ serially with one writer; the planner owns final integration acceptance.
   Fix defects inside the accepted cards; return contradicted design assumptions
   or requirement gaps to the planner. Result pending; assign its ID/version
   and bind it to plan/task revisions, both actual dependency result versions,
-  final code state, and evidence. Mark the overall plan `done` only after this
-  card is `done`.
+  final code state, and evidence. After this card is `done`, the planner
+  reviews its evidence and marks the overall plan `done` only with an accepting
+  record.

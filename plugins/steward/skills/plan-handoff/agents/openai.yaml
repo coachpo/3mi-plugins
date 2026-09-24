@@ -1,0 +1,4 @@
+interface:
+  display_name: "Plan Handoff"
+  short_description: "基于仓库证据编写代码级任务合同，并依据执行证据验收或修订"
+  default_prompt: "使用 $steward:plan-handoff 根据已定需求和当前仓库编写下一批可执行任务合同，明确实现决策、验收及反证回交规则。"

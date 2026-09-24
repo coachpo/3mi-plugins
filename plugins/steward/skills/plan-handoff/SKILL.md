@@ -1,9 +1,9 @@
 ---
-name: plan-execution
-description: Create, revise, or review repository-grounded implementation task contracts for another executor. Use for code-level handoff from requirements or a Backlog, or to revise contracts after execution evidence; not for ordinary small fixes, requirements analysis, or Sprint scheduling.
+name: plan-handoff
+description: Create, revise, or review repository-grounded implementation task contracts for another executor. Use for code-level handoff from requirements or a Backlog, or to accept results or revise contracts from execution evidence; not for ordinary small fixes, requirements analysis, or Sprint scheduling.
 ---
 
-# Plan Execution
+# Plan Handoff
 
 Turn accepted requirements into a bounded implementation contract that a qualified
 executor can complete from the contract and repository without choosing the
@@ -13,10 +13,11 @@ task should be delegated. Simple work can be done directly, major unknowns need
 bounded investigation first, and tightly coupled exploratory work may be better
 completed by the planner.
 
-This skill plans and hands off. It does not dispatch tasks, implement changes,
-or run acceptance. A request to analyze or review is read-only; create or revise
-files only in the requested scope. Follow existing authorization for local writes
-and seek separate authority for external or destructive actions.
+This skill plans, hands off, and decides acceptance from returned evidence. It
+does not dispatch tasks, implement changes, or run the executor's validation. A
+request to analyze or review is read-only; create or revise files only in the
+requested scope. Follow existing authorization for local writes and seek
+separate authority for external or destructive actions.
 
 ## Establish authority and evidence
 
@@ -25,8 +26,8 @@ implementation plan or Backlog exists, cite its entry and revision; do not
 silently rewrite it. No upstream plan is required. `analyze-change-request` owns
 requirement analysis and tradeoff advice; `parallel-repository-research` can
 collect read-only facts; `plan-delivery` owns work packages, Backlog, dependency
-and Sprint planning. This skill owns code-level decisions and the executor
-contract.
+and Sprint planning. This skill owns code-level decisions, the executor
+contract, and acceptance of returned results.
 
 Inspect the actual implementation, callers, tests, configuration, and relevant
 history. Reopen decisive evidence yourself, including delegated findings.
@@ -60,7 +61,7 @@ of the overall requirements during planning. Completing component tasks does
 not establish overall completion. Ordinary tasks with mechanical acceptance do
 not each need another planning-model signature.
 
-## Hand off and revise
+## Hand off, revise, and accept
 
 Default to serial execution and one writer. Before execution, compare the
 contract, dependency results, and relevant code with their recorded baselines
@@ -78,6 +79,20 @@ revisions, actual dependency output versions, and code state. Keep interrupted
 work recoverable. A file ignored by Git does not travel between workspaces:
 state how the plan, diff, and necessary evidence will actually be delivered.
 
+To accept returned results, judge the recorded results and actual diff, not the
+executor's summary. Confirm that each result binds to current plan and task
+revisions, actual dependency outputs, and the reviewed code state; that the diff
+stays within scope, fixed decisions, and listed discretion; and that recorded
+validation output meets the pass criteria, with unrun checks named. Check the
+integration evidence against every overall requirement. Missing or unverifiable
+evidence, or an in-contract defect, reopens the affected task as `ready` with
+the failed criterion, along with dependents whose evidence no longer applies.
+Revise the contract only for a disproven assumption, design error, or
+requirement gap. Write the decision, reviewed revisions, and evidence to the
+acceptance record before marking the plan `done`; acceptance never lowers
+criteria.
+
 Review the final contract for requirement coverage, decisions left to the
 executor, executable validation, drift and failure handling, and integration
-ownership. Report the handoff location and any tasks still `draft` or `blocked`.
+ownership. Report the handoff location and any tasks still `draft` or `blocked`;
+after an acceptance decision, report it with any reopened or revised tasks.

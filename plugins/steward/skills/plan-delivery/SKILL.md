@@ -46,9 +46,13 @@ that prevent readiness; creating or changing the plan needs to be in scope.
   and expected evidence. Include explicit work and ownership for shared business
   results and final integration. Planned evidence is still evidence to collect.
 
-Use existing IDs and preserve them across revisions or Sprint moves. Maintain a
-traceable mapping for splits, merges, or retirements. Coverage views should refer
-to authoritative entries rather than duplicate their scope and completion rules.
+Use existing IDs and preserve them across revisions or Sprint moves. Give each
+delivered plan and Backlog a revision, following any existing convention, and
+increment it when an entry's scope, outputs, dependencies, responsibilities, or
+acceptance change; downstream contracts cite the entry and revision they used.
+Maintain a traceable mapping for splits, merges, or retirements. Coverage views
+should refer to authoritative entries rather than duplicate their scope and
+completion rules.
 
 ## Check dependencies and acceptance
 
@@ -78,7 +82,7 @@ responsibility, capacity assumptions, and acceptance. When both documents change
 check their final versions together. Report paths or findings and material gaps,
 including unread or unavailable inputs that limit the consistency review.
 
-This workflow ends at delivery planning. Use `plan-execution` when the request
+This workflow ends at delivery planning. Use `plan-handoff` when the request
 needs repository-grounded, code-level contracts for a separate executor; that
 handoff can also start directly from accepted requirements. This skill does not
 dispatch tasks, implement changes, or perform acceptance.
