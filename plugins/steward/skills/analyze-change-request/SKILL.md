@@ -36,12 +36,14 @@ or perform actions.
 
 Delegate independent questions when useful and permitted by the available
 tools. In Codex, use `gpt-6-luna` for bounded read-only workers when the
-delegation tool supports a model override; otherwise use the host default.
-Give workers the question, relevant target and version, authorized read scope,
-and analysis-only boundary. The main agent reconciles the results and checks
-decisive evidence directly. If delegation is unavailable, research directly.
-Tool failures or inaccessible sources warrant a fallback or an explicit
-evidence gap, not invented support.
+delegation tool supports a model override. In Claude Code, send repository
+questions to the plugin's `steward-researcher` agent, which runs on a
+lower-cost model with read-only file tools; other questions and hosts use the
+host default. Give workers the question, relevant target and version,
+authorized read scope, and analysis-only boundary. The main agent reconciles the
+results and checks decisive evidence directly. If delegation is unavailable,
+research directly. Tool failures or inaccessible sources warrant a fallback or
+an explicit evidence gap, not invented support.
 
 Open decisive sources; search snippets and worker confidence are not evidence.
 Check the cited code or source in context, including version applicability and
