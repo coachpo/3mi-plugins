@@ -2,6 +2,10 @@
 
 Steward 为 Codex 与 Claude Code 提供项目文档、仓库调研、交付规划和代码级任务交接技能。两个宿主读取同一份 `skills/` 目录。
 
+## 0.14.0 升级说明
+
+`write-project-docs` 的贡献指南（通常为 `CONTRIBUTING.md`）角色新增设计与开发原则：默认采用乐观取向，按较宽松的平台能力、资源档位与配额设计并记录工作假设，不为假设的最坏情况预先收紧；默认绝大多数请求正常，不预置滥用防护与保守限流；默认选择最好情况分支，最坏情况处理必须是具名决策。`write-agent-guides` 在根 AGENTS.md 中以可执行规则承载同一默认，理由链接贡献指南或政策文档。乐观取向只作用于政策与设计取舍，未知限制仍以工作假设加复查条件表述，不写成已验证事实；项目已采纳不同政策时保持原政策。两个插件 manifest 的版本同步到 0.14.0。
+
 ## 0.13.0 升级说明
 
 `plan-handoff` 的任务卡新增执行档位、入口检查和尝试预算，把漂移、越界和升级判断改成命令、路径和次数，便于交给低价模型执行；结果区要求记录每条命令的退出码和原始输出。执行协议改为技能附带的 `executor-protocol.md`，由规划者原样复制进 `task-plan.md`；完整范例移到 `task-plan-example.md`，按需读取。Claude Code 版新增两个插件 agent：`steward-researcher`（`haiku`，只读工具）承担调研 worker，`steward-executor`（`sonnet`）执行 ready 任务；你要求执行时，`plan-handoff` 会把 ready 任务逐个派发给它。已有 `task-plan.md` 可继续按其中附带的协议执行。两个插件 manifest 的版本同步到 0.13.0。

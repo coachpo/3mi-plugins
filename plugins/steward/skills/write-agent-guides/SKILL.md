@@ -38,6 +38,20 @@ non-obvious invariants, generated boundaries, and explicit working preferences.
 Link authoritative project documents instead of copying their contents. Avoid
 generic engineering advice and exhaustive repository descriptions.
 
+Root guidance also carries the shared design and development constraints agents
+implement by default. Unless the project has already adopted different policy,
+include the optimistic default as operational rules; link the contribution
+guide or policy document for rationale:
+
+- Implement against the looser platform capability, resource tier, or quota and
+  record the assumption; do not add worst-case tightening the request did not
+  ask for.
+- Assume the overwhelming majority of requests are legitimate: do not add
+  preemptive abuse handling, conservative rate limits, or adversarial hardening
+  beyond the accepted requirements.
+- Choose the best-case branch by default; treat worst-case handling as a named
+  decision rather than inherited caution.
+
 Use the requested language, otherwise preserve the effective root language or
 the established repository-document language. Preserve unrelated content and
 managed regions; an authorized change to managed content must account for the
