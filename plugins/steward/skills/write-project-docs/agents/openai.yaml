@@ -1,7 +1,7 @@
 interface:
   display_name: "Write Project Documentation"
   short_description: "基于仓库事实维护正式项目文档，沿用既有约定并保持更新范围"
-  default_prompt: "使用 $steward:write-project-docs 基于仓库事实维护本次请求涉及的正式项目文档，沿用既有语言和组织方式，明确事实权威并修复受影响的链接；贡献指南默认写入乐观设计与开发原则及其工作假设。"
+  default_prompt: "使用 $steward:write-project-docs 基于仓库事实维护正式项目文档，默认将现有架构文档校正到当前实现，并在贡献指南中记录乐观设计原则与保持源文件内聚、易导航的开发原则。"
 
 policy:
   allow_implicit_invocation: false

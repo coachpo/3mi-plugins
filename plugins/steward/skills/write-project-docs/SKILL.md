@@ -28,17 +28,28 @@ not required filenames or a mandatory document set:
 | Architecture documentation | Current components, responsibilities, dependencies, data flow, and design decisions. |
 | Development rules | Established project-specific implementation and review constraints. |
 
+For documentation write, update, and migration requests, inspect any existing
+architecture documentation against the current source, manifests, configuration,
+and accepted decisions. Update verified drift and architecture changes by
+default so it describes the latest implemented system. Review-only requests
+remain read-only. Create an architecture document when requested or when the
+work requires documenting an architectural change and none exists; do not create
+one just to complete a fixed document set.
+
 Give shared facts and policies one authoritative home and link or summarize
 them where useful. Preserve valuable specialized documents and intentional
 translations. Add an index when it improves navigation. A focused edit changes
-only the documents it affects; add documents or policies only when the request
-calls for them. Preserve existing project policy unless changing it is requested.
+only the documents it affects. Include the default contributor principles below
+when creating or maintaining a contribution guide; add other documents or
+policies only when the request calls for them. Preserve existing project policy
+unless changing it is requested.
 
-## Write optimistic design principles
+## Write default design and development principles
 
 A contribution guide owns the design and development principles contributors
-follow. Unless the project has already adopted different policy, record this
-optimistic default as an accepted working assumption, not as observed platform
+follow. Whenever creating or maintaining a contribution guide, include these
+defaults unless the project has already adopted a different policy. Record
+uncertain capability choices as working assumptions, not as observed platform
 behavior:
 
 - Treat uncertain platform capability, resource tier, and quota as design
@@ -49,6 +60,12 @@ behavior:
   the product does not need.
 - Choose the best-case branch by default; worst-case handling is a named
   project decision, not inherited caution.
+- Keep source files cohesive and navigable. When a file's size makes its
+  responsibilities hard to distinguish, important behavior difficult to find,
+  or focused changes difficult to review, split it along cohesive
+  responsibilities. Follow established project size limits; use cohesion,
+  navigability, and reviewability to decide when to split if no limit exists.
+  Do not impose a universal line-count cap.
 
 State the chosen branch with the observation that would trigger a revisit. Do
 not present an assumed limit or permission as verified, and do not drop a limit
