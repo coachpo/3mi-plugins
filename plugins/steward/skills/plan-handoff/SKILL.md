@@ -16,8 +16,11 @@ dependent chain that fits one context is usually cheaper to finish directly.
 
 This skill plans, hands off, and decides acceptance from returned evidence. It
 dispatches tasks only when the user asks to run them, and it does not implement
-changes or run the executor's validation. A request to analyze or review is
-read-only; create or revise files only in the requested scope. Follow existing
+changes or run the executor's validation when used on its own. Use `execute-plan`
+for carrying an approved plan through execution, integration validation, and
+authorized delivery/cleanup; that skill reuses these contracts and acceptance
+rules without inheriting this standalone execution boundary. A request to analyze
+or review is read-only; create or revise files only in the requested scope. Follow existing
 authorization for local writes and seek separate authority for external or
 destructive actions.
 
@@ -74,7 +77,10 @@ a separate planner sign-off.
 
 ## Hand off, revise, and accept
 
-Default to serial execution and one writer. Before execution, compare the
+For this skill's standalone dispatch, default to serial execution and one writer.
+When the user requests parallel or mixed execution, or the full execution loop,
+route orchestration to `execute-plan`; do not impose serial order on independent
+work there. Before execution, compare the
 contract, dependency results, and relevant code with their recorded baselines
 and attributable checkpoint diffs.
 Unrelated drift need not trigger a full replan; a contradicted assumption or
@@ -89,8 +95,13 @@ When the user asks to run ready tasks and the host provides the plugin's
 and task ID, and check each result before the next dispatch. Request the
 delegation tool's lower-cost model for `basic` tasks when it offers a model
 choice, and rerun a `basic` task as `strong` once its attempt budget is spent.
+Explicit user model and effort choices take precedence over tier defaults and
+escalation; never silently substitute them. Report an unsupported choice before
+dependent dispatch.
 `planner` tasks are not dispatched. Without that agent or an explicit request,
-stop at the handoff.
+stop at the handoff in this standalone workflow. `execute-plan` may use other
+available, authorized execution paths; this plugin agent is not a requirement
+for that skill.
 
 On a handback, revise the affected tasks and dependencies, identify invalidated
 evidence, and preserve prior results. Bind every result to plan and task

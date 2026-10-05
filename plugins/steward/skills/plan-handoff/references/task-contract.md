@@ -54,4 +54,4 @@ only when the shape below leaves a question open.
 | Validation | Commands, cwd, environment/preconditions, pass criteria, evidence location, and what remains unrun. Include a final integration check where needed. |
 | Attempt budget | Fix-and-validate cycles allowed for in-contract failures, then the escalation target: a stronger tier first, the planner for design or requirement issues. |
 | Exception and handback | Relevant drift, missing prerequisites, failed checks, and decisions that must return to the planner. |
-| Result | Executor-owned record: result ID/version, plan/task revisions, actual dependency result versions, code state as commit and diff summary, actions, each command with its exit code and raw output or saved output path, evidence, remaining differences, status, and next action after interruption. |
+| Result | Executor-owned record: result ID/version, plan/task revisions, actual dependency result versions, code state as commit (when authorized) or baseline plus retained diff, actions, each command with its exit code and raw output or saved output path, evidence, remaining differences, status, and next action after interruption. |

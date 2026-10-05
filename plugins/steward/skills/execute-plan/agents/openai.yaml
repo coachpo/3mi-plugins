@@ -1,0 +1,4 @@
+interface:
+  display_name: "Execute Plan"
+  short_description: "将已批准计划编排为串行、并行或混合执行，并审查集成与交付"
+  default_prompt: "使用 $steward:execute-plan 推进已批准计划，准备合同与执行环境，调度执行者、审查结果并完成集成验证，在已有授权内提交和清理。"
