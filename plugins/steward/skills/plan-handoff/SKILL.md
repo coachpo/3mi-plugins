@@ -24,6 +24,11 @@ or review is read-only; create or revise files only in the requested scope. Foll
 authorization for local writes and seek separate authority for external or
 destructive actions.
 
+When advising on Codex model selection, recommend `gpt-6.1-sol` for routine
+task contracts and acceptance, and `gpt-6-astra` for the most demanding design
+decisions and integration acceptance. These are role recommendations, not
+instructions to switch the active model or override user or host choices.
+
 ## Establish authority and evidence
 
 Use accepted requirements and decisions as the source of behavior. If an upstream
@@ -64,6 +69,10 @@ ordinary implementation; keep tightly coupled or high-risk work at `planner`. A
 lower-cost executor needs mechanical start and stop conditions rather than
 judgment calls, so express drift, scope, and escalation decisions as commands,
 paths, and counts on the card.
+
+For a Codex `strong` executor, recommend `gpt-6.1-sol` when a model choice is
+needed. This does not make `planner` tasks dispatchable or change the existing
+lower-cost choice for `basic` tasks.
 
 Use [task-contract.md](references/task-contract.md) when writing or reviewing a
 handoff. Start with one `task-plan.md` at the user's or project's location;

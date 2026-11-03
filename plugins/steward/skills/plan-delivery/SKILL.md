@@ -15,6 +15,11 @@ none exist, save new artifacts under `docs/planning/implementation-plan.md` and
 `docs/planning/sprint-backlog.md`. Adapt the level of detail to the work; no fixed
 template or extra planning infrastructure is required.
 
+When advising on Codex model selection, recommend `gpt-6.1-sol` for routine
+delivery planning and `gpt-6-astra` for the most demanding cross-package
+dependencies and competing constraints. These are role recommendations, not
+instructions to switch the active model or override user or host choices.
+
 ## Establish the planning baseline
 
 Read the requirements, accepted decisions, and affected existing planning

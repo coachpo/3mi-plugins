@@ -80,6 +80,13 @@ issues return for contract revision rather than blind retries. `planner` tasks
 stay with the integration owner. Use available executors; do not require a
 particular plugin agent when another authorized execution path exists.
 
+When advising on Codex model selection, recommend `gpt-6.1-sol` for routine
+execution coordination, `strong` implementation, review, and integration checks;
+`gpt-6-astra` for the most demanding design and integration decisions kept with
+the integration owner; and `gpt-6.1-terra` for documentation-only drafting from
+verified facts. These role recommendations do not override explicit choices or
+configured defaults, switch the active model, or make `planner` tasks dispatchable.
+
 Read [host-adapters.md](references/host-adapters.md) for the actual host when
 preparing or coordinating executors. This skill supplies instructions, not tools.
 Continue independent authorized work when a capability blocks only one lane.

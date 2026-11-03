@@ -2,6 +2,10 @@
 
 Steward 为 Codex 与 Claude Code 提供项目文档、仓库调研、交付规划、代码级任务交接和计划执行技能。两个宿主读取同一份 `skills/` 目录。
 
+## 0.16.1 升级说明
+
+补齐 Codex 的模型角色建议：`gpt-6.1-sol` 用于常规分析、规划、代码级合同、`strong` 实现、执行协调和验收；`gpt-6.1-terra` 用于基于已核实事实的文案、结构及视觉材料理解；`gpt-6-astra` 用于最复杂的设计取舍、约束冲突和集成验收。相关技能正文同步这些建议，保留现有 Luna 调研分工；不自动切换主会话模型，不覆盖用户或宿主选择，不新增执行配置、调度或评测。两个插件 manifest 的版本同步到 0.16.1。
+
 ## 0.16.0 升级说明
 
 新增 `execute-plan`，把已批准计划推进到工程交付，支持串行、并行和混合执行，负责合同与环境准备、派发、实际 diff 审查、最终集成验证，以及已有授权内的提交与资源清理。复用 `plan-delivery` 的范围与总体验收、`plan-handoff` 的代码级合同与证据验收；原技能保留各自职责。Codex Desktop 与 CLI／Claude Code 共用核心流程，仅在必要时读取宿主适配参考；技能不提供或保证会话管理工具。两个插件 manifest 的版本同步到 0.16.0。
@@ -75,13 +79,24 @@ Codex 可以按意图隐式选择仓库调查、交付规划、代码级任务�
 
 ## 模型分工
 
-共享技能不在元数据中固定模型：Codex 的 `openai.yaml` 没有模型字段，`SKILL.md` 的校验也不接受 Claude Code 的模型字段。执行时用户明确指定的模型与 effort 优先；没有指定时沿用宿主或执行档位配置的默认。不能静默替换用户指定值，工具不支持时需先报告。规划和验收可在主会话进行，调研与执行可交给其他模型。
+共享技能不在元数据中固定模型：Codex 的 `openai.yaml` 没有模型字段，`SKILL.md` 的校验也不接受 Claude Code 的模型字段。技能正文提供 Codex 的角色建议，不会因为调用技能而自动切换主会话模型。执行时用户明确指定的模型与 effort 优先；没有指定时沿用宿主或执行档位配置的默认。不能静默替换用户指定值，工具不支持时需先报告。规划和验收可在主会话进行，调研与执行可交给其他模型。
 
 | 角色 | Claude Code | Codex |
 | --- | --- | --- |
-| 规划、验收 | 主会话，例如 `claude --model opus` 或 `--model fable` | 主会话 |
+| 规划、验收 | 主会话，例如 `claude --model opus` 或 `--model fable` | 主会话；常规任务建议 `gpt-6.1-sol`，最复杂任务建议 `gpt-6-astra` |
 | 只读调研 worker | 插件 agent `steward-researcher`：`haiku`，只有读文件和搜索工具，查不了 Git 历史 | 委派工具的模型覆盖：`gpt-6-luna` |
 | 执行者 | 插件 agent `steward-executor`：`sonnet`，`effort: medium`；`basic` 档派发时改用更便宜的模型 | `codex exec -p <profile>`，在 profile 里设 `model` 和 `model_reasoning_effort` |
+
+Codex 按工作角色选择模型，而不是给每个技能固定一个模型。下表仅在需要模型选择建议时适用；显式模型选择和宿主配置优先，使用当前账户与客户端可用的模型。Claude Code 的分工保持不变。
+
+| Codex 模型 | 建议角色 | 适用技能或任务 |
+| --- | --- | --- |
+| `gpt-6.1-sol` | 常规分析、规划、代码事实与约束核验、代码级合同、`strong` 实现、执行协调及验收 | `analyze-change-request`、`plan-delivery`、`plan-handoff`、`execute-plan`；两项文档技能中的代码事实、指令层级和一致性判断 |
+| `gpt-6.1-terra` | 基于已核实事实的文案和结构整理，以及视觉材料理解；视觉结论仍需核对来源 | `write-project-docs`；`write-agent-guides` 中已核实规则的表达整理，不替代事实或指令作用域核验 |
+| `gpt-6-astra` | 最复杂的歧义、架构取舍、跨工作包约束、权威或指令冲突，以及困难集成验收 | 分析、规划、交接与执行中的复杂判断；两项文档技能在请求范围内的复杂冲突处理；`planner` 工作仍不外派 |
+| `gpt-6-luna` | 保留现有的有界只读调研角色 | `parallel-repository-research` 与 `analyze-change-request` 的调研 worker |
+
+这些角色建议参考 [OpenAI 官方模型说明](https://learn.chatgpt.com/docs/models#recommended-models)，不代表已完成跨模型评测，也不新增模型切换或自动派发能力。
 
 任务卡的执行档位辅助选择执行者：`basic` 只接短小、可机械验收的任务；`strong` 用配置的执行者默认；`planner` 留在主会话。预算与升级规则按合同约定，用户指定的模型和 effort 优先于档位默认及升级；设计或需求问题回到合同负责人。下方的模型、effort、路径和命令仅为可选示例，使用前核对宿主当前支持的配置方式，不是通用要求。
 

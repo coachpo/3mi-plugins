@@ -88,6 +88,14 @@ establish deployment, external users, or data-retention obligations; preserve
 uncertainty rather than inventing status or permission. Link decisive evidence
 where it helps readers verify or maintain the document.
 
+When advising on Codex model selection, recommend `gpt-6.1-terra` for drafting,
+wording, structure, and interpreting visual source material; use `gpt-6.1-sol`
+for code-grounded facts, architecture, and consistency checks, and
+`gpt-6-astra` for the most demanding cross-document authority or architecture
+conflicts within scope. Terra's writing role uses verified facts; visual claims
+still need source checks. These are role recommendations, not instructions to
+switch the active model or override user or host choices.
+
 ## Edit and migrate within scope
 
 Update the requested content and affected summaries, indexes, and links.

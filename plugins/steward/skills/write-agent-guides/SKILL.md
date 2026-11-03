@@ -25,6 +25,12 @@ Explicit user requirements establish working preferences; they do not need code
 evidence. Preserve accurate existing rules and mark material facts that remain
 unverified.
 
+When advising on Codex model selection, recommend `gpt-6.1-sol` for instruction
+hierarchy and constraint checks, `gpt-6.1-terra` for wording and structure after
+the rules are verified, and `gpt-6-astra` for the most demanding cross-subtree
+instruction conflicts within scope. These are role recommendations, not
+instructions to switch the active model or override user or host choices.
+
 ## Choose and write the hierarchy
 
 Keep or create a nested file when the subtree has an evidenced command,

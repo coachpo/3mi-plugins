@@ -10,6 +10,11 @@ skill only when the user explicitly requests it. Keep the analysis in the
 conversation; do not modify files, run project code or tests, implement the
 change.
 
+When advising on Codex model selection, recommend `gpt-6.1-sol` for routine
+requirements analysis and `gpt-6-astra` for the most demanding ambiguity and
+architecture tradeoffs. These are role recommendations, not instructions to
+switch the active model or override user or host choices.
+
 ## Establish what needs to be decided
 
 Identify the desired outcome, accepted decisions, included and excluded scope,
