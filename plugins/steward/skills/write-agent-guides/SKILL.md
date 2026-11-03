@@ -46,8 +46,9 @@ generic engineering advice and exhaustive repository descriptions.
 
 Root guidance also carries the shared design and development constraints agents
 implement by default. Unless the project has already adopted different policy,
-include the optimistic default as operational rules; link the contribution
-guide or policy document for rationale:
+include the following operational defaults; keep detailed policy and rationale
+in the contribution guide or existing authoritative policy document and link
+to it:
 
 - Implement against the looser platform capability, resource tier, or quota and
   record the assumption; do not add worst-case tightening the request did not
@@ -57,6 +58,13 @@ guide or policy document for rationale:
   beyond the accepted requirements.
 - Choose the best-case branch by default; treat worst-case handling as a named
   decision rather than inherited caution.
+- Keep source files cohesive and navigable when adding or changing code. If a
+  file's size or continued growth makes responsibilities hard to distinguish,
+  important behavior difficult to find, or focused changes difficult to review,
+  split it along cohesive responsibilities within the task's scope. Follow
+  established project size limits; without them, use cohesion, navigability,
+  and reviewability rather than a universal line-count cap. Do not create
+  needless fragments or abstractions merely to shorten a file.
 
 Use the requested language, otherwise preserve the effective root language or
 the established repository-document language. Preserve unrelated content and

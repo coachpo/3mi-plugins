@@ -1,6 +1,6 @@
 {
   "name": "steward",
-  "version": "0.16.1",
+  "version": "0.17.0",
   "description": "面向 Codex 与 Claude Code 的工程技能，覆盖项目文档、只读调研、交付规划、代码级任务交接与计划执行。",
   "author": {
     "name": "coachpo",
