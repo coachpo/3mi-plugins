@@ -122,6 +122,13 @@ not create static tests for wording or introduce a whole-repository validation
 gate solely for a documentation edit. Keep unrelated findings separate from
 in-scope failures.
 
+When documenting or reviewing a workflow or operational decision within the
+requested scope, check whether the reader can choose the correct next action at
+each affected decision point. State verified conditions, responsible actors,
+and exceptions where they change that action; link the authoritative source for
+details. Skip this coverage check for wording, formatting, or link-only changes
+that do not change meaning or the reader's next action.
+
 Report the resulting documents or review findings, meaningful evidence and
 validation, and any unresolved facts or required follow-up. State which commands
 were actually run; distinguish inspection from execution.
