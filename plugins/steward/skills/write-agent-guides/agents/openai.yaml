@@ -1,7 +1,7 @@
 interface:
   display_name: "Write AGENTS.md Guides"
   short_description: "维护分层、有证据支撑的 AGENTS.md"
-  default_prompt: "使用 $steward:write-agent-guides 基于仓库事实维护本次请求影响的 AGENTS.md 层级；根文件保留共享规则，子树只写真实差异，详细政策链接到贡献指南等 canonical 文档，并验证命令、链接和作用域；根文件默认以可执行规则承载乐观设计、源文件内聚与必要拆分约束。"
+  default_prompt: "使用 $steward:write-agent-guides 基于仓库事实维护本次请求影响的 AGENTS.md 层级；根文件保留共享规则，子树只写真实差异，详细政策链接到贡献指南等 canonical 文档，并验证命令、链接和作用域；根文件默认以可执行规则承载乐观设计、源文件内聚与必要拆分约束，新建与维护时在相关政策章节明确默认不保留向后兼容，遵循用户或项目的明确兼容要求，不因此授权代码或公共 API 变更。"
 
 policy:
   allow_implicit_invocation: true

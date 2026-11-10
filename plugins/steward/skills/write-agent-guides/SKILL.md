@@ -71,6 +71,29 @@ the established repository-document language. Preserve unrelated content and
 managed regions; an authorized change to managed content must account for the
 mechanism that owns it.
 
+## Write the compatibility policy
+
+When creating or maintaining root guidance, explicitly state the compatibility
+policy in its relevant policy section, not merely as an internal working
+assumption. Reuse equivalent existing wording instead of duplicating it, and
+link detailed policy from its authoritative document when available. Follow
+explicit compatibility requirements from the user or currently effective project
+specifications and policies; otherwise write the following operational default:
+
+- This project does not preserve backward compatibility by default. Do not retain
+  compatibility layers, aliases, dual paths, or transitional code for old APIs,
+  formats, configuration, or implementations unless explicitly required.
+- When authorized to replace an implementation, update affected callers,
+  configuration, derived contracts, tests, and documentation, and remove obsolete
+  paths within the task's scope. Do not add old-field fallbacks, dual reads or
+  writes, or format conversions merely because old callers might exist.
+- Keep cleanup within the current task; this policy does not expand its scope.
+
+This documentation default does not itself authorize deleting existing
+compatibility code or changing public APIs. For subtree-only maintenance,
+inherit the effective parent policy rather than repeat it; report a missing
+root policy outside the write scope. Review-only requests remain read-only.
+
 ## Verify and hand off
 
 Re-read changed files in their effective hierarchy. Check scopes, conflicts,

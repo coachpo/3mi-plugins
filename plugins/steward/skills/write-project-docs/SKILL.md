@@ -73,6 +73,28 @@ or obligation the project has actually accepted. In review, flag unadopted
 worst-case constraints and assumptions presented as verified facts. Agent
 operational rules belong to the AGENTS.md hierarchy, not the contribution guide.
 
+## Write the compatibility policy
+
+For both new and maintained documentation, explicitly state the compatibility
+policy in the relevant policy section of the contribution guide or existing
+authoritative policy document within scope, not merely as an internal working
+assumption. Reuse equivalent existing wording instead of duplicating it. Follow
+explicit compatibility requirements from the user or currently effective project
+specifications and policies; otherwise write the following default:
+
+- This project does not preserve backward compatibility by default. Do not retain
+  compatibility layers, aliases, dual paths, or transitional code for old APIs,
+  formats, configuration, or implementations unless explicitly required.
+- When authorized to replace an implementation, update affected callers,
+  configuration, derived contracts, tests, and documentation, and remove obsolete
+  paths within the task's scope. Do not add old-field fallbacks, dual reads or
+  writes, or format conversions merely because old callers might exist.
+- Keep cleanup within the current task; this policy does not expand its scope.
+
+This documentation default does not itself authorize deleting existing
+compatibility code or changing public APIs. Review-only requests report missing
+or conflicting policy without editing documents.
+
 ## Ground the content
 
 Inspect relevant source, manifests, configuration, tests, CI, and existing
