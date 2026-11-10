@@ -4,7 +4,7 @@ Steward 为 Codex 与 Claude Code 提供任务指令改写、项目文档、仓�
 
 ## 0.18.2 升级说明
 
-`refine-task` 在未指定目标模型时按宿主给出建议：Codex 使用 GPT 6.1 Sol，Claude Code 使用 Claude Opus 5.5。显式目标和强度优先，不切换实际运行模型。
+`refine-task` 在未指定目标模型时按宿主给出建议：Codex 使用 GPT-6.1 Sol，Claude Code 使用 Claude Opus 5.5。显式目标和强度优先，不切换实际运行模型。
 
 ## 0.18.1 升级说明
 
@@ -72,7 +72,7 @@ claude plugin install steward@coachpo
 
 | 技能 | 主要结果与边界 |
 | --- | --- |
-| [refine-task](skills/refine-task/SKILL.md) | 改写工程需求，不执行原任务。显式目标优先；未指定目标时按当前宿主推荐：Claude Code → Claude Opus 5.5，Codex → GPT 6.1 Sol。只建议强度，不切换模型。 |
+| [refine-task](skills/refine-task/SKILL.md) | 改写工程需求，不执行原任务。显式目标优先；未指定目标时按当前宿主推荐：Claude Code → Claude Opus 5.5，Codex → GPT-6.1 Sol。只建议强度，不切换模型。 |
 | [analyze-change-request](skills/analyze-change-request/SKILL.md) | 结合仓库与公开来源分析变更需求，提供引用及可观察验收标准。显式调用；只读，不实施或执行项目。 |
 | [parallel-repository-research](skills/parallel-repository-research/SKILL.md) | 至少两条独立调查线定位代码、梳理架构或追踪依赖，主代理核实证据。只读，不运行测试或判定行为风险。 |
 | [plan-delivery](skills/plan-delivery/SKILL.md) | 创建、修订或审查实施计划和／或 Sprint Backlog，明确交付、责任、依赖及验收。只规划，不执行开发。 |

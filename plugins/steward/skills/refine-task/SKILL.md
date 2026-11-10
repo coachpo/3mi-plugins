@@ -21,13 +21,13 @@ label the prompt a draft and ask the smallest necessary question.
 Assess the difficulty of executing the rewritten task, not of rewriting it.
 Honor an explicit target and effort first. Otherwise use the named target host,
 or, if no target is given, the current host identified by the session runtime:
-Claude Code → Claude Opus 5.5; Codex → GPT 6.1 Sol. These are recommendation
+Claude Code → Claude Opus 5.5; Codex → GPT-6.1 Sol. These are recommendation
 defaults, not claims about the model running the session. Do not ask which
 model to use when the host supplies a default. For a human, an unknown host
 without a named model, or a target without known effort controls, omit the level.
 If advice was requested but cannot be grounded, explain why.
 
-For GPT 6.1 Sol, choose the lowest sufficient level supported by the target client:
+For GPT-6.1 Sol, choose the lowest sufficient level supported by the target client:
 
 - `low`: clear method with few assumptions to check.
 - `medium`: multiple bounded steps with routine verification.
