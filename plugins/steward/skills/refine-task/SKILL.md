@@ -33,17 +33,15 @@ For gpt-6.1-sol, choose the lowest sufficient level supported by the target clie
 - `max`: several dependent hard judgments; identify what extra reasoning beyond
   `xhigh` would resolve.
 
-For Claude Opus 5.5, use [Anthropic’s effort guidance](https://platform.claude.com/docs/zh-CN/build-with-claude/effort#effort-levels).
-The Claude API supports five levels; recommend only a level exposed by the
-target client. Adaptive thinking is always on, even at `low`.
+For claude-opus-5-5, choose the lowest sufficient level supported by the target client:
 
-- `medium`: the API default and starting point for ordinary agentic work.
-- `low`: straightforward tasks where a quick, inexpensive answer is the priority.
-- `high`: difficult coding or reasoning where extra investigation matters.
-- `xhigh`: sustained agentic work, such as an extended debugging session with
+- `low`: straightforward work with little need for investigation.
+- `medium`: routine agentic work that balances quality, latency, and cost; the default.
+- `high`: difficult coding or reasoning that benefits from deeper investigation.
+- `xhigh`: long-running agentic work that requires sustained reasoning across
   repeated rounds of tool use and verification.
-- `max`: reserve for the deepest analysis, where completeness matters more than
-  latency or token cost.
+- `max`: the most demanding analysis, where depth and completeness take priority
+  over latency and token cost.
 
 For other models, use their own known levels and meanings.
 Length, vagueness and volume alone do not justify a higher level.
