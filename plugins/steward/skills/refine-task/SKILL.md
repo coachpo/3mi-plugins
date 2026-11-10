@@ -19,12 +19,11 @@ label the prompt a draft and ask the smallest necessary question.
 ## Execution effort
 
 Assess the difficulty of executing the rewritten task, not of rewriting it.
-Honor an explicit target and effort first. Otherwise use the named target host,
-or, if no target is given, the current host identified by the session runtime:
-Claude Code → Claude Opus 5.5; Codex → GPT-6.1 Sol. These are recommendation
-defaults, not claims about the model running the session. Do not ask which
-model to use when the host supplies a default. For a human, an unknown host
-without a named model, or a target without known effort controls, omit the level.
+Honor an explicit target and effort. If only a target host is named, use
+GPT-6.1 Sol for Codex or Claude Opus 5.5 for Claude Code. If no target is
+specified, recommend an effort for both GPT-6.1 Sol and Claude Opus 5.5,
+using each model's criteria below, regardless of the current host.
+For a human or a target without known effort controls, omit the level.
 If advice was requested but cannot be grounded, explain why.
 
 For GPT-6.1 Sol, choose the lowest sufficient level supported by the target client:
@@ -52,7 +51,7 @@ Length, vagueness and volume alone do not justify a higher level.
 ## Output
 
 Put only the executor's prompt in one copyable code block. When applicable,
-follow it with one line naming the target, one effort level, and the concrete
+follow it with one line per target naming the model, one effort level, and the concrete
 reason. Mark advice provisional if it depends on an open question. Advice is
 not a settings change; if the user wants only the prompt, omit the advice.
 For Chinese output use: 目标模型：`<model>`；建议推理强度：`<level>`。<任务理由>
