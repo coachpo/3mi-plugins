@@ -1,7 +1,7 @@
 {
   "name": "steward",
-  "version": "0.19.0",
-  "description": "面向 Codex 与 Claude Code 的工程技能，覆盖任务指令改写、项目文档、只读调研、交付规划、代码级任务交接与计划执行。",
+  "version": "0.20.0",
+  "description": "面向 Codex 与 Claude Code 的工程技能，覆盖仓库精简、任务指令改写、项目文档、只读调研、交付规划、代码级任务交接与计划执行。",
   "author": {
     "name": "coachpo",
     "url": "https://github.com/coachpo"
@@ -19,6 +19,7 @@
     "plan-execution",
     "requirements-analysis",
     "repository-research",
+    "repository-cleanup",
     "sprint-backlog",
     "workflows",
     "steward"
@@ -26,8 +27,8 @@
   "skills": "./skills/",
   "interface": {
     "displayName": "Steward",
-    "shortDescription": "项目文档、调研、规划、任务交接与计划执行",
-    "longDescription": "Steward 的共享技能维护项目文档与 AGENTS.md，执行只读仓库调研和需求分析，通过 plan-delivery 规划实施计划与 Sprint Backlog，通过 plan-handoff 准备代码级任务合同并依据证据验收，通过 execute-plan 编排串行、并行或混合执行，审查实际 diff、完成最终集成验证并在已有授权内提交和清理。Codex 与 Claude Code 读取同一套技能，执行者与会话管理依赖宿主实际能力。",
+    "shortDescription": "仓库精简、项目文档、调研、规划与执行",
+    "longDescription": "Steward 通过 simplify-repository 联合清理代码、测试、文档及其他仓库产物，保全现行行为、独有回归覆盖、有效知识及必要用途与保留义务；维护项目文档与 AGENTS.md，执行只读仓库调研和需求分析，通过 plan-delivery 规划实施计划与 Sprint Backlog，通过 plan-handoff 准备代码级任务合同并依据证据验收，通过 execute-plan 编排串行、并行或混合执行，审查实际 diff、完成最终集成验证并在已有授权内提交和清理。Codex 与 Claude Code 读取同一套技能，执行者与会话管理依赖宿主实际能力。",
     "developerName": "CoachPo",
     "category": "Productivity",
     "capabilities": [

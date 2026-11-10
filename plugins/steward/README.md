@@ -1,6 +1,10 @@
 # Steward
 
-Steward 为 Codex 与 Claude Code 提供任务指令改写、项目文档、仓库调研、交付规划、代码级任务交接和计划执行技能。两个宿主读取同一份 `skills/` 目录。
+Steward 为 Codex 与 Claude Code 提供仓库精简、任务指令改写、项目文档、仓库调研、交付规划、代码级任务交接和计划执行技能。两个宿主读取同一份 `skills/` 目录。
+
+## 0.20.0 升级说明
+
+新增独立技能 `simplify-repository`，统一精简代码、测试、文档及其他仓库产物。分别保全现行行为与必要复杂度、独有回归覆盖、文档中有效决定／约束／适用前提／验收缺口，以及产物的消费者与必要保留义务。文档和产物清理是主要职责，不限于代码修改的附带清理；不按数量或文件类型机械删减，也不借清理改写业务契约或项目政策。两个插件 manifest 的版本同步到 0.20.0。
 
 ## 0.19.0 升级说明
 
@@ -81,6 +85,7 @@ claude plugin install steward@coachpo
 | 技能 | 主要结果与边界 |
 | --- | --- |
 | [refine-task](skills/refine-task/SKILL.md) | 改写工程需求，不执行原任务。显式目标优先；未指定目标时分别给出 GPT-6.1 Sol 和 Claude Opus 5.5 的强度建议，不切换模型。 |
+| [simplify-repository](skills/simplify-repository/SKILL.md) | 联合精简代码、测试、文档及其他产物，保全行为、覆盖、有效知识和必要用途／保留义务。可独立实施与验证；审查只返回发现，不借清理下线功能、改写政策或重建文档体系。 |
 | [analyze-change-request](skills/analyze-change-request/SKILL.md) | 结合仓库与公开来源分析变更需求，提供引用及可观察验收标准。显式调用；只读，不实施或执行项目。 |
 | [parallel-repository-research](skills/parallel-repository-research/SKILL.md) | 至少两条独立调查线定位代码、梳理架构或追踪依赖，主代理核实证据。只读，不运行测试或判定行为风险。 |
 | [plan-delivery](skills/plan-delivery/SKILL.md) | 创建、修订或审查实施计划和／或 Sprint Backlog，明确交付、责任、依赖及验收。只规划，不执行开发。 |
@@ -89,7 +94,18 @@ claude plugin install steward@coachpo
 | [write-agent-guides](skills/write-agent-guides/SKILL.md) | 维护有依据的 AGENTS.md 层级，共享规则在根文件，子树仅记录局部差异。不维护 CLAUDE.md。 |
 | [write-project-docs](skills/write-project-docs/SKILL.md) | 按仓库事实和既有约定维护正式项目文档，明确权威来源并同步相关链接。显式文档请求；局部更新不扩展为文档套件。 |
 
-Codex 可以按意图隐式选择任务指令改写、仓库调查、交付规划、代码级任务交接、计划执行和代理指南技能；其他技能保持各自的调用策略。审查请求只返回发现；创建、修改请求在指定范围内落盘。Claude Code 版另带 `steward-researcher` 和 `steward-executor` 两个插件 agent，用法见下文的模型分工一节。
+Codex 可以按意图隐式选择仓库精简、任务指令改写、仓库调查、交付规划、代码级任务交接、计划执行和代理指南技能；其他技能保持各自的调用策略。审查请求只返回发现；创建、修改请求在指定范围内落盘。Claude Code 版另带 `steward-researcher` 和 `steward-executor` 两个插件 agent，用法见下文的模型分工一节。
+
+## 仓库精简
+
+使用 `simplify-repository` 清理已证实冗余的仓库内容，目标是只保留仍有用途或保留义务的内容，而不是让每类内容都减少。它拥有独立的文档归并和产物清理职责，其他文档技能提供专门方法，不排除这些清理范围；迁移、业务历史、许可证、测试基准和必要交付输入不能仅因陈旧或可重新生成就删除。
+
+有界清理无需先建计划、任务合同、子代理或工作树；需要交接时配合 `plan-handoff`，已有批准计划需要协调执行时配合 `execute-plan`。
+
+```text
+使用 $steward:simplify-repository 精简当前仓库的代码、测试、文档及其他产物，保全四类义务并完成验证，不提交或推送。
+使用 /steward:simplify-repository 只审查当前目录的冗余候选及保留义务，不实施清理。
+```
 
 ## 交付链路
 

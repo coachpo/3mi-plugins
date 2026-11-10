@@ -1,0 +1,7 @@
+interface:
+  display_name: "Simplify Repository"
+  short_description: "精简代码、测试、文档及其他仓库产物，保全行为、覆盖、知识与必要用途"
+  default_prompt: "使用 $steward:simplify-repository 精简当前范围内的仓库内容，统一检查代码、测试、文档及其他产物，保全现行行为与必要复杂度、独有回归覆盖、有效文档信息及产物用途与保留义务，完成验证并报告未验证范围。"
+
+policy:
+  allow_implicit_invocation: true

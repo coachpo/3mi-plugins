@@ -10,13 +10,14 @@ CoachPo 的 Codex 与 Claude Code 插件市场。两个宿主从同一个 Git �
 
 | Plugin | Category | 简介 |
 | --- | --- | --- |
-| [`steward`](plugins/steward/README.md) | Productivity | 任务指令改写、项目文档、只读调研、交付规划、代码级交接与计划执行。 |
+| [`steward`](plugins/steward/README.md) | Productivity | 仓库精简、任务指令改写、项目文档、只读调研、交付规划、代码级交接与计划执行。 |
 
 ## Steward 工作流
 
 | 工作流 | 技能 |
 | --- | --- |
 | 将原始需求写成给执行者的提示词（独立使用） | `refine-task` |
+| 联合精简代码、测试、文档及其他仓库产物（独立使用） | `simplify-repository` |
 | 调研分析 | `parallel-repository-research`、`analyze-change-request` |
 | 开发规划 | `plan-delivery` |
 | 代码级交接与验收 | `plan-handoff` |
@@ -24,6 +25,8 @@ CoachPo 的 Codex 与 Claude Code 插件市场。两个宿主从同一个 Git �
 | 项目文档 | `write-project-docs`、`write-agent-guides` |
 
 一次代码变更可经过需求分析、交付规划（按需）、代码级交接，再由 `execute-plan` 编排执行、证据审查与最终集成验证，在已有授权内提交与清理；文档技能可单独使用。执行方式及模型／effort 优先遵循用户选择，否则采用依赖、容量和宿主／执行档位默认。Claude Code 版附带 `steward-researcher` 和 `steward-executor` 两个 agent，其他宿主使用实际可用执行者。各步交接物、模型分工、完整用法和权限边界见 [Steward 文档](plugins/steward/README.md)。
+
+`simplify-repository` 可独立完成范围内的仓库清理，也可为交付任务提供精简方法。它分别保全代码行为与必要复杂度、测试的独有回归发现能力、文档的有效信息，以及其他产物的消费者与保留义务；不以删减数量为目标，不强制经过规划或委派。
 
 ## Codex 安装
 
