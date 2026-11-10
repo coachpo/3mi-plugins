@@ -19,12 +19,15 @@ label the prompt a draft and ask the smallest necessary question.
 ## Execution effort
 
 Assess the difficulty of executing the rewritten task, not of rewriting it.
-Use the intended executor and its target client, not the host composing the prompt.
-Honor a specified model or effort. If the target is unspecified, human, or has
-no known supported effort controls, omit the level; do not block the rewrite.
+Honor an explicit target and effort first. Otherwise use the named target host,
+or, if no target is given, the current host identified by the session runtime:
+Claude Code → Claude Opus 5.5; Codex → GPT 6.1 Sol. These are recommendation
+defaults, not claims about the model running the session. Do not ask which
+model to use when the host supplies a default. For a human, an unknown host
+without a named model, or a target without known effort controls, omit the level.
 If advice was requested but cannot be grounded, explain why.
 
-For gpt-6.1-sol, choose the lowest sufficient level supported by the target client:
+For GPT 6.1 Sol, choose the lowest sufficient level supported by the target client:
 
 - `low`: clear method with few assumptions to check.
 - `medium`: multiple bounded steps with routine verification.
@@ -33,7 +36,7 @@ For gpt-6.1-sol, choose the lowest sufficient level supported by the target clie
 - `max`: several dependent hard judgments; identify what extra reasoning beyond
   `xhigh` would resolve.
 
-For claude-opus-5-5, choose the lowest sufficient level supported by the target client:
+For Claude Opus 5.5, choose the lowest sufficient level supported by the target client:
 
 - `low`: straightforward work with little need for investigation.
 - `medium`: routine agentic work that balances quality, latency, and cost; the default.
@@ -52,3 +55,4 @@ Put only the executor's prompt in one copyable code block. When applicable,
 follow it with one line naming the target, one effort level, and the concrete
 reason. Mark advice provisional if it depends on an open question. Advice is
 not a settings change; if the user wants only the prompt, omit the advice.
+For Chinese output use: 目标模型：`<model>`；建议推理强度：`<level>`。<任务理由>
