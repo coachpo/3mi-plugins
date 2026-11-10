@@ -1,13 +1,13 @@
 {
   "name": "steward",
-  "version": "0.18.0",
+  "version": "0.18.1",
   "description": "面向 Codex 与 Claude Code 的工程技能，覆盖任务指令改写、项目文档、只读调研、交付规划、代码级任务交接与计划执行。",
   "author": {
     "name": "coachpo",
     "url": "https://github.com/coachpo"
   },
-  "homepage": "https://github.com/coachpo/plugins/tree/main/plugins/steward#readme",
-  "repository": "https://github.com/coachpo/plugins",
+  "homepage": "https://github.com/coachpo/3mi-plugins/tree/main/plugins/steward#readme",
+  "repository": "https://github.com/coachpo/3mi-plugins",
   "license": "MIT",
   "keywords": [
     "agents-md",
@@ -42,6 +42,6 @@
       "使用 $steward:execute-plan 推进已批准计划，按依赖选择串行、并行或混合执行，完成结果审查和最终集成验证，在已有授权内提交与清理。"
     ],
     "brandColor": "#1A73E8",
-    "websiteURL": "https://github.com/coachpo/plugins/tree/main/plugins/steward"
+    "websiteURL": "https://github.com/coachpo/3mi-plugins/tree/main/plugins/steward"
   }
 }

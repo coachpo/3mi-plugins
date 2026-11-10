@@ -1,4 +1,4 @@
-# plugins
+# 3mi-plugins
 
 CoachPo 的 Codex 与 Claude Code 插件市场。两个宿主从同一个 Git 仓库安装插件，并共享插件内的技能。
 
@@ -6,7 +6,7 @@ CoachPo 的 Codex 与 Claude Code 插件市场。两个宿主从同一个 Git �
 
 - Marketplace ID：`coachpo`
 - 显示名称：`CoachPo`
-- 仓库：`github.com/coachpo/plugins`
+- 仓库：`github.com/coachpo/3mi-plugins`
 
 | Plugin | Category | 简介 |
 | --- | --- | --- |
@@ -28,7 +28,7 @@ CoachPo 的 Codex 与 Claude Code 插件市场。两个宿主从同一个 Git �
 ## Codex 安装
 
 ```bash
-codex plugin marketplace add coachpo/plugins --ref main
+codex plugin marketplace add coachpo/3mi-plugins --ref main
 codex plugin add steward@coachpo
 ```
 
@@ -41,7 +41,7 @@ $steward:<skill-name>
 ## Claude Code 安装
 
 ```bash
-claude plugin marketplace add coachpo/plugins@main
+claude plugin marketplace add coachpo/3mi-plugins@main
 claude plugin install steward@coachpo
 ```
 

@@ -2,6 +2,10 @@
 
 Steward 为 Codex 与 Claude Code 提供任务指令改写、项目文档、仓库调研、交付规划、代码级任务交接和计划执行技能。两个宿主读取同一份 `skills/` 目录。
 
+## 0.18.1 升级说明
+
+`refine-task` 新增 Claude Opus 5.5 强度建议：以 Claude API 默认的 `medium` 为起点，按任务和目标客户端选择档位，不更改执行配置。插件链接和安装命令已切换至新仓库 `coachpo/3mi-plugins`；市场名仍是 `coachpo`。
+
 ## 0.18.0 升级说明
 
 新增独立技能 `refine-task`。例如：“把‘查清重复扣款原因，先别修’写成给 gpt-6.1-sol 的提示词。”它返回可复制的调查指令，不调查也不修复。无需同时询问思考强度；建议按目标模型及其客户端的已知能力给出，不按编写提示词的宿主推断。目标未指定、是人或没有已知强度档位时，不附档位。它不是开发或正式交接的前置步骤。
@@ -47,14 +51,14 @@ Codex 中的只读调研工作代理在委派工具支持模型覆盖时使用 `
 Codex：
 
 ```bash
-codex plugin marketplace add coachpo/plugins --ref main
+codex plugin marketplace add coachpo/3mi-plugins --ref main
 codex plugin add steward@coachpo
 ```
 
 Claude Code：
 
 ```bash
-claude plugin marketplace add coachpo/plugins@main
+claude plugin marketplace add coachpo/3mi-plugins@main
 claude plugin install steward@coachpo
 ```
 
