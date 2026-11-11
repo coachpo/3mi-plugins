@@ -84,11 +84,10 @@ protocol follows the task cards unchanged.
   every check is mechanical.
 - **Entry check:** `META-01` is `done`, and
   `git diff --quiet 478e595 -- README.md plugins/steward/README.md` exits 0.
-- **Observed facts:** `README.md` has a Steward workflow table and links to
-  `plugins/steward/README.md`; that plugin README has a skill table and example
-  invocations. The manifest directory setting already covers a new skill
-  folder. The repository `.gitignore` ignores `/docs/`. These observations
-  do not establish that the proposed skill works.
+- **Observed facts:** `README.md` links to `plugins/steward/README.md`, which
+  lists skills and example invocations. The manifest directory setting covers
+  a new skill folder. The repository `.gitignore` ignores `/docs/`. These
+  observations do not establish that the proposed skill works.
 - **Scope and preservation:** edit `README.md` and
   `plugins/steward/README.md` only. Keep the existing workflows and links
   accurate; do not change plugin manifests or marketplace metadata in this
