@@ -177,6 +177,31 @@ or compatibility constraints remain legitimate tests.
 Review the final combined diff against all affected obligation classes.
 Passing checks and deletion metrics support, but do not replace, this review.
 
+## Iterate to a simplification baseline
+
+For implementation requests, repeat candidate discovery, obligation and consumer
+checks, justified removal or consolidation, and validation. After each validated
+round, inspect new candidates exposed by the changes and remaining unreviewed
+relationships material to the requested scope. Continue while safe, authorized
+changes with concrete maintenance benefit remain; do not require a full repository
+rescan each round.
+
+Judge net maintenance benefit, including any added abstraction, indirection,
+configuration, or coupling. Do not consolidate merely for uniformity or introduce
+abstractions whose maintenance cost outweighs their benefit.
+
+Report a simplification baseline under current constraints only when, within the
+reviewed scope, no remaining simplification is supported as safe and meaningfully
+beneficial, implemented changes have passed applicable validation, and no material
+unresolved candidate or validation gap prevents that conclusion. State the reviewed
+boundary and effective constraints; this is not proof of a global optimum.
+
+Do not repeat unchanged investigations without new evidence, relationship changes,
+or actionable work. If unresolved evidence, additional authorization, or environment
+limits prevent further judgment or validation, retain the affected content and
+report partial completion and the specific limits. Stopping investigation does not
+establish a simplification baseline.
+
 ## Compose with other Steward skills
 
 This skill owns repository simplification, including substantive documentation
@@ -207,6 +232,11 @@ Summarize:
 - How each affected obligation class remains protected.
 - Validation actually performed, its results, and material unverified scope.
 
-Keep existing acceptance gaps explicit. For review-only work, distinguish
-supported candidates from unresolved ones and do not describe proposed changes
-as implemented or validated.
+Distinguish confirmed redundancy and its disposition from unresolved candidates,
+changes requiring additional authorization, and environment or validation limits.
+State whether these prevent a baseline conclusion and identify any narrower
+completed scope. Retaining an unresolved candidate proves neither necessity nor
+redundancy.
+
+Keep existing acceptance gaps explicit. For review-only work, do not describe
+proposed changes as implemented or validated.
