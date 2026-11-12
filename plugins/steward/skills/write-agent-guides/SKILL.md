@@ -94,12 +94,44 @@ compatibility code or changing public APIs. For subtree-only maintenance,
 inherit the effective parent policy rather than repeat it; report a missing
 root policy outside the write scope. Review-only requests remain read-only.
 
+## Write the working-state policy
+
+When creating or maintaining root guidance, explicitly write the following
+working-state policy in its relevant policy section. Reuse equivalent existing
+wording rather than duplicate it:
+
+- For work spanning context compaction or sessions, keep progress only in the
+  gitignored `.agent-work/<task-slug>/`, with one `progress.md` snapshot and an
+  `evidence/` directory. Do not create this directory for work that fits in one
+  context.
+- Do not record task progress in `AGENTS.md`, README, status documents, other
+  documentation, or source comments.
+- Overwrite `progress.md` in full each time; never append. Use only these fields,
+  in order: `Goal`, `Done` (one item per line, each with an evidence path), `Now`,
+  `Next` (one directly executable action), and `Decisions` (one decision per line).
+- Save long command output in `evidence/`; record only its path and exit code in
+  the snapshot.
+- On resumption, read `progress.md`, inspect `git status` and the diff, then
+  rerun the last verification. If the snapshot disagrees with the repository,
+  treat the repository as authoritative and correct the snapshot.
+- After task validation is complete, move conclusions that still need lasting
+  retention into the appropriate canonical documentation, then delete that
+  task's directory. Report directories belonging to other tasks; do not delete
+  them.
+
+For subtree-only maintenance, inherit the root policy rather than repeat it;
+report a missing root policy outside the write scope. Review-only requests
+remain read-only.
+
 ## Verify and hand off
 
 Re-read changed files in their effective hierarchy. Check scopes, conflicts,
 parent repetition, links, command accuracy, and the value of nested files. Use
 the smallest non-destructive checks that resolve uncertainty in the changed
 guidance; a prose or preference update does not require unrelated project tests.
+
+Treat task progress, session records, and temporary TODOs in `AGENTS.md` as
+content to remove; report them without editing for review-only requests.
 
 Return the changed paths or review findings, meaningful hierarchy decisions,
 checks actually performed, and any remaining uncertainty or obsolete-file

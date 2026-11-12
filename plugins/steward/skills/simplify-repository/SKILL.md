@@ -211,10 +211,6 @@ those categories from this skill's scope.
 - Use [parallel-repository-research](../parallel-repository-research/SKILL.md)
   when independent searches justify it. Workers return facts; the responsible
   executor owns removal and preservation judgments.
-- Use [plan-handoff](../plan-handoff/SKILL.md) when handing bounded work to
-  another executor. Carry the obligations and validation into the contract.
-- Use [execute-plan](../execute-plan/SKILL.md) for coordinated execution of an
-  approved plan and final integration.
 - Use [write-project-docs](../write-project-docs/SKILL.md) for specialized
   canonical-document maintenance within the requested cleanup.
 - Use [write-agent-guides](../write-agent-guides/SKILL.md) when agent behavior

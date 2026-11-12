@@ -87,11 +87,5 @@ responsibility, capacity assumptions, and acceptance. When both documents change
 check their final versions together. Report paths or findings and material gaps,
 including unread or unavailable inputs that limit the consistency review.
 
-This workflow ends at delivery planning. Use `plan-handoff` when the request
-needs repository-grounded, code-level contracts for a separate executor; that
-handoff can also start directly from accepted requirements. This skill does not
-dispatch tasks, implement changes, or perform acceptance.
-
-Use `execute-plan` when the user asks to carry an approved plan through engineering
-delivery; it reuses this plan and `plan-handoff` contracts while owning execution
-mode, integration validation, and authorized delivery and cleanup.
+This workflow ends at delivery planning. This skill does not dispatch tasks,
+implement changes, or perform acceptance.

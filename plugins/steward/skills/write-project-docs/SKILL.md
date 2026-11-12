@@ -22,7 +22,7 @@ not required filenames or a mandatory document set:
 | Document role | Content it owns |
 | --- | --- |
 | README / entry point | Purpose, getting started, and links to further documentation. |
-| Project status | Verified lifecycle, deployment, support, users, data, and compatibility facts. |
+| Project status | Only durable lifecycle, deployment, support, users, data, and compatibility facts; update when those facts change. Exclude task progress, changelogs, plans, and dated work logs. |
 | Contribution guide (commonly `CONTRIBUTING.md`) | Development setup, commands, workflow, completion checks, and the project's design and development principles. |
 | Product documentation | Users, goals, scope, requirements, flows, and acceptance criteria. |
 | Architecture documentation | Current components, responsibilities, dependencies, data flow, and design decisions. |
@@ -43,6 +43,13 @@ only the documents it affects. Include the default contributor principles below
 when creating or maintaining a contribution guide; add other documents or
 policies only when the request calls for them. Preserve existing project policy
 unless changing it is requested.
+
+Task progress, execution records, and evidence are working state, not canonical
+documentation; do not write them into formal documents.
+
+Rewrite status documents in place when facts change. Do not append completion
+lists, next steps, dated entries, or per-session updates. When there are few
+status facts, a small README section is sufficient.
 
 ## Write default design and development principles
 
@@ -143,6 +150,13 @@ sources, and the exact diff. Run applicable existing documentation checks. Do
 not create static tests for wording or introduce a whole-repository validation
 gate solely for a documentation edit. Keep unrelated findings separate from
 in-scope failures.
+
+During review or migration, flag scattered progress files such as `PROGRESS.md`,
+`NOTES.md`, and leftover `.agent-work/` directories, as well as progress content
+in status documents. For authorized migrations, move still-valid durable facts
+to their appropriate canonical documents and report the rest as deletion
+candidates. Review-only requests report the proposed moves without editing;
+do not delete other tasks' working-state directories.
 
 When documenting or reviewing a workflow or operational decision within the
 requested scope, check whether the reader can choose the correct next action at

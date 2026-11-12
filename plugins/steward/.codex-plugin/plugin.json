@@ -1,7 +1,7 @@
 {
   "name": "steward",
-  "version": "0.20.2",
-  "description": "面向 Codex 与 Claude Code 的工程技能，覆盖仓库精简、任务指令改写、项目文档、只读调研、交付规划、代码级任务交接与计划执行。",
+  "version": "0.21.0",
+  "description": "面向 Codex 与 Claude Code 的工程技能，覆盖仓库精简、任务指令改写、项目文档、只读调研与交付规划。",
   "author": {
     "name": "coachpo",
     "url": "https://github.com/coachpo"
@@ -15,8 +15,6 @@
     "codex",
     "documentation",
     "implementation-planning",
-    "task-contracts",
-    "plan-execution",
     "requirements-analysis",
     "repository-research",
     "repository-cleanup",
@@ -27,8 +25,8 @@
   "skills": "./skills/",
   "interface": {
     "displayName": "Steward",
-    "shortDescription": "仓库精简、项目文档、调研、规划与执行",
-    "longDescription": "Steward 通过 simplify-repository 联合清理代码、测试、文档及其他仓库产物，保全现行行为、独有回归覆盖、有效知识及必要用途与保留义务；维护项目文档与 AGENTS.md，执行只读仓库调研和需求分析，通过 plan-delivery 规划实施计划与 Sprint Backlog，通过 plan-handoff 准备代码级任务合同并依据证据验收，通过 execute-plan 编排串行、并行或混合执行，审查实际 diff、完成最终集成验证并在已有授权内提交和清理。Codex 与 Claude Code 读取同一套技能，执行者与会话管理依赖宿主实际能力。",
+    "shortDescription": "仓库精简、项目文档、调研与规划",
+    "longDescription": "Steward 通过 simplify-repository 联合清理代码、测试、文档及其他仓库产物，保全现行行为、独有回归覆盖、有效知识及必要用途与保留义务；维护项目文档与 AGENTS.md，执行只读仓库调研和需求分析，通过 plan-delivery 规划实施计划与 Sprint Backlog。write-agent-guides 在根 AGENTS.md 中统一跨压缩或跨会话的 working-state policy；write-project-docs 排除运行态，项目状态仅维护持久事实。Codex 与 Claude Code 读取同一套技能。",
     "developerName": "CoachPo",
     "category": "Productivity",
     "capabilities": [
@@ -38,9 +36,7 @@
     "defaultPrompt": [
       "使用 $steward:write-project-docs 维护 canonical 项目文档，再用 $steward:write-agent-guides 同步 AGENTS.md 层级。",
       "使用 $steward:analyze-change-request 调研当前变更请求；需要复杂仓库搜索时使用 $steward:parallel-repository-research。",
-      "使用 $steward:plan-delivery 按需创建或修订实施计划与 Sprint Backlog；可仅处理一个阶段，交付两份文档时联合检查。",
-      "使用 $steward:plan-handoff 基于仓库证据编写下一批代码级执行合同，明确实现决策、验证和反证回交规则。",
-      "使用 $steward:execute-plan 推进已批准计划，按依赖选择串行、并行或混合执行，完成结果审查和最终集成验证，在已有授权内提交与清理。"
+      "使用 $steward:plan-delivery 按需创建或修订实施计划与 Sprint Backlog；可仅处理一个阶段，交付两份文档时联合检查。"
     ],
     "brandColor": "#1A73E8",
     "websiteURL": "https://github.com/coachpo/3mi-plugins/tree/main/plugins/steward"

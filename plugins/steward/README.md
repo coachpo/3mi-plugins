@@ -1,6 +1,14 @@
 # Steward
 
-Steward 为 Codex 与 Claude Code 提供仓库精简、任务指令改写、项目文档、仓库调研、交付规划、代码级任务交接和计划执行技能。两个宿主读取同一份 `skills/` 目录。
+Steward 为 Codex 与 Claude Code 提供仓库精简、任务指令改写、项目文档、仓库调研与交付规划技能。两个宿主读取同一份 `skills/` 目录。
+
+## 0.21.0 升级说明
+
+不兼容变更：删除 `execute-plan`、`plan-handoff` 及依赖它们的 `steward-executor` agent，不保留别名或兼容入口；技能目录、使用链路、模型分工、示例和执行记录说明同步清理，并移除已退役执行技能的专项审计报告。沿用 0.x 阶段删除旧能力时提升次版本的惯例，两个插件 manifest 同步到 0.21.0。
+
+`write-agent-guides` 默认在根 `AGENTS.md` 写入 working-state policy：跨压缩或跨会话的进度仅存于 gitignored 的 `.agent-work/<task-slug>/progress.md` 与 `evidence/`，单上下文任务不创建目录。快照整体重写，固定 Goal、Done（逐项附证据路径）、Now、一条可直接执行的 Next、逐行 Decisions；长输出只记路径和退出码。恢复时先读快照、检查 Git 状态与差异，再重跑最后验证，以仓库为准修正记录；验证完成后迁移持久结论并删除本任务目录，其他任务目录只报告。子目录继承根策略，审查时将 AGENTS.md 中的任务进度、会话记录和临时 TODO 列为需移除内容。
+
+`write-project-docs` 将任务进度、执行记录和证据排除在正式文档之外；status 只保留持久的生命周期、部署、支持、用户、数据及兼容性事实，事实变化时就地改写，不追加完成列表、下一步、日期日志或会话更新，事实很少时放在 README 小节。审查或迁移时标出零散进度文件、残留工作目录及 status 中的进度，迁移有效持久事实，其余报告为可删除候选；审查请求保持只读。
 
 ## 0.20.2 升级说明
 
@@ -97,18 +105,16 @@ claude plugin install steward@coachpo
 | [analyze-change-request](skills/analyze-change-request/SKILL.md) | 结合仓库与公开来源分析变更需求，提供引用及可观察验收标准。显式调用；只读，不实施或执行项目。 |
 | [parallel-repository-research](skills/parallel-repository-research/SKILL.md) | 至少两条独立调查线定位代码、梳理架构或追踪依赖，主代理核实证据。只读，不运行测试或判定行为风险。 |
 | [plan-delivery](skills/plan-delivery/SKILL.md) | 创建、修订或审查实施计划和／或 Sprint Backlog，明确交付、责任、依赖及验收。只规划，不执行开发。 |
-| [plan-handoff](skills/plan-handoff/SKILL.md) | 根据已定需求与仓库证据创建、修订或审查供另一执行者（可以是低价模型）使用的代码级任务合同，并依据回交证据验收或修订合同；你要求执行时，在 Claude Code 中把 ready 任务逐个派发给 `steward-executor`。独立使用时不实施，也不替执行者运行验证；完整执行编排转到 `execute-plan`。 |
-| [execute-plan](skills/execute-plan/SKILL.md) | 推进已批准计划：准备合同和环境，按串行、并行或混合方式调度可执行任务，审查实际 diff 与证据，完成最终集成验证，并在已有授权内提交和清理。 |
 | [write-agent-guides](skills/write-agent-guides/SKILL.md) | 维护有依据的 AGENTS.md 层级，共享规则在根文件，子树仅记录局部差异。不维护 CLAUDE.md。 |
 | [write-project-docs](skills/write-project-docs/SKILL.md) | 按仓库事实和既有约定维护正式项目文档，明确权威来源并同步相关链接。显式文档请求；局部更新不扩展为文档套件。 |
 
-Codex 可以按意图隐式选择仓库精简、任务指令改写、仓库调查、交付规划、代码级任务交接、计划执行和代理指南技能；其他技能保持各自的调用策略。审查请求只返回发现；创建、修改请求在指定范围内落盘。Claude Code 版另带 `steward-researcher` 和 `steward-executor` 两个插件 agent，用法见下文的模型分工一节。
+Codex 可以按意图隐式选择仓库精简、任务指令改写、仓库调查、交付规划和代理指南技能；其他技能保持各自的调用策略。审查请求只返回发现；创建、修改请求在指定范围内落盘。Claude Code 版另带只读调研插件 agent `steward-researcher`，用法见下文的模型分工一节。
 
 ## 仓库精简
 
 使用 `simplify-repository` 清理已证实冗余的仓库内容，目标是只保留仍有用途或保留义务的内容，而不是让每类内容都减少。它拥有独立的文档归并和产物清理职责，其他文档技能提供专门方法，不排除这些清理范围；迁移、业务历史、许可证、测试基准和必要交付输入不能仅因陈旧或可重新生成就删除。
 
-有界清理无需先建计划、任务合同、子代理或工作树；需要交接时配合 `plan-handoff`，已有批准计划需要协调执行时配合 `execute-plan`。
+有界清理无需先建计划、任务合同、子代理或工作树。
 
 ```text
 使用 $steward:simplify-repository 精简当前仓库的代码、测试、文档及其他产物，保全四类义务并完成验证，不提交或推送。
@@ -117,56 +123,32 @@ Codex 可以按意图隐式选择仓库精简、任务指令改写、仓库调�
 
 ## 交付链路
 
-一次代码变更可按下列链路使用技能；每一步都可单独调用，不需要的步骤可以跳过。需要从已批准计划推进到工程交付时，用 `execute-plan` 编排第 3–6 步。
+一次代码变更可按下列链路使用技能；每一步都可单独调用，不需要的步骤可以跳过。
 
 1. `analyze-change-request` 在对话中给出带来源和验收标准的需求分析，复杂仓库搜索配合 `parallel-repository-research`；由用户确认需求和决策。
-2. 需要拆工作包或排 Sprint 时，用 `plan-delivery` 编写带修订号的实施计划和／或 Backlog。
-3. `plan-handoff` 把已确认的需求或计划条目写成 `task-plan.md` 任务合同，并为每个任务指定执行档位、入口检查和尝试预算。
-4. `execute-plan` 准备可信起点、传递合同与必要材料，并按用户指定的串行、并行或混合方式调度；未指定时按依赖、共享写入和实际容量选择。另一执行者按合同协议实施并记录结果，无需加载 Steward。前置输出尚未实际具备的任务保留 `draft` 或 `blocked`；入口失败或前提不成立时交回合同负责人，预算耗尽按已约定升级处理。
-5. 主会话使用 `plan-handoff` 的规则审查实际 diff 和可核验证据，接受、返工或修订合同；`execute-plan` 汇总结果并对同一最终实现版本完成集成验证。各路分别通过不等于组合通过，缺少真实产品或外部验收条件时单独记录待验项。
-6. 变更影响文档时，用 `write-project-docs`、`write-agent-guides` 同步，也可写进任务卡。已有授权包含提交与本次执行资源清理时，`execute-plan` 完成对应动作：成果已接受并纳入集成、证据和必要恢复材料保存后，分别归档执行会话、移除工作树和删除任务分支；未回交或未纳入成果继续保留。
+2. 需要拆工作包或排 Sprint 时，用 `plan-delivery` 编写带修订号的实施计划和／或 Backlog；该技能到规划为止，不派发任务、不实施或验收。
+3. 开发与验证由宿主按用户当前授权直接完成，Steward 不再提供专门的代码级合同或执行编排入口。
+4. 变更影响文档时，用 `write-project-docs`、`write-agent-guides` 同步正式文档与代理指南；任务运行态不写入这些文档。
 
 ## 模型分工
 
-共享技能不在元数据中固定模型：Codex 的 `openai.yaml` 没有模型字段，`SKILL.md` 的校验也不接受 Claude Code 的模型字段。技能正文提供 Codex 的角色建议，不会因为调用技能而自动切换主会话模型。执行时用户明确指定的模型与 effort 优先于宿主／执行档位默认及预算耗尽后的升级；没有指定时沿用宿主或执行档位配置的默认。不能静默替换用户指定值，工具不支持时需先报告。规划和验收可在主会话进行，调研与执行可交给其他模型。
+共享技能不在元数据中固定模型：Codex 的 `openai.yaml` 没有模型字段，`SKILL.md` 的校验也不接受 Claude Code 的模型字段。技能正文提供 Codex 的角色建议，不会因为调用技能而自动切换主会话模型。用户明确指定的模型与 effort 优先；没有指定时沿用宿主默认。不能静默替换用户指定值，工具不支持时需先报告。规划和事实核验可在主会话进行，只读调研可交给其他模型。
 
 | 角色 | Claude Code | Codex |
 | --- | --- | --- |
 | 规划、验收 | 主会话，例如 `claude --model opus` 或 `--model fable` | 主会话；常规任务建议 `gpt-6.1-sol`，最复杂任务建议 `gpt-6-astra` |
 | 只读调研 worker | 插件 agent `steward-researcher`：`haiku`，只有读文件和搜索工具，查不了 Git 历史 | 委派工具的模型覆盖：`gpt-6-luna` |
-| 执行者 | 插件 agent `steward-executor`：`sonnet`，`effort: medium`；`basic` 档派发时改用更便宜的模型 | `codex exec -p <profile>`，在 profile 里设 `model` 和 `model_reasoning_effort` |
 
 下表按 Codex 工作角色给出建议，仅在需要模型选择建议时适用，并以当前账户与客户端可用的模型为准。Claude Code 的分工保持不变。
 
 | Codex 模型 | 建议角色 | 适用技能或任务 |
 | --- | --- | --- |
-| `gpt-6.1-sol` | 常规分析、规划、代码事实与约束核验、代码级合同、`strong` 实现、执行协调及验收 | `analyze-change-request`、`plan-delivery`、`plan-handoff`、`execute-plan`；两项文档技能中的代码事实、指令层级和一致性判断 |
+| `gpt-6.1-sol` | 常规分析、规划、代码事实与约束核验 | `analyze-change-request`、`plan-delivery`；两项文档技能中的代码事实、指令层级和一致性判断 |
 | `gpt-6.1-terra` | 基于已核实事实的文案和结构整理，以及视觉材料理解；视觉结论仍需核对来源 | `write-project-docs`；`write-agent-guides` 中已核实规则的表达整理，不替代事实或指令作用域核验 |
-| `gpt-6-astra` | 最复杂的歧义、架构取舍、跨工作包约束、权威或指令冲突，以及困难集成验收 | 分析、规划、交接与执行中的复杂判断；两项文档技能在请求范围内的复杂冲突处理；`planner` 工作仍不外派 |
+| `gpt-6-astra` | 最复杂的歧义、架构取舍、跨工作包约束、权威或指令冲突，以及困难集成验收 | 分析与规划中的复杂判断；两项文档技能在请求范围内的复杂冲突处理 |
 | `gpt-6-luna` | 保留现有的有界只读调研角色 | `parallel-repository-research` 与 `analyze-change-request` 的调研 worker |
 
 这些角色建议参考 [OpenAI 官方模型说明](https://learn.chatgpt.com/docs/models#recommended-models)，不代表已完成跨模型评测，也不新增模型切换或自动派发能力。
-
-任务卡的执行档位辅助选择执行者：`basic` 只接短小、可机械验收的任务；`strong` 用配置的执行者默认；`planner` 留在主会话。预算与升级规则按合同约定；设计或需求问题回到合同负责人。下方的模型、effort、路径和命令仅为可选示例，使用前核对宿主当前支持的配置方式，不是通用要求。
-
-Codex 执行 profile 示例（`$CODEX_HOME/steward-executor.config.toml`，模型按实测选择；配置层读取方式见[官方说明](https://developers.openai.com/codex/config-advanced#profiles)）：
-
-```toml
-model = "gpt-6-luna"
-model_reasoning_effort = "medium"
-```
-
-```bash
-codex exec -p steward-executor "按 task-plan.md 的执行协议实施 META-01 并记录结果"
-```
-
-在 Claude Code 里，也可以不经规划会话派发，单独用低价模型执行：
-
-```bash
-claude -p --model sonnet --effort medium "按 task-plan.md 的执行协议实施 META-01 并记录结果"
-```
-
-交接本身有成本：规划、写合同、验收和返工都由高价模型承担。活能拆成多个可独立验收的任务时，分工才划算；一个上下文就能做完的单条依赖链，让规划模型调低 effort 直接做往往更便宜。推广前先挑几个真实需求，对比三种做法的验收通过率和总成本：高价模型单跑、高价模型调低 effort 单跑、高价规划加低价执行。headless 运行（`claude -p --output-format json`、`codex exec --json`）输出结构化记录，便于按角色汇总用量。
 
 ## 文档与规划
 
@@ -174,11 +156,11 @@ claude -p --model sonnet --effort medium "按 task-plan.md 的执行协议实施
 
 两个文档技能在新建与维护时，均在范围内的相关政策章节明确写入“本项目默认不保留向后兼容”，已有等价表述不重复；用户或当前有效项目规格、政策明确要求兼容时遵循该要求。默认不为旧接口、格式、配置或实现保留兼容层、别名、双轨路径及过渡代码；获授权替换实现时，同步更新相关调用方、配置、派生契约、测试及文档，移除不再需要的旧路径，不因“可能还有旧调用方”自动增加旧字段回退、双读双写或格式转换。清理限于当前任务；这项文档默认值不自动授权删除现有兼容代码或修改公共 API。`write-project-docs` 将政策写入贡献指南或已有权威政策文档；`write-agent-guides` 将可执行规则写入根 `AGENTS.md`，子树继承，范围外缺失只报告，审查请求仍只读。
 
+任务进度、执行记录和证据属于 working state，不写进 AGENTS.md、README、status、其他正式文档或源码注释。跨压缩／跨会话工作遵循根 working-state policy，使用 gitignored 的 `.agent-work/<task-slug>/`；项目状态只维护持久事实，事实变化时就地改写，不承载进度、changelog、计划或日期工作日志。
+
 文档技能不再附带固定开发等级目录、双语模板、通用行数上限政策及对应生成／验证脚本。已有项目若直接调用这些 helper CLI，需要改用项目自己的生成器或直接维护相关文档。
 
 规划可以只处理实施计划、只处理 Backlog，或联合维护两者。实施计划拥有范围、工作包与总体验收，Backlog 拥有任务拆分、具体依赖和迭代安排；未知容量以假设表达。采用用户及项目的格式，没有约定时默认放在 `docs/planning/`。
-
-`plan-handoff` 接受已定需求，也可引用现有计划或 Backlog 的条目及修订号，不强制先创建 Sprint 文档；只在对话中确认的需求，连同验收标准和确认来源写进合同。它为下一批稳定工作固定代码级实现、兼容和错误语义、允许裁量、可观察验收、验证命令、执行档位、入口检查、尝试预算及反证回交规则；未来未知工作保持 `draft`。默认从一个 `task-plan.md` 开始，末尾原样附上技能自带的执行／恢复协议，任务状态和结果绑定版本与代码状态。规划者指定最终集成验收负责人；负责人依据结果记录和实际 diff 验收，证据缺失或无法核验不算通过，写下验收记录后计划才标为 `done`。执行者不能用修改合同或降低标准来接受自己的实现。单纯需求分析、Sprint 排期与普通小修复不必走此交接。
 
 计划文件沿用用户或项目指定位置；若放在本仓库被 `.gitignore` 忽略的 `/docs/` 下，跨工作区交付时必须另行传送该文件、代码差异和必要证据，不能假定 Git 会同步它。
 
@@ -186,11 +168,6 @@ claude -p --model sonnet --effort medium "按 task-plan.md 的执行协议实施
 使用 $steward:write-project-docs 更新 README 中受本次变更影响的用法与链接。
 使用 $steward:write-agent-guides 维护 packages/api/AGENTS.md 的局部命令差异。
 使用 $steward:plan-delivery 根据已有实施计划创建 Sprint Backlog，只编写 Backlog。
-使用 $steward:plan-handoff 根据已定需求和当前代码创建下一批任务合同，供另一执行者实施。
-使用 $steward:execute-plan 按混合方式推进已批准计划；独立任务并行、依赖链串行，完成最终集成验证。
-使用 /steward:execute-plan 串行推进 task-plan.md，复用适合的执行会话和工作树。
-按 task-plan.md 中的执行协议实施下一个 ready 任务并记录结果；合同前提不成立时交回规划者。
-使用 $steward:plan-handoff 验收 task-plan.md 的执行结果，决定结项、退回任务或修订合同。
 ```
 
 ## 只读调研
@@ -207,8 +184,6 @@ claude -p --model sonnet --effort medium "按 task-plan.md 的执行协议实施
 ## 授权边界
 
 技能遵循当前任务授权，发现技能不等于授权执行。实施请求允许范围内的本地准备、修改和验证；计划内容获批不自动授予执行或所有交付动作的权限。提交、推送、PR 变更／合并、发布、部署、外部写入、购买、破坏性操作和实质范围扩展需要相应明确授权；已经成立的授权可以继续使用，不重复确认。授权实施、提交、归档和删除本次任务工作树／分支时直接完成这些动作，不扩大到主会话、集成分支、无关来源会话或业务数据。
-
-`execute-plan` 的执行记录维护任务、执行者／会话、工作树、分支、结果提交或保留 diff 的对应关系，中断后先核实并恢复已有工作。串行、并行和混合共用合同与证据机制；失败的独立任务不自动取消其他正常任务。工程验收、真实产品／外部条件验收和资源清理分别报告，待验条件不冒称通过。
 
 Codex Desktop 仅在用户明确要求新 chat 时使用相应创建工具；工作树会话遵循用户选择和实际工具规则，异步创建需取得真实 ID 后再协调。CLI／Claude Code 使用实际可用执行者和 Git 工作树，不强制安装额外插件。宿主有可恢复工作树归档机制时优先使用，必要的 ignored 材料另行保存；工作树清理与会话归档是两个操作，工具或权限缺失时如实报告保留状态。
 
