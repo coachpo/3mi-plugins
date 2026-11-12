@@ -2,7 +2,7 @@
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "steward",
   "displayName": "Steward",
-  "version": "0.21.1",
+  "version": "0.21.2",
   "description": "面向 Codex 与 Claude Code 的工程技能，覆盖仓库精简、任务指令改写、项目文档、只读调研与交付规划。",
   "author": {
     "name": "coachpo",

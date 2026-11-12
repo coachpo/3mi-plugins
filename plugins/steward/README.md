@@ -2,6 +2,10 @@
 
 Steward 为 Codex 与 Claude Code 提供仓库精简、任务指令改写、项目文档、仓库调研与交付规划技能。两个宿主读取同一份 `skills/` 目录。
 
+## 0.21.2 升级说明
+
+两个文档技能共享的默认政策改为单一来源：设计与开发原则、兼容性政策的默认文本集中在 `write-project-docs/references/default-policies.md`。`write-project-docs` 据此在贡献指南中写出完整政策与理由，`write-agent-guides` 据此在根 `AGENTS.md` 中写出简短的可执行规则并链接权威文档，不再各自内嵌一份。working-state policy 仍只由 `write-agent-guides` 定义，`write-project-docs` 只排除运行态并指向该政策。默认政策内容不变。两个插件 manifest 的版本同步到 0.21.2。
+
 ## 0.21.1 升级说明
 
 `write-agent-guides` 的 working-state policy 补齐三处：用户或项目已有进度约定时以其为准，否则写入默认策略；创建 `.agent-work/` 时若尚未被忽略，将其加入 `.gitignore`；每次验证单独存为 `evidence/` 文件，记录确切命令、工作目录、退出码和输出，`Done` 末项引用最近一次验证，恢复时按记录的命令和工作目录重跑。两个插件 manifest 的版本同步到 0.21.1。

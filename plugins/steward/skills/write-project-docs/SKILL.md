@@ -45,7 +45,8 @@ policies only when the request calls for them. Preserve existing project policy
 unless changing it is requested.
 
 Task progress, execution records, and evidence are working state, not canonical
-documentation; do not write them into formal documents.
+documentation; do not write them into formal documents. The root `AGENTS.md`
+working-state policy, owned by `write-agent-guides`, says where they belong.
 
 Rewrite status documents in place when facts change. Do not append completion
 lists, next steps, dated entries, or per-session updates. When there are few
@@ -54,31 +55,12 @@ status facts, a small README section is sufficient.
 ## Write default design and development principles
 
 A contribution guide owns the design and development principles contributors
-follow. Whenever creating or maintaining a contribution guide, include these
-defaults unless the project has already adopted a different policy. Record
-uncertain capability choices as working assumptions, not as observed platform
-behavior:
-
-- Treat uncertain platform capability, resource tier, and quota as design
-  space: choose the looser tier and record the assumption instead of
-  pre-tightening defaults for an assumed worst case.
-- Assume the overwhelming majority of requests are legitimate: do not require
-  preemptive abuse handling, conservative rate limits, or adversarial hardening
-  the product does not need.
-- Choose the best-case branch by default; worst-case handling is a named
-  project decision, not inherited caution.
-- Keep source files cohesive and navigable. When a file's size makes its
-  responsibilities hard to distinguish, important behavior difficult to find,
-  or focused changes difficult to review, split it along cohesive
-  responsibilities. Follow established project size limits; use cohesion,
-  navigability, and reviewability to decide when to split if no limit exists.
-  Do not impose a universal line-count cap.
-
-State the chosen branch with the observation that would trigger a revisit. Do
-not present an assumed limit or permission as verified, and do not drop a limit
-or obligation the project has actually accepted. In review, flag unadopted
-worst-case constraints and assumptions presented as verified facts. Agent
-operational rules belong to the AGENTS.md hierarchy, not the contribution guide.
+follow. Whenever creating or maintaining a contribution guide, state the
+principles in [default-policies.md](references/default-policies.md), with the
+rationale contributors need, unless the project has already adopted a different
+policy. In review, flag unadopted worst-case constraints and assumptions
+presented as verified facts. Agent operational rules belong to the AGENTS.md
+hierarchy, not the contribution guide.
 
 ## Write the compatibility policy
 
@@ -87,20 +69,9 @@ policy in the relevant policy section of the contribution guide or existing
 authoritative policy document within scope, not merely as an internal working
 assumption. Reuse equivalent existing wording instead of duplicating it. Follow
 explicit compatibility requirements from the user or currently effective project
-specifications and policies; otherwise write the following default:
-
-- This project does not preserve backward compatibility by default. Do not retain
-  compatibility layers, aliases, dual paths, or transitional code for old APIs,
-  formats, configuration, or implementations unless explicitly required.
-- When authorized to replace an implementation, update affected callers,
-  configuration, derived contracts, tests, and documentation, and remove obsolete
-  paths within the task's scope. Do not add old-field fallbacks, dual reads or
-  writes, or format conversions merely because old callers might exist.
-- Keep cleanup within the current task; this policy does not expand its scope.
-
-This documentation default does not itself authorize deleting existing
-compatibility code or changing public APIs. Review-only requests report missing
-or conflicting policy without editing documents.
+specifications and policies; otherwise write the default in
+[default-policies.md](references/default-policies.md). Review-only requests
+report missing or conflicting policy without editing documents.
 
 ## Ground the content
 

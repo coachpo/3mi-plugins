@@ -46,25 +46,10 @@ generic engineering advice and exhaustive repository descriptions.
 
 Root guidance also carries the shared design and development constraints agents
 implement by default. Unless the project has already adopted different policy,
-include the following operational defaults; keep detailed policy and rationale
-in the contribution guide or existing authoritative policy document and link
-to it:
-
-- Implement against the looser platform capability, resource tier, or quota and
-  record the assumption; do not add worst-case tightening the request did not
-  ask for.
-- Assume the overwhelming majority of requests are legitimate: do not add
-  preemptive abuse handling, conservative rate limits, or adversarial hardening
-  beyond the accepted requirements.
-- Choose the best-case branch by default; treat worst-case handling as a named
-  decision rather than inherited caution.
-- Keep source files cohesive and navigable when adding or changing code. If a
-  file's size or continued growth makes responsibilities hard to distinguish,
-  important behavior difficult to find, or focused changes difficult to review,
-  split it along cohesive responsibilities within the task's scope. Follow
-  established project size limits; without them, use cohesion, navigability,
-  and reviewability rather than a universal line-count cap. Do not create
-  needless fragments or abstractions merely to shorten a file.
+state the principles in
+[default-policies.md](../write-project-docs/references/default-policies.md) as
+short operational rules; keep detailed policy and rationale in the contribution
+guide or existing authoritative policy document and link to it.
 
 Use the requested language, otherwise preserve the effective root language or
 the established repository-document language. Preserve unrelated content and
@@ -78,21 +63,11 @@ policy in its relevant policy section, not merely as an internal working
 assumption. Reuse equivalent existing wording instead of duplicating it, and
 link detailed policy from its authoritative document when available. Follow
 explicit compatibility requirements from the user or currently effective project
-specifications and policies; otherwise write the following operational default:
-
-- This project does not preserve backward compatibility by default. Do not retain
-  compatibility layers, aliases, dual paths, or transitional code for old APIs,
-  formats, configuration, or implementations unless explicitly required.
-- When authorized to replace an implementation, update affected callers,
-  configuration, derived contracts, tests, and documentation, and remove obsolete
-  paths within the task's scope. Do not add old-field fallbacks, dual reads or
-  writes, or format conversions merely because old callers might exist.
-- Keep cleanup within the current task; this policy does not expand its scope.
-
-This documentation default does not itself authorize deleting existing
-compatibility code or changing public APIs. For subtree-only maintenance,
-inherit the effective parent policy rather than repeat it; report a missing
-root policy outside the write scope. Review-only requests remain read-only.
+specifications and policies; otherwise write the default in
+[default-policies.md](../write-project-docs/references/default-policies.md) as
+operational rules. For subtree-only maintenance, inherit the effective parent
+policy rather than repeat it; report a missing root policy outside the write
+scope. Review-only requests remain read-only.
 
 ## Write the working-state policy
 
