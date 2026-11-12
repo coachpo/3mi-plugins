@@ -2,6 +2,10 @@
 
 Steward 为 Codex 与 Claude Code 提供仓库精简、任务指令改写、项目文档、仓库调研与交付规划技能。两个宿主读取同一份 `skills/` 目录。
 
+## 0.21.1 升级说明
+
+`write-agent-guides` 的 working-state policy 补齐三处：用户或项目已有进度约定时以其为准，否则写入默认策略；创建 `.agent-work/` 时若尚未被忽略，将其加入 `.gitignore`；每次验证单独存为 `evidence/` 文件，记录确切命令、工作目录、退出码和输出，`Done` 末项引用最近一次验证，恢复时按记录的命令和工作目录重跑。两个插件 manifest 的版本同步到 0.21.1。
+
 ## 0.21.0 升级说明
 
 不兼容变更：删除 `execute-plan`、`plan-handoff` 及依赖它们的 `steward-executor` agent，不保留别名或兼容入口；技能目录、使用链路、模型分工、示例和执行记录说明同步清理，并移除已退役执行技能的专项审计报告。沿用 0.x 阶段删除旧能力时提升次版本的惯例，两个插件 manifest 同步到 0.21.0。

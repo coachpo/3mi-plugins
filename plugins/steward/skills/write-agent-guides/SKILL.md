@@ -96,23 +96,27 @@ root policy outside the write scope. Review-only requests remain read-only.
 
 ## Write the working-state policy
 
-When creating or maintaining root guidance, explicitly write the following
-working-state policy in its relevant policy section. Reuse equivalent existing
-wording rather than duplicate it:
+When creating or maintaining root guidance, explicitly state the working-state
+policy in its relevant policy section. Reuse equivalent existing wording instead
+of duplicating it. Follow an explicit working-state convention from the user or
+currently effective project policy; otherwise write the following default:
 
-- For work spanning context compaction or sessions, keep progress only in the
-  gitignored `.agent-work/<task-slug>/`, with one `progress.md` snapshot and an
-  `evidence/` directory. Do not create this directory for work that fits in one
-  context.
+- For work spanning context compaction or sessions, keep progress only in
+  `.agent-work/<task-slug>/`, with one `progress.md` snapshot and an
+  `evidence/` directory. When creating it, add `.agent-work/` to `.gitignore`
+  unless it is already ignored. Do not create this directory for work that fits
+  in one context.
 - Do not record task progress in `AGENTS.md`, README, status documents, other
   documentation, or source comments.
 - Overwrite `progress.md` in full each time; never append. Use only these fields,
   in order: `Goal`, `Done` (one item per line, each with an evidence path), `Now`,
   `Next` (one directly executable action), and `Decisions` (one decision per line).
-- Save long command output in `evidence/`; record only its path and exit code in
-  the snapshot.
+- Save each verification in its own `evidence/` file with the exact command,
+  working directory, exit code, and output; record only its path and exit code
+  in the snapshot. The last `Done` item references the latest verification.
 - On resumption, read `progress.md`, inspect `git status` and the diff, then
-  rerun the last verification. If the snapshot disagrees with the repository,
+  rerun the latest verification's recorded command from its recorded working
+  directory. If the snapshot disagrees with the repository,
   treat the repository as authoritative and correct the snapshot.
 - After task validation is complete, move conclusions that still need lasting
   retention into the appropriate canonical documentation, then delete that
