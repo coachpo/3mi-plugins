@@ -130,44 +130,27 @@ merely to complete cleanup.
 
 #### Current-state cleanup (explicit request only)
 
-Apply these rules only when the user explicitly requests documentation that
-describes the current state rather than the history of work. This mode does not
-relax the preservation obligations above or make historical content disposable
-by default. Review requests remain read-only.
+When the user explicitly asks for documentation that describes the current
+state rather than the history of work, apply these additional criteria. They
+do not relax the obligations above.
 
-- Read the repository's applicable guides and documentation index, inventory
-  documents in scope (including tracked Markdown where relevant), and read each
-  scoped document in full. Check concrete claims against current source,
-  configuration, manifests and migrations; do not infer live state from old logs.
-- Remove execution/acceptance logs, operation transcripts, completed migration
-  or repair narratives, and "previously X, then Y" accounts only when they carry
-  no continuing obligation. Likewise remove obsolete resource/command descriptions,
-  debugging notes, temporary conclusions, superseded TODOs/proposals and intermediate
-  artifacts only when readers no longer need them to understand or operate the system.
-- Preserve current architecture, contracts, domain rules, active resource identities
-  and configuration, and security, privacy and financial boundaries. Preserve usable
-  setup, deployment, migration, incident/reconciliation and backup/restore runbooks;
-  instructions for repeatable operations are not execution logs. Keep historical
-  data/protocol handling that current code still supports or requires.
-- Distinguish execution dates from source-verification dates. Keep source links,
-  verification dates, necessary provenance, required acceptance/audit evidence and
-  unresolved validation gaps. A dated heading alone is not grounds for deletion.
-- When retired-resource text prevents reuse or accidental operations, retain that
-  warning as a current constraint without the chronology; keep identifiers needed
-  for safe resource selection.
-- Prefer deletion and necessary connective wording over rewriting valid content or
-  adding feature descriptions. For partly stale sentences, remove only the obsolete
-  clause; do not invent replacement facts. Repair empty sections, duplication,
-  heading structure, indexes and affected links after deletion.
-- Retain uncertain candidates and list them for user decision. In the handoff,
-  identify changed sections by file with reasons, and separately report confirmed
-  inconsistencies left unchanged. Do not turn inability to verify into a claim
-  that a statement is false.
-
-For documentation-only work, inspect retained commands, paths, relative links and
-anchors and check whitespace. Do not start the application or add permanent wording
-tests solely to validate this cleanup. The requested documentation scope does not
-authorize source/configuration/test changes, remote operations or commits.
+- Check claims against current source, configuration, and migrations; do not
+  infer live state from old logs. A claim that cannot be verified is uncertain,
+  not false.
+- Remove execution and acceptance logs, operation transcripts, completed
+  migration or repair narratives, "previously X, then Y" accounts, and
+  superseded notes or proposals when they carry no continuing obligation.
+- Keep runbooks for repeatable operations such as setup, deployment, migration,
+  and recovery; instructions are not execution logs. Keep historical data or
+  protocol handling that current code still supports.
+- Distinguish execution dates from source-verification dates. A dated heading
+  alone is not grounds for deletion; keep verification dates and required
+  acceptance or audit evidence.
+- Restate warnings about retired resources as current constraints without the
+  chronology, keeping identifiers needed to prevent reuse or accidental
+  operations.
+- Prefer deletion over rewriting valid content. For partly stale sentences,
+  remove only the obsolete clause; do not invent replacement facts.
 
 ### Other artifacts
 
