@@ -2,6 +2,10 @@
 
 Steward 为 Codex 与 Claude Code 提供仓库精简、任务指令改写、项目文档、仓库调研与交付规划技能。两个宿主读取同一份 `skills/` 目录。
 
+## 0.21.5 升级说明
+
+`refine-task` 固定为“改写 → 分析强度 → 输出提示词、模型与强度”：每次都在提示词后分别给出 GPT-6.1 Sol 和 Claude Opus 5.5 的推荐档位与理由，不再按宿主、显式目标或执行者类型取舍，也不因用户只要提示词而省略；任务不清楚时仍给出最接近的档位，并说明什么会改变它。选档以两个模型默认的 `medium` 为起点，`xhigh` 与 `max` 仅在预期有明确收益时使用；两个模型各级含义按官方文档重写，删除 Codex 与 Claude Code 的界面和设置说明。边界扩展为不调查、不运行命令、不改文件、不委派、不改设置，只约束被改写的请求。description 改为第三人称并补充触发条件，新增完整示例。两个插件 manifest 的版本同步到 0.21.5。
+
 ## 0.21.4 升级说明
 
 精简 `simplify-repository` 的“当前态文档清理”规则：只保留该模式特有的判断标准（核对当前实现、删除无持续义务的执行记录与演变叙述、保留可重复操作的 runbook、区分执行日期与核实日期、退役资源提醒改写为当前约束、部分过时句只删失效部分），去掉与正文重复的只读、链接修复、不确定项交接和验证要求，以及关于提交与远程操作授权的条款。两个插件 manifest 的版本同步到 0.21.4。
@@ -116,7 +120,7 @@ claude plugin install steward@coachpo
 
 | 技能 | 主要结果与边界 |
 | --- | --- |
-| [refine-task](skills/refine-task/SKILL.md) | 改写工程需求，不执行原任务。显式目标优先；未指定目标时分别给出 GPT-6.1 Sol 和 Claude Opus 5.5 的强度建议，不切换模型。 |
+| [refine-task](skills/refine-task/SKILL.md) | 改写工程需求，不执行原任务；每次都分别给出 GPT-6.1 Sol 和 Claude Opus 5.5 的推荐强度，不切换模型。 |
 | [simplify-repository](skills/simplify-repository/SKILL.md) | 联合精简代码、测试、文档及其他产物，保全行为、覆盖、有效知识和必要用途／保留义务。可独立实施与验证；审查只返回发现，不借清理下线功能、改写政策或重建文档体系。 |
 | [analyze-change-request](skills/analyze-change-request/SKILL.md) | 结合仓库与公开来源分析变更需求，提供引用及可观察验收标准。显式调用；只读，不实施或执行项目。 |
 | [parallel-repository-research](skills/parallel-repository-research/SKILL.md) | 至少两条独立调查线定位代码、梳理架构或追踪依赖，主代理核实证据。只读，不运行测试或判定行为风险。 |

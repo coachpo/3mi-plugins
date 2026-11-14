@@ -1,4 +1,4 @@
 interface:
   display_name: "Refine Task"
-  short_description: "把工程需求改写为可复制的执行指令，按目标执行者建议合适的思考强度"
-  default_prompt: "使用 $steward:refine-task 把以下需求整理为给另一个会话执行的指令，保留原有范围和授权。"
+  short_description: "把工程需求改写为可复制的提示词，并给出 GPT-6.1 Sol 与 Claude Opus 5.5 的推荐强度"
+  default_prompt: "使用 $steward:refine-task 把以下需求改写为提示词，保留原有范围和授权。"
