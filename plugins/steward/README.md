@@ -2,6 +2,10 @@
 
 Steward 为 Codex 与 Claude Code 提供仓库精简、任务指令改写、项目文档、仓库调研与交付规划技能。两个宿主读取同一份 `skills/` 目录。
 
+## 0.21.3 升级说明
+
+`simplify-repository` 的 Documentation 小节补充“当前态文档清理”规则，仅在用户明确要求时启用：核对当前实现，删除无持续用途的执行记录、演变叙述和中间内容，保留当前契约、资源标识、操作与恢复指南、来源核实日期及必要验收证据；退役资源的防误操作提醒改写为当前约束，不确定项保留并交接。通用保留义务不变，不包含项目专属细节。两个插件 manifest 的版本同步到 0.21.3。
+
 ## 0.21.2 升级说明
 
 两个文档技能共享的默认政策改为单一来源：设计与开发原则、兼容性政策的默认文本集中在 `write-project-docs/references/default-policies.md`。`write-project-docs` 据此在贡献指南中写出完整政策与理由，`write-agent-guides` 据此在根 `AGENTS.md` 中写出简短的可执行规则并链接权威文档，不再各自内嵌一份。working-state policy 仍只由 `write-agent-guides` 定义，`write-project-docs` 只排除运行态并指向该政策。默认政策内容不变。两个插件 manifest 的版本同步到 0.21.2。
