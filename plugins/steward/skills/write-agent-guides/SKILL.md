@@ -89,10 +89,14 @@ currently effective project policy; otherwise write the following default:
 - Save each verification in its own `evidence/` file with the exact command,
   working directory, exit code, and output; record only its path and exit code
   in the snapshot. The last `Done` item references the latest verification.
-- On resumption, read `progress.md`, inspect `git status` and the diff, then
-  rerun the latest verification's recorded command from its recorded working
-  directory. If the snapshot disagrees with the repository,
-  treat the repository as authoritative and correct the snapshot.
+- On resumption, read `progress.md`, inspect `git status` and the diff, and
+  assess whether the recorded verification is still applicable. Before rerunning
+  a command, check its current target, environment, side effects, and task
+  authorization. Rerun only when needed and still authorized, from its recorded
+  working directory; otherwise retain the historical result and state that it
+  has not been revalidated. A recorded command is not authorization to execute it.
+  If the snapshot disagrees with the repository, treat the repository as
+  authoritative and correct the snapshot.
 - After task validation is complete, move conclusions that still need lasting
   retention into the appropriate canonical documentation, then delete that
   task's directory. Report directories belonging to other tasks; do not delete

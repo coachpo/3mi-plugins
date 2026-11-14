@@ -1,5 +1,6 @@
 ---
 name: analyze-change-request
+disable-model-invocation: true
 description: Analyze a software change request using repository evidence and public sources, with cited requirements and acceptance criteria. Use only when explicitly requested; analysis only, without file writes or project execution.
 ---
 

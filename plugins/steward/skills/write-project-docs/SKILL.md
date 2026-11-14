@@ -28,13 +28,14 @@ not required filenames or a mandatory document set:
 | Architecture documentation | Current components, responsibilities, dependencies, data flow, and design decisions. |
 | Development rules | Established project-specific implementation and review constraints. |
 
-For documentation write, update, and migration requests, inspect any existing
-architecture documentation against the current source, manifests, configuration,
-and accepted decisions. Update verified drift and architecture changes by
-default so it describes the latest implemented system. Review-only requests
-remain read-only. Create an architecture document when requested or when the
-work requires documenting an architectural change and none exists; do not create
-one just to complete a fixed document set.
+For documentation write, update, and migration requests, inspect architecture
+documentation involved in or affected by the request against the current source,
+manifests, configuration, and accepted decisions. Correct verified drift only
+within the authorized scope; report unrelated or out-of-scope drift without
+editing it. A wording or link-only edit does not require an architecture audit.
+Review-only requests remain read-only. Create an architecture document when
+requested or when the work requires documenting an architectural change and none
+exists; do not create one just to complete a fixed document set.
 
 Give shared facts and policies one authoritative home and link or summarize
 them where useful. Preserve valuable specialized documents and intentional
