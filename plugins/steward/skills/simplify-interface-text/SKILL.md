@@ -14,7 +14,9 @@ nothing worth removing is a valid outcome.
 
 Review requests return findings without changes. Implementation requests work
 from a findings list the user has accepted and carry the in-scope changes
-through validation. Unlike
+through validation. Text the request names for change counts as accepted.
+Otherwise, when no accepted list exists, produce the findings list as a review
+does and stop for acceptance before editing. Unlike
 [simplify-repository](../simplify-repository/SKILL.md), this work changes
 visible output on purpose. It still does not change commands, amounts, stored
 facts, or server contracts.

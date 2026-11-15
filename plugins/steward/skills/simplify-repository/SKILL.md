@@ -1,5 +1,6 @@
 ---
 name: simplify-repository
+disable-model-invocation: true
 description: Review or simplify repository contents across code, tests, documentation, and other artifacts. Remove evidenced redundancy while preserving current behavior, unique regression coverage, valid project knowledge, and necessary consumers or retention obligations. Use for repository cleanup, consolidation, or ablation; not feature retirement, interface copy cleanup, policy redesign, or delivery orchestration.
 ---
 
@@ -39,6 +40,10 @@ not mean retaining every historical API or compatibility path. Conversely, a
 default against backward compatibility does not itself authorize removing
 existing behavior or changing public APIs. Do not establish or rewrite project
 policy as a side effect of cleanup.
+
+Deleting files that version control does not track, including ignored files,
+cannot be undone. List those candidates and obtain explicit confirmation before
+deleting them.
 
 ## Preserve four classes of obligations
 

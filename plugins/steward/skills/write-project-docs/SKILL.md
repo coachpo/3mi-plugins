@@ -1,5 +1,6 @@
 ---
 name: write-project-docs
+disable-model-invocation: true
 description: Review, create, update, or migrate canonical repository documentation from verified project facts. Use only for an explicit documentation request. Use write-agent-guides for the AGENTS.md hierarchy.
 ---
 
@@ -40,10 +41,9 @@ exists; do not create one just to complete a fixed document set.
 Give shared facts and policies one authoritative home and link or summarize
 them where useful. Preserve valuable specialized documents and intentional
 translations. Add an index when it improves navigation. A focused edit changes
-only the documents it affects. Include the default contributor principles below
-when creating or maintaining a contribution guide; add other documents or
-policies only when the request calls for them. Preserve existing project policy
-unless changing it is requested.
+only the documents it affects. Include the default policies below when they are
+in scope; add other documents or policies only when the request calls for them.
+Preserve existing project policy unless changing it is requested.
 
 Task progress, execution records, and evidence are working state, not canonical
 documentation; do not write them into formal documents. The root `AGENTS.md`
@@ -55,11 +55,16 @@ status facts, a small README section is sufficient.
 
 ## Write default design and development principles
 
+Default policies are in scope when creating a contribution guide or when the
+request concerns policy sections of the contribution guide or another
+authoritative policy document. A narrow edit, such as a wording, link, or
+command fix, does not add missing policy sections; report them instead. This
+applies to the principles in this section and to the compatibility policy.
+
 A contribution guide owns the design and development principles contributors
-follow. Whenever creating or maintaining a contribution guide, state the
-principles in [default-policies.md](references/default-policies.md), with the
-rationale contributors need, unless the project has already adopted a different
-policy. In review, flag unadopted worst-case constraints and assumptions
+follow. When default policies are in scope, state the principles in
+[default-policies.md](references/default-policies.md), with the rationale
+contributors need, unless the project has already adopted a different policy. In review, flag unadopted worst-case constraints and assumptions
 presented as verified facts. Agent operational rules belong to the AGENTS.md
 hierarchy, not the contribution guide.
 
@@ -71,8 +76,8 @@ interface.
 
 ## Write the compatibility policy
 
-For both new and maintained documentation, explicitly state the compatibility
-policy in the relevant policy section of the contribution guide or existing
+When default policies are in scope, explicitly state the compatibility policy
+in the relevant policy section of the contribution guide or existing
 authoritative policy document within scope, not merely as an internal working
 assumption. Reuse equivalent existing wording instead of duplicating it. Follow
 explicit compatibility requirements from the user or currently effective project

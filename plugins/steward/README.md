@@ -20,22 +20,22 @@ claude plugin install steward@coachpo
 
 安装或更新后，新建 Codex 任务或 Claude Code 会话加载技能。Codex 调用形式为 `$steward:<skill-name>`，Claude Code 为 `/steward:<skill-name>`。
 
-`analyze-change-request` 和 `simplify-interface-text` 在两个宿主都仅允许显式调用：Codex 使用 `agents/openai.yaml` 的 `policy.allow_implicit_invocation: false`；Claude Code 使用共享 `SKILL.md` 的 `disable-model-invocation: true`。该 Claude Code 扩展字段不替代 Codex 的调用策略；Codex 运行时可加载带该字段的技能，但仅接受通用 frontmatter 字段的校验器会拒绝它，须另用宿主原生加载检查确认兼容性。两宿主的调用控制分别见 [Codex 技能配置](https://learn.chatgpt.com/docs/build-skills#optional-metadata)与 [Claude Code 技能配置](https://code.claude.com/docs/en/skills#control-who-invokes-a-skill)。
+`analyze-change-request`、`simplify-repository`、`simplify-interface-text` 和 `write-project-docs` 在两个宿主都仅允许显式调用：Codex 使用 `agents/openai.yaml` 的 `policy.allow_implicit_invocation: false`；Claude Code 使用共享 `SKILL.md` 的 `disable-model-invocation: true`。该 Claude Code 扩展字段不替代 Codex 的调用策略；Codex 运行时可加载带该字段的技能，但仅接受通用 frontmatter 字段的校验器会拒绝它，须另用宿主原生加载检查确认兼容性。两宿主的调用控制分别见 [Codex 技能配置](https://learn.chatgpt.com/docs/build-skills#optional-metadata)与 [Claude Code 技能配置](https://code.claude.com/docs/en/skills#control-who-invokes-a-skill)。
 
 ## 技能用途与边界
 
 | 技能 | 主要结果与边界 |
 | --- | --- |
 | [refine-task](skills/refine-task/SKILL.md) | 改写工程需求，不执行原任务；每次都分别给出 GPT-6.1 Sol 和 Claude Opus 5.5 的推荐强度，不切换模型。 |
-| [simplify-repository](skills/simplify-repository/SKILL.md) | 联合精简代码、测试、文档及其他产物，保全行为、覆盖、有效知识和必要用途／保留义务。可独立实施与验证；审查只返回发现，不借清理下线功能、改写政策或重建文档体系。 |
-| [simplify-interface-text](skills/simplify-interface-text/SKILL.md) | 显式调用；按角色和状态在渲染出的屏幕上走查界面文案，清理重复、常驻、讲内部机制和解说控件的文字，保留确认、唯一信息和有功能的文字。审查只返回发现；清理按已确认的清单进行，会改变可见输出，但不改命令、金额、存储事实或服务端契约。不负责新功能文案、翻译或视觉改版。 |
+| [simplify-repository](skills/simplify-repository/SKILL.md) | 显式调用；联合精简代码、测试、文档及其他产物，保全行为、覆盖、有效知识和必要用途／保留义务。可独立实施与验证；删除未纳入版本控制或被忽略的文件前须先确认。审查只返回发现，不借清理下线功能、改写政策或重建文档体系。 |
+| [simplify-interface-text](skills/simplify-interface-text/SKILL.md) | 显式调用；按角色和状态在渲染出的屏幕上走查界面文案，清理重复、常驻、讲内部机制和解说控件的文字，保留确认、唯一信息和有功能的文字。审查只返回发现；清理按已确认的清单进行，请求点名的文案视为已确认，没有清单时先产出清单并等待确认；清理会改变可见输出，但不改命令、金额、存储事实或服务端契约。不负责新功能文案、翻译或视觉改版。 |
 | [analyze-change-request](skills/analyze-change-request/SKILL.md) | 结合仓库与公开来源分析变更需求，提供引用及可观察验收标准。显式调用；只读，不实施或执行项目。 |
 | [parallel-repository-research](skills/parallel-repository-research/SKILL.md) | 至少两条独立调查线定位代码、梳理架构或追踪依赖，主代理核实证据。只读，不运行测试或判定行为风险。 |
-| [plan-delivery](skills/plan-delivery/SKILL.md) | 创建、修订或审查实施计划和／或 Sprint Backlog，明确交付、责任、依赖及验收。只规划，不执行开发。 |
-| [write-agent-guides](skills/write-agent-guides/SKILL.md) | 维护有依据的 AGENTS.md 层级，共享规则在根文件，子树仅记录局部差异。不维护 CLAUDE.md。 |
-| [write-project-docs](skills/write-project-docs/SKILL.md) | 按仓库事实和既有约定维护正式项目文档，明确权威来源并同步相关链接。显式文档请求；局部更新不扩展为文档套件。 |
+| [plan-delivery](skills/plan-delivery/SKILL.md) | 创建、修订或审查实施计划和／或 Sprint Backlog，明确交付、责任、依赖及验收。只规划，不执行开发；不用于编码前的对话内计划或 plan mode。 |
+| [write-agent-guides](skills/write-agent-guides/SKILL.md) | 维护有依据的 AGENTS.md 层级，共享规则在根文件，子树仅记录局部差异。不维护 CLAUDE.md；Claude Code 中 CLAUDE.md 未导入 `@AGENTS.md` 而遮蔽 AGENTS.md 时只报告。 |
+| [write-project-docs](skills/write-project-docs/SKILL.md) | 按仓库事实和既有约定维护正式项目文档，明确权威来源并同步相关链接。显式调用；局部更新不扩展为文档套件。 |
 
-Codex 可以按意图隐式选择仓库精简、任务指令改写、仓库调查、交付规划和代理指南技能；其他技能保持各自的调用策略。审查请求只返回发现；创建、修改请求在指定范围内落盘。Claude Code 版另带只读调研插件 agent `steward-researcher`，用法见下文的模型分工一节。
+Codex 可以按意图隐式选择任务指令改写、仓库调查、交付规划和代理指南技能；其他技能保持各自的调用策略。审查请求只返回发现；创建、修改请求在指定范围内落盘。Claude Code 版另带只读调研插件 agent `steward-researcher`，用法见下文的模型分工一节。
 
 ## 仓库精简
 
@@ -88,9 +88,9 @@ Codex 可以按意图隐式选择仓库精简、任务指令改写、仓库调�
 
 ## 文档与规划
 
-文档维护沿用项目的语言、路径、信息结构和政策。README、项目状态、贡献指南、产品、架构与开发规范是可选文档角色，不是必建文件清单；写入、更新或迁移文档时，仅在授权范围内对照当前代码、配置和已采纳决策校正本次请求涉及或影响的架构文档，范围外偏差只报告，纯措辞或链接修改不要求架构审查。贡献指南在创建或维护时，默认记录乐观设计原则，以及保持源文件内聚、易导航并在规模妨碍理解或评审时拆分的开发原则。`write-agent-guides` 默认将这些原则转为项目根 `AGENTS.md` 中的可执行约束，详细政策与理由链接贡献指南等已有权威文档。仓库源码确有面向用户的界面文字时，贡献指南另外记录界面文案原则：同屏只说一次、正常状态不提示、不讲内部机制、不解说控件，同时保留确认、唯一信息和有功能的文字；语言、单位、术语和具体例外按项目事实写，没有界面的仓库不写入。`write-agent-guides` 对此只写一条短规则并链接权威章节。已有文档中有用的内容、翻译和托管标记予以保留；有仓库生成器管理的区域遵循其契约。没有活动生成器的旧 `write-project-docs:*` 区域可直接维护。
+文档维护沿用项目的语言、路径、信息结构和政策。README、项目状态、贡献指南、产品、架构与开发规范是可选文档角色，不是必建文件清单；写入、更新或迁移文档时，仅在授权范围内对照当前代码、配置和已采纳决策校正本次请求涉及或影响的架构文档，范围外偏差只报告，纯措辞或链接修改不要求架构审查。新建贡献指南或请求涉及政策章节时，默认记录乐观设计原则，以及保持源文件内聚、易导航并在规模妨碍理解或评审时拆分的开发原则。`write-agent-guides` 默认将这些原则转为项目根 `AGENTS.md` 中的可执行约束，详细政策与理由链接贡献指南等已有权威文档。仓库源码确有面向用户的界面文字时，贡献指南另外记录界面文案原则：同屏只说一次、正常状态不提示、不讲内部机制、不解说控件，同时保留确认、唯一信息和有功能的文字；语言、单位、术语和具体例外按项目事实写，没有界面的仓库不写入。`write-agent-guides` 对此只写一条短规则并链接权威章节。已有文档中有用的内容、翻译和托管标记予以保留；有仓库生成器管理的区域遵循其契约。没有活动生成器的旧 `write-project-docs:*` 区域可直接维护。
 
-两个文档技能在新建与维护时，均在范围内的相关政策章节明确写入“本项目默认不保留向后兼容”，已有等价表述不重复；用户或当前有效项目规格、政策明确要求兼容时遵循该要求。默认不为旧接口、格式、配置或实现保留兼容层、别名、双轨路径及过渡代码；获授权替换实现时，同步更新相关调用方、配置、派生契约、测试及文档，移除不再需要的旧路径，不因“可能还有旧调用方”自动增加旧字段回退、双读双写或格式转换。清理限于当前任务；这项文档默认值不自动授权删除现有兼容代码或修改公共 API。`write-project-docs` 将政策写入贡献指南或已有权威政策文档；`write-agent-guides` 将可执行规则写入根 `AGENTS.md`，子树继承，范围外缺失只报告，审查请求仍只读。
+两个文档技能在新建或请求涉及政策章节时，均在范围内的相关政策章节明确写入“本项目默认不保留向后兼容”，已有等价表述不重复；措辞、链接、命令或路径类窄改动不补写缺失的政策章节，只报告缺失。用户或当前有效项目规格、政策明确要求兼容时遵循该要求。默认不为旧接口、格式、配置或实现保留兼容层、别名、双轨路径及过渡代码；获授权替换实现时，同步更新相关调用方、配置、派生契约、测试及文档，移除不再需要的旧路径，不因“可能还有旧调用方”自动增加旧字段回退、双读双写或格式转换。清理限于当前任务；这项文档默认值不自动授权删除现有兼容代码或修改公共 API。`write-project-docs` 将政策写入贡献指南或已有权威政策文档；`write-agent-guides` 将可执行规则写入根 `AGENTS.md`，子树继承，范围外缺失只报告，审查请求仍只读。
 
 任务进度、执行记录和证据属于 working state，不写进 AGENTS.md、README、status、其他正式文档或源码注释。跨压缩／跨会话工作遵循根 working-state policy，使用 gitignored 的 `.agent-work/<task-slug>/`；项目状态只维护持久事实，事实变化时就地改写，不承载进度、changelog、计划或日期工作日志。
 

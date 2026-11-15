@@ -16,7 +16,9 @@ return findings without editing; maintenance requests change the affected
 Identify the repository boundaries and effective instruction hierarchy for each
 affected path. Account for the host's overrides, configured fallback files, and
 visibility limits where applicable. A shadowed or truncated file may not supply
-the guidance its author expects.
+the guidance its author expects. In Claude Code, a `CLAUDE.md` at the same level
+or above stops `AGENTS.md` from loading by default unless it imports
+`@AGENTS.md`; report this without editing `CLAUDE.md`.
 
 Ground repository facts in relevant code, configuration, manifests, CI, and
 existing documents. Verify commands, their working directories, component
@@ -53,6 +55,12 @@ guide or existing authoritative policy document and link to it. Its interface
 copy principles apply only to a repository with a user interface: state them as
 one short rule that links the authoritative section, and omit them otherwise.
 
+Root policy is in scope when creating root guidance or when the request concerns
+its policy sections. A narrow root edit, such as a command, path, link, or
+wording fix, does not add missing policy sections; report them instead. This
+applies to the principles above and to the compatibility and working-state
+policies below.
+
 Use the requested language, otherwise preserve the effective root language or
 the established repository-document language. Preserve unrelated content and
 managed regions; an authorized change to managed content must account for the
@@ -60,9 +68,8 @@ mechanism that owns it.
 
 ## Write the compatibility policy
 
-When creating or maintaining root guidance, explicitly state the compatibility
-policy in its relevant policy section, not merely as an internal working
-assumption. Reuse equivalent existing wording instead of duplicating it, and
+When root policy is in scope, explicitly state the compatibility policy in its
+relevant policy section, not merely as an internal working assumption. Reuse equivalent existing wording instead of duplicating it, and
 link detailed policy from its authoritative document when available. Follow
 explicit compatibility requirements from the user or currently effective project
 specifications and policies; otherwise write the default in
@@ -73,9 +80,9 @@ scope. Review-only requests remain read-only.
 
 ## Write the working-state policy
 
-When creating or maintaining root guidance, explicitly state the working-state
-policy in its relevant policy section. Reuse equivalent existing wording instead
-of duplicating it. Follow an explicit working-state convention from the user or
+When root policy is in scope, explicitly state the working-state policy in its
+relevant policy section. Reuse equivalent existing wording instead of
+duplicating it. Follow an explicit working-state convention from the user or
 currently effective project policy; otherwise write the following default:
 
 - For work spanning context compaction or sessions, keep progress only in

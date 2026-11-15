@@ -1,6 +1,6 @@
 ---
 name: plan-delivery
-description: Create, revise, or review implementation plans and Sprint Backlogs from requirements and accepted decisions. Use for delivery planning, not development execution.
+description: Create, revise, or review persisted delivery-planning documents, namely implementation plans with work packages and acceptance, and Sprint Backlogs, from requirements and accepted decisions. Use when the user wants these planning documents written or reviewed; not for an in-conversation plan before coding, plan mode, or development execution.
 ---
 
 # Plan Delivery
