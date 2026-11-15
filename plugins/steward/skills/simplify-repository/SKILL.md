@@ -1,6 +1,6 @@
 ---
 name: simplify-repository
-description: Review or simplify repository contents across code, tests, documentation, and other artifacts. Remove evidenced redundancy while preserving current behavior, unique regression coverage, valid project knowledge, and necessary consumers or retention obligations. Use for repository cleanup, consolidation, or ablation; not feature retirement, policy redesign, or delivery orchestration.
+description: Review or simplify repository contents across code, tests, documentation, and other artifacts. Remove evidenced redundancy while preserving current behavior, unique regression coverage, valid project knowledge, and necessary consumers or retention obligations. Use for repository cleanup, consolidation, or ablation; not feature retirement, interface copy cleanup, policy redesign, or delivery orchestration.
 ---
 
 # Simplify Repository
@@ -239,6 +239,9 @@ those categories from this skill's scope.
   canonical-document maintenance within the requested cleanup.
 - Use [write-agent-guides](../write-agent-guides/SKILL.md) when agent behavior
   or AGENTS.md hierarchy genuinely requires maintenance.
+- Use [simplify-interface-text](../simplify-interface-text/SKILL.md) for
+  cleanup of user-visible interface text. It changes visible output and is
+  outside this skill's behavior-preserving scope.
 
 Read another skill only when using it. Its defaults do not expand the cleanup
 scope or authorize new policy. Do not require a plan, contract, subagent, or

@@ -1,0 +1,130 @@
+---
+name: simplify-interface-text
+disable-model-invocation: true
+description: Review or clean up existing user-interface text for repeated facts, always-on notices, exposed internal mechanics, and narrated controls, judged on rendered screens by role and state. Use only when explicitly requested, for interface copy audits and the cleanup that follows; not for new feature copy, translation, visual redesign, or behavior-preserving repository cleanup.
+---
+
+# Simplify Interface Text
+
+Use this skill only when the user explicitly requests it. Remove interface
+text that does not change what the reader does or knows, and keep the text that
+protects them or informs them uniquely. The measure is what a person sees on
+one screen in one state, not how many strings the repository holds. Finding
+nothing worth removing is a valid outcome.
+
+Review requests return findings without changes. Implementation requests work
+from a findings list the user has accepted and carry the in-scope changes
+through validation. Unlike
+[simplify-repository](../simplify-repository/SKILL.md), this work changes
+visible output on purpose. It still does not change commands, amounts, stored
+facts, or server contracts.
+
+## Establish rules, scope, and authority
+
+Use the project's adopted interface copy rules when its contribution guide or
+another authoritative document states them. Otherwise apply the interface copy
+principles in
+[default-policies.md](../write-project-docs/references/default-policies.md) and
+say that you did. Do not record project policy as a side effect of an audit.
+
+Identify the interfaces, roles, locales, and environments in scope, and what
+the user has authorized in each environment. Reaching a state often requires
+creating a record and moving it through a workflow; do that only where it is
+authorized, label the records you create, leave other records alone, and do not
+remove test records unless asked. Authorization for one environment does not
+extend to another.
+
+When an environment cannot be reached, for example because of sign-in or a
+verification step, say so and continue on one that can, such as a local
+instance. Do not guess addresses, credentials, or screen contents.
+
+## Judge rendered screens
+
+Repetition and noise exist on a screen, not in a string table. Two keys with
+similar wording are not a finding unless a person sees both together, and one
+key can be a finding by appearing next to a heading, badge, or control that
+already says the same thing.
+
+Walk each interface by role and state. Cover the states that change what is
+shown: empty and populated, normal and exceptional, in progress and finished,
+one available option and several, a capability enabled and not enabled. Read
+the page as text where possible, and view it when placement matters.
+
+Read source for states you cannot reach, and mark those findings as read from
+source rather than observed. Source reading supplements the walk; it does not
+replace it.
+
+For every text, determine whether it is source or instance data such as saved
+settings, managed content, or seeded records. A repository change cannot fix
+instance data. List those findings separately for whoever owns the content.
+
+## Record findings
+
+Give each finding a stable identifier so the cleanup can be reported against
+it, and record:
+
+- The screen and the condition under which the text appears.
+- The exact text.
+- Which rule it breaks, and why the reader does not need it there.
+- The proposed change: remove, shorten, move, or show conditionally.
+- The source location, or that it is instance data.
+- Whether it was observed or read from source.
+
+Report one finding for a fact repeated in several places, naming the place
+that keeps it. Record text that looks redundant but must stay, with the reason,
+so a later pass does not remove it. Do not pad the list: a finding has to pass
+the rule's own test of whether removal would mislead the reader or lose a fact.
+
+## Clean up against the accepted list
+
+Work from the list the user accepted. Report anything found along the way
+instead of adding it silently.
+
+- Change every supported locale together. When a key is no longer referenced,
+  delete it from every locale and its type, following the project's
+  compatibility policy.
+- A copy change includes the condition that renders it. Implement "do not show
+  this in the normal state" from facts the screen already has, as narrowly as
+  the finding requires. If a finding needs new business logic or a contract
+  change, leave it and report why.
+- Keep explicit confirmations, values shown nowhere else, and text that carries
+  function. Before removing text that contains a value, such as a revision,
+  identifier, or amount, check what relies on it: the reader, a support
+  workflow, or a test that uses it as evidence of state.
+- Update tests and documentation that assert or describe the changed text. Do
+  not add tests that only prove a sentence was removed.
+- Leave instance data unchanged unless editing it in that environment is
+  authorized.
+
+## Validate
+
+Run the project's checks for the affected code, including interface tests that
+assert the changed screens. When an interface test fails, compare it with the
+pre-change baseline before attributing the failure to the cleanup; stale
+assertions are reported, not rewritten to pass.
+
+View the changed screens in the affected states where that is possible. State
+which screens were viewed, which were only covered by tests, and which test
+suites were updated but not run. Later edits invalidate affected results.
+
+## Report the result
+
+For each finding identifier, state whether it was changed, changed in part and
+how the result differs from the proposal, or left unchanged and why. Call out
+every deviation from the accepted list.
+
+State the validation actually run and its results, the scope left unverified,
+the instance-data findings that remain for their owner, and any test records
+or local state left behind.
+
+## Compose with other Steward skills
+
+- Use [write-project-docs](../write-project-docs/SKILL.md) when the user wants
+  the interface copy rules recorded in the contribution guide.
+- Use [simplify-repository](../simplify-repository/SKILL.md) for cleanup that
+  must preserve current behavior.
+- Use [parallel-repository-research](../parallel-repository-research/SKILL.md)
+  when locating copy sources across a large interface justifies independent
+  searches.
+
+Read another skill only when using it. Its defaults do not expand this scope.

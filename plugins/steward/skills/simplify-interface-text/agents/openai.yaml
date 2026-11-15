@@ -1,0 +1,7 @@
+interface:
+  display_name: "Simplify Interface Text"
+  short_description: "按角色和状态走查界面文案，清理重复、常驻、讲内部机制和解说控件的文字"
+  default_prompt: "使用 $steward:simplify-interface-text 只读走查当前范围内的界面文案，按角色和状态在渲染出的屏幕上判断，逐条给出页面、出现条件、原文、违反的规则、建议和源码位置，区分实际看到与从源码读到的发现，以及源码文案与实例数据；不修改代码、文案或配置。"
+
+policy:
+  allow_implicit_invocation: false

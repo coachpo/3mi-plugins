@@ -49,7 +49,9 @@ implement by default. Unless the project has already adopted different policy,
 state the principles in
 [default-policies.md](../write-project-docs/references/default-policies.md) as
 short operational rules; keep detailed policy and rationale in the contribution
-guide or existing authoritative policy document and link to it.
+guide or existing authoritative policy document and link to it. Its interface
+copy principles apply only to a repository with a user interface: state them as
+one short rule that links the authoritative section, and omit them otherwise.
 
 Use the requested language, otherwise preserve the effective root language or
 the established repository-document language. Preserve unrelated content and

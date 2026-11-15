@@ -63,6 +63,12 @@ policy. In review, flag unadopted worst-case constraints and assumptions
 presented as verified facts. Agent operational rules belong to the AGENTS.md
 hierarchy, not the contribution guide.
 
+The interface copy principles in the same file are conditional. State them only
+when source shows the repository renders text to people through a user
+interface, and add locales, units, terminology, and named exceptions only from
+verified project facts. Do not write them into a repository without an
+interface.
+
 ## Write the compatibility policy
 
 For both new and maintained documentation, explicitly state the compatibility

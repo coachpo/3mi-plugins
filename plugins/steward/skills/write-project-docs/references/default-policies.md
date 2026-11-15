@@ -43,3 +43,28 @@ and do not drop a limit or obligation the project has actually accepted.
 
 This documentation default does not itself authorize deleting existing
 compatibility code or changing public APIs.
+
+## Interface copy
+
+Conditional: state these only for a repository whose source renders text to
+people through a user interface. Omit the section for libraries, services, and
+tools without one.
+
+Keep a sentence only if removing it would make the reader act wrongly or lose a
+fact they cannot get elsewhere on the same screen.
+
+- State each fact once per screen, at the place closest to the action it
+  informs.
+- Show a notice only when it changes what the reader does. The normal state
+  gets no banner; empty sections and sections for a capability that is not
+  enabled are not rendered.
+- Keep internal mechanics off the screen: data-model terms, validation order,
+  configuration names, internal identifiers, and algorithm descriptions.
+- Do not narrate a control whose label is sufficient.
+
+These rules remove explanation, not protection. Keep explicit confirmations on
+irreversible or financial actions, a value the screen shows nowhere else, and
+text that carries function.
+
+Supported locales, units, terminology, and named exceptions are project facts:
+write them from the repository and accepted decisions, not from this default.

@@ -1,6 +1,6 @@
 # Steward
 
-Steward 为 Codex 与 Claude Code 提供仓库精简、任务指令改写、项目文档、仓库调研与交付规划技能。两个宿主读取同一份 `skills/` 目录。
+Steward 为 Codex 与 Claude Code 提供仓库精简、界面文案清理、任务指令改写、项目文档、仓库调研与交付规划技能。两个宿主读取同一份 `skills/` 目录。
 
 ## 安装与调用
 
@@ -20,7 +20,7 @@ claude plugin install steward@coachpo
 
 安装或更新后，新建 Codex 任务或 Claude Code 会话加载技能。Codex 调用形式为 `$steward:<skill-name>`，Claude Code 为 `/steward:<skill-name>`。
 
-`analyze-change-request` 在两个宿主都仅允许显式调用：Codex 使用 `agents/openai.yaml` 的 `policy.allow_implicit_invocation: false`；Claude Code 使用共享 `SKILL.md` 的 `disable-model-invocation: true`。该 Claude Code 扩展字段不替代 Codex 的调用策略；Codex 运行时可加载它，但仅接受通用 frontmatter 字段的校验器会拒绝它，须另用宿主原生加载检查确认兼容性。两宿主的调用控制分别见 [Codex 技能配置](https://learn.chatgpt.com/docs/build-skills#optional-metadata)与 [Claude Code 技能配置](https://code.claude.com/docs/en/skills#control-who-invokes-a-skill)。
+`analyze-change-request` 和 `simplify-interface-text` 在两个宿主都仅允许显式调用：Codex 使用 `agents/openai.yaml` 的 `policy.allow_implicit_invocation: false`；Claude Code 使用共享 `SKILL.md` 的 `disable-model-invocation: true`。该 Claude Code 扩展字段不替代 Codex 的调用策略；Codex 运行时可加载带该字段的技能，但仅接受通用 frontmatter 字段的校验器会拒绝它，须另用宿主原生加载检查确认兼容性。两宿主的调用控制分别见 [Codex 技能配置](https://learn.chatgpt.com/docs/build-skills#optional-metadata)与 [Claude Code 技能配置](https://code.claude.com/docs/en/skills#control-who-invokes-a-skill)。
 
 ## 技能用途与边界
 
@@ -28,6 +28,7 @@ claude plugin install steward@coachpo
 | --- | --- |
 | [refine-task](skills/refine-task/SKILL.md) | 改写工程需求，不执行原任务；每次都分别给出 GPT-6.1 Sol 和 Claude Opus 5.5 的推荐强度，不切换模型。 |
 | [simplify-repository](skills/simplify-repository/SKILL.md) | 联合精简代码、测试、文档及其他产物，保全行为、覆盖、有效知识和必要用途／保留义务。可独立实施与验证；审查只返回发现，不借清理下线功能、改写政策或重建文档体系。 |
+| [simplify-interface-text](skills/simplify-interface-text/SKILL.md) | 显式调用；按角色和状态在渲染出的屏幕上走查界面文案，清理重复、常驻、讲内部机制和解说控件的文字，保留确认、唯一信息和有功能的文字。审查只返回发现；清理按已确认的清单进行，会改变可见输出，但不改命令、金额、存储事实或服务端契约。不负责新功能文案、翻译或视觉改版。 |
 | [analyze-change-request](skills/analyze-change-request/SKILL.md) | 结合仓库与公开来源分析变更需求，提供引用及可观察验收标准。显式调用；只读，不实施或执行项目。 |
 | [parallel-repository-research](skills/parallel-repository-research/SKILL.md) | 至少两条独立调查线定位代码、梳理架构或追踪依赖，主代理核实证据。只读，不运行测试或判定行为风险。 |
 | [plan-delivery](skills/plan-delivery/SKILL.md) | 创建、修订或审查实施计划和／或 Sprint Backlog，明确交付、责任、依赖及验收。只规划，不执行开发。 |
@@ -45,6 +46,15 @@ Codex 可以按意图隐式选择仓库精简、任务指令改写、仓库调�
 ```text
 使用 $steward:simplify-repository 精简当前仓库的代码、测试、文档及其他产物，保全四类义务并完成验证，不提交或推送。
 使用 /steward:simplify-repository 只审查当前目录的冗余候选及保留义务，不实施清理。
+```
+
+## 界面文案清理
+
+使用 `simplify-interface-text` 清理已有界面上不改变用户行动、也不提供新信息的文字。重复和冗余只在渲染出的屏幕上成立，所以先按角色和状态走查，再对照已确认的清单清理；到不了的状态从源码读取并注明。规则优先取项目贡献指南中已采纳的界面文案规则，没有时使用默认的界面文案原则。保存在实例里的设置或内容不是源码，单独列给内容所有者。它与 `simplify-repository` 的区别是会有意改变可见输出。
+
+```text
+使用 $steward:simplify-interface-text 只读走查顾客端和员工端的界面文案，给出带页面、出现条件和源码位置的清单，不修改任何内容。
+使用 /steward:simplify-interface-text 对照已确认的清单清理界面文案，所有语言同步，完成验证，不提交或推送。
 ```
 
 ## 交付链路
@@ -78,7 +88,7 @@ Codex 可以按意图隐式选择仓库精简、任务指令改写、仓库调�
 
 ## 文档与规划
 
-文档维护沿用项目的语言、路径、信息结构和政策。README、项目状态、贡献指南、产品、架构与开发规范是可选文档角色，不是必建文件清单；写入、更新或迁移文档时，仅在授权范围内对照当前代码、配置和已采纳决策校正本次请求涉及或影响的架构文档，范围外偏差只报告，纯措辞或链接修改不要求架构审查。贡献指南在创建或维护时，默认记录乐观设计原则，以及保持源文件内聚、易导航并在规模妨碍理解或评审时拆分的开发原则。`write-agent-guides` 默认将这些原则转为项目根 `AGENTS.md` 中的可执行约束，详细政策与理由链接贡献指南等已有权威文档。已有文档中有用的内容、翻译和托管标记予以保留；有仓库生成器管理的区域遵循其契约。没有活动生成器的旧 `write-project-docs:*` 区域可直接维护。
+文档维护沿用项目的语言、路径、信息结构和政策。README、项目状态、贡献指南、产品、架构与开发规范是可选文档角色，不是必建文件清单；写入、更新或迁移文档时，仅在授权范围内对照当前代码、配置和已采纳决策校正本次请求涉及或影响的架构文档，范围外偏差只报告，纯措辞或链接修改不要求架构审查。贡献指南在创建或维护时，默认记录乐观设计原则，以及保持源文件内聚、易导航并在规模妨碍理解或评审时拆分的开发原则。`write-agent-guides` 默认将这些原则转为项目根 `AGENTS.md` 中的可执行约束，详细政策与理由链接贡献指南等已有权威文档。仓库源码确有面向用户的界面文字时，贡献指南另外记录界面文案原则：同屏只说一次、正常状态不提示、不讲内部机制、不解说控件，同时保留确认、唯一信息和有功能的文字；语言、单位、术语和具体例外按项目事实写，没有界面的仓库不写入。`write-agent-guides` 对此只写一条短规则并链接权威章节。已有文档中有用的内容、翻译和托管标记予以保留；有仓库生成器管理的区域遵循其契约。没有活动生成器的旧 `write-project-docs:*` 区域可直接维护。
 
 两个文档技能在新建与维护时，均在范围内的相关政策章节明确写入“本项目默认不保留向后兼容”，已有等价表述不重复；用户或当前有效项目规格、政策明确要求兼容时遵循该要求。默认不为旧接口、格式、配置或实现保留兼容层、别名、双轨路径及过渡代码；获授权替换实现时，同步更新相关调用方、配置、派生契约、测试及文档，移除不再需要的旧路径，不因“可能还有旧调用方”自动增加旧字段回退、双读双写或格式转换。清理限于当前任务；这项文档默认值不自动授权删除现有兼容代码或修改公共 API。`write-project-docs` 将政策写入贡献指南或已有权威政策文档；`write-agent-guides` 将可执行规则写入根 `AGENTS.md`，子树继承，范围外缺失只报告，审查请求仍只读。
 
