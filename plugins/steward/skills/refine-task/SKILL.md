@@ -44,28 +44,22 @@ Choosing a level:
 
 GPT-6.1 Sol: `low`, `medium` (default), `high`, `xhigh`, `max`.
 
-- `low`: quick, well-scoped tasks such as drafting or execution-oriented coding.
-- `medium`: planning, judgment, agentic coding and research; the default
-  for most work.
-- `high`: hard reasoning, complex debugging, or work spanning multiple
-  sources or tradeoffs.
-- `xhigh`: long-running agentic or research work, such as security or code
-  review, when the gain justifies the extra latency and cost.
-- `max`: the hardest single problems, where depth matters more than speed;
-  worth it only if it beats `xhigh`.
+- `low`: clear method with few assumptions to check.
+- `medium`: multiple bounded steps with routine verification.
+- `high`: cross-module causality, competing hypotheses, or important boundary checks.
+- `xhigh`: interacting constraints and a long chain of hard-to-obtain evidence.
+- `max`: several dependent hard judgments; identify what extra reasoning beyond
+  `xhigh` would resolve.
 
 Claude Opus 5.5: `low`, `medium` (default), `high`, `xhigh`, `max`.
 
-- `low`: quick, scoped work where each result is reviewed, such as small
-  changes or subagent tasks.
-- `medium`: day-to-day engineering with a clear scope, including most
-  agentic coding.
-- `high`: work where verification matters or edge cases are likely, such
-  as fixing a bug in an existing codebase.
-- `xhigh`: long-running agentic and coding work, when a gain over `high`
-  is expected.
-- `max`: hard problems worked through without the user, such as hunting for
-  security vulnerabilities. Returns diminish and the model can overthink.
+- `low`: straightforward work with little need for investigation.
+- `medium`: routine agentic work that balances quality, latency, and cost; the default.
+- `high`: difficult coding or reasoning that benefits from deeper investigation.
+- `xhigh`: long-running agentic work that requires sustained reasoning across
+  repeated rounds of tool use and verification.
+- `max`: the most demanding analysis, where depth and completeness take priority
+  over latency and token cost.
 
 ## Output
 
