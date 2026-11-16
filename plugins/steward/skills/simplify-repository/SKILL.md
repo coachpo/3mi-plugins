@@ -69,7 +69,8 @@ application source.
 
 Look for duplicated behavior or information, unused consumers or outputs,
 unreachable branches, superseded paths, redundant coverage, outdated reports,
-non-baseline screenshots, and generated artifacts without a continuing purpose.
+non-baseline screenshots, scaffolding leftovers, completed transitional switches,
+and generated artifacts without a continuing purpose.
 
 These are candidate categories, not deletion rules. Being reproducible,
 generated, historical, or absent from text searches is not sufficient evidence
@@ -92,6 +93,10 @@ Keep this correspondence compact; do not require a permanent inventory or
 report. Investigate or retain unresolved candidates rather than presenting
 them as confirmed redundancy.
 
+When retention depends on a fact the repository cannot establish, such as
+deployment state, live data, or client-held records, name that fact and group
+the candidates it decides rather than reporting each as retained.
+
 ## Simplify connected content
 
 Organize cohesive changes around obligations and consumer relationships, not
@@ -101,6 +106,14 @@ separate deletion quotas for code, tests, documents, or artifacts.
 
 Compare call conditions, validation order, error behavior, state changes,
 rollback, and other relevant effects before merging similar implementations.
+
+When duplicates have already diverged, report the divergence and which side
+is authoritative. Consolidating them is a behavior change that needs its own
+decision.
+
+A production member referenced only by tests is a candidate, not confirmed
+dead. Determine whether it is a deliberate test seam, a fixture that belongs
+with the tests, or a superseded path whose coverage should move to the live path.
 
 Before removing a wrapper, guard, compatibility path, or helper, determine
 whether it carries an independent contract or necessary complexity.
@@ -161,6 +174,10 @@ do not relax the obligations above.
 
 Check actual consumers and retention obligations before removing assets,
 screenshots, reports, generated files, configuration, dependencies, or scripts.
+
+For operator-run tools, the consumer is the documented scenario, such as setup,
+release, recovery, or account maintenance. Absence of code callers is not
+evidence of redundancy.
 
 For screenshots, distinguish disposable captures from comparison baselines,
 required evidence, and documentation assets. For generated files, distinguish
