@@ -68,7 +68,9 @@ policy exists, consult:
   For repositories with a user interface, state the copy principles as one
   short rule; omit it for repositories without one. State the
   operating-context principles and the commit and pull request conventions
-  only when the conditions stated in that file hold.
+  only when the conditions stated in that file hold. State the sections that
+  file marks as agent operational policy in full, keeping every identification
+  criterion and authorization rule: no other document holds them to link to.
 - [Working-state policy](references/working-state-policy.md) for the default
   policy to document in the root `AGENTS.md`.
 

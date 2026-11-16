@@ -5,9 +5,10 @@ The single source for the default policies Steward writes into a repository.
 in the contribution guide or existing authoritative policy document, except
 the sections marked as agent operational policy. `write-agent-guides` states
 them in root `AGENTS.md` as short operational rules and links to the
-authoritative policy where it exists. Explicit requirements
-from the user or currently effective project policy take precedence over these
-defaults.
+authoritative policy where it exists; it states the sections marked as agent
+operational policy in full, because no other document holds them. Explicit
+requirements from the user or currently effective project policy take
+precedence over these defaults.
 
 ## Contents
 
@@ -96,8 +97,8 @@ way, wherever they state it:
 
 ## Non-production data and secrets
 
-Agent operational policy: `write-agent-guides` states it in root `AGENTS.md`.
-`write-project-docs` does not write it into the contribution guide.
+Agent operational policy: `write-agent-guides` states it in full in root
+`AGENTS.md`. `write-project-docs` does not write it into the contribution guide.
 
 - Treat an environment and its data as non-production unless it is
   identifiable as production: it is one of the project's listed production
@@ -130,8 +131,8 @@ does not authorize commits, pushes, deployments, or other external writes.
 
 ## Authorization and Git
 
-Agent operational policy: `write-agent-guides` states it in root `AGENTS.md`.
-`write-project-docs` does not write it into the contribution guide.
+Agent operational policy: `write-agent-guides` states it in full in root
+`AGENTS.md`. `write-project-docs` does not write it into the contribution guide.
 
 - Answer, explanation, review, diagnosis, and planning requests are read-only.
   Change, build, and fix requests authorize the in-scope local edits and the
