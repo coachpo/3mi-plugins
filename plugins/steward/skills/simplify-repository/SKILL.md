@@ -114,6 +114,17 @@ with the tests, or a superseded path whose coverage should move to the live path
 Before removing a wrapper, guard, compatibility path, or helper, determine
 whether it carries an independent contract or necessary complexity.
 
+Before removing a root fact, trace derived symbols, interfaces, and copy, not
+just the original field name. Use the scope to decide whether it needs its own batch.
+
+Remove the field from its contract type and use type checking to enumerate typed sites.
+Check handwritten SQL fixtures, strict runtime schemas that reject extra fields,
+translation dictionaries and dynamic keys, and browser and end-to-end tests
+separately. Search documentation by concept as well as by identifier.
+
+When removal depends on the shape of stored data, apply
+[persisted data cleanup](references/persisted-data-cleanup.md).
+
 ### Tests
 
 Compare setup assumptions, input boundaries, failure branches, concurrency
@@ -123,10 +134,13 @@ not establish equivalent regression detection.
 Before removing valid coverage, identify retained assertions that detect the
 same meaningful failures, or migrate unique assertions into suitable tests.
 Do not assume a higher-level test subsumes lower-level or property coverage.
+If setup depends on a removed state, change the setup when the same contract
+is still observable on new data; remove the test only if the contract no longer applies.
 
 Distinguish fragile implementation-detail assertions and one-time cleanup
 checks from durable contracts. Rejection paths and forbidden side effects
-can provide essential negative coverage.
+can provide essential negative coverage. After tightening constraints, recheck
+each expected rejection to ensure it fails for the intended reason.
 
 ### Documentation
 
@@ -180,7 +194,8 @@ does not prove that an artifact was unnecessary.
 
 Use the known baseline and check relevant pre-change behavior when needed to
 interpret results. Choose checks appropriate to affected obligations and run
-the repository's required validation.
+the repository's required validation. If relying on a slow browser or end-to-end
+suite to judge the change, run it before editing to establish a baseline.
 
 Use behavior tests for affected code, assertion-level review for coverage
 replacement, content and link checks for documentation, and relevant consumer
@@ -188,7 +203,9 @@ or packaging checks for artifacts. Do not impose unrelated application tests
 for an isolated prose change or a universal coverage or mutation-testing gate.
 
 Investigate failures as product regressions, test fragility, tooling defects,
-or environment limitations before choosing a remedy. Subsequent edits
+or environment limitations before choosing a remedy. Compare with the baseline
+and trace the failing assertion to the affected code, including indirect effects,
+to distinguish existing failures from new regressions. Subsequent edits
 invalidate affected validation evidence.
 
 Use temporary checks for one-time deletion and reference cleanup. Do not retain
@@ -246,7 +263,8 @@ Summarize:
 
 - What was removed, consolidated, or deliberately retained, and why.
 - How each affected obligation class remains protected.
-- Validation actually performed, its results, and material unverified scope.
+- Validation actually performed and its results. List checks not run separately
+  from passing checks, by suite or file, and state material unverified scope.
 
 Distinguish confirmed redundancy and its disposition from unresolved candidates,
 changes requiring additional authorization, and environment or validation limits.
