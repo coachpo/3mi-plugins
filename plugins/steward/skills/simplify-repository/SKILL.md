@@ -114,13 +114,15 @@ with the tests, or a superseded path whose coverage should move to the live path
 Before removing a wrapper, guard, compatibility path, or helper, determine
 whether it carries an independent contract or necessary complexity.
 
-Before removing a root fact, trace derived symbols, interfaces, and copy, not
-just the original field name. Use the scope to decide whether it needs its own batch.
+Before removing a field or state that other values derive from, trace the
+derived symbols, interfaces, and copy, not just the original name. Use the
+scope to decide whether it needs its own batch.
 
-Remove the field from its contract type and use type checking to enumerate typed sites.
-Check handwritten SQL fixtures, strict runtime schemas that reject extra fields,
-translation dictionaries and dynamic keys, and browser and end-to-end tests
-separately. Search documentation by concept as well as by identifier.
+When removing a field in a type-checked codebase, remove it from its contract
+type and use type checking to enumerate typed sites. Check handwritten SQL
+fixtures, strict runtime schemas that reject extra fields, translation
+dictionaries and dynamic keys, and browser and end-to-end tests separately.
+Search documentation by concept as well as by identifier.
 
 When removal depends on the shape of stored data, apply
 [persisted data cleanup](references/persisted-data-cleanup.md).
