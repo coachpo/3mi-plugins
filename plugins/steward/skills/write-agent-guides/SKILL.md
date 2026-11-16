@@ -63,8 +63,8 @@ specifications or policies, reusing equivalent wording. Where no applicable
 policy exists, consult:
 
 - [Default policies](../../references/default-policies.md) for
-  design, development, compatibility, non-production data and secrets, and
-  commit and pull request conventions.
+  design, development, compatibility, non-production data and secrets,
+  authorization and Git, and commit and pull request conventions.
   For repositories with a user interface, state the copy principles as one
   short rule; omit it for repositories without one. State the
   operating-context principles and the commit and pull request conventions

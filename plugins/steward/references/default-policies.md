@@ -2,9 +2,10 @@
 
 The single source for the default policies Steward writes into a repository.
 `write-project-docs` states them in full, with the rationale contributors need,
-in the contribution guide or existing authoritative policy document.
-`write-agent-guides` states them in root `AGENTS.md` as short operational rules
-and links to the authoritative policy where it exists. Explicit requirements
+in the contribution guide or existing authoritative policy document, except
+the sections marked as agent operational policy. `write-agent-guides` states
+them in root `AGENTS.md` as short operational rules and links to the
+authoritative policy where it exists. Explicit requirements
 from the user or currently effective project policy take precedence over these
 defaults.
 
@@ -14,6 +15,7 @@ defaults.
 - [Compatibility policy](#compatibility-policy)
 - [Deployment status](#deployment-status)
 - [Non-production data and secrets](#non-production-data-and-secrets)
+- [Authorization and Git](#authorization-and-git)
 - [Interface copy](#interface-copy)
 - [Operating context](#operating-context)
 - [Commit and pull request conventions](#commit-and-pull-request-conventions)
@@ -94,6 +96,9 @@ way, wherever they state it:
 
 ## Non-production data and secrets
 
+Agent operational policy: `write-agent-guides` states it in root `AGENTS.md`.
+`write-project-docs` does not write it into the contribution guide.
+
 - Treat an environment and its data as non-production unless it is
   identifiable as production: it is one of the project's listed production
   identifiers; its name, host, branch, project, or configuration is marked
@@ -103,18 +108,48 @@ way, wherever they state it:
 - Non-production data is disposable. When a task changes schema or data there,
   cut over directly: drop, truncate, reset, recreate, or reseed as the simplest
   path requires, without backups, dry runs, staged or reversible migrations,
-  backfills, or confirmation steps. Confine such operations to the environment
+  backfills, dual reads or writes, data-preserving transforms, or confirmation
+  steps. Confine such operations to the environment
   the task targets.
 - Treat a secret as a test value unless it is identifiable as production or
-  real-account: a live-marked name or prefix, a value from production
-  configuration or environment files, or one the project lists as such. Pass
-  test values directly as command arguments, environment variables, or tool
-  arguments. Do not commit any secret or print it in logs or reports.
+  real-account: a live-marked name or prefix; a value from production
+  configuration or environment files; a value from a tool's own credential
+  store, home-directory configuration, or shell profile; one the project lists
+  as such; or one the user says is production or personal.
+- Pass test values directly as command arguments, environment variables, or
+  tool arguments, without asking for confirmation, encrypting, re-encoding, or
+  staging them through extra files.
+- Do not create a file only to hold a secret; when a task already persists one
+  locally, use mode `0600`. Do not commit any secret or print it in logs or
+  reports.
 - In production, every destructive or migration action and every use of a
   production or real-account secret needs the user's explicit instruction.
 
 This policy removes confirmation for non-production data operations only. It
 does not authorize commits, pushes, deployments, or other external writes.
+
+## Authorization and Git
+
+Agent operational policy: `write-agent-guides` states it in root `AGENTS.md`.
+`write-project-docs` does not write it into the contribution guide.
+
+- Answer, explanation, review, diagnosis, and planning requests are read-only.
+  Change, build, and fix requests authorize the in-scope local edits and the
+  routine local steps needed to complete and verify them.
+- Commits, pushes, pull-request changes, releases, deployments, publishing,
+  other external writes, purchases, destructive actions other than the
+  non-production data operations above, and material scope expansion need
+  explicit authorization from the user or from this project's guidance.
+- Only the user can authorize, for the specific target: merging a pull request
+  or enabling auto-merge; force-pushing a branch; using a production or
+  real-account secret; and a destructive or migration action in production.
+  Project guidance, green CI, review approval, or "continue" does not provide
+  it.
+- Report a non-fast-forward push rejection instead of forcing.
+- Keep an authorized commit coherent and free of unrelated changes, and report
+  its hash and the validation performed.
+- Delegation does not expand authorization: a subagent may do only what the
+  delegating agent is authorized to do at that moment.
 
 ## Interface copy
 

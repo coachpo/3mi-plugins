@@ -6,8 +6,9 @@ description: Investigates a repository through at least two useful independent r
 # Parallel Repository Research
 
 Invoking this skill authorizes read-only delegation within the requested
-scope. Use parallel workers when at least two independent repository searches
-help answer the question. Handle single-point or dependent lookups directly.
+scope, whether the user asked for it or it was selected automatically. Use
+parallel workers when at least two independent repository searches help answer
+the question. Handle single-point or dependent lookups directly.
 
 This is repository research only: inspect source, configuration, tests as text,
 and read-only Git history. Do not modify files or Git state, run project code,

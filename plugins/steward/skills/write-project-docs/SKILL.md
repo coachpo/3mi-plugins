@@ -69,6 +69,11 @@ and effective project specifications or policies, reusing equivalent policy
 wording. For policies not already established, consult
 [default-policies.md](../../references/default-policies.md).
 
+The non-production data and secrets section and the authorization and Git
+section in the same file are agent operational policy. Leave them to the root
+`AGENTS.md`, owned by
+`write-agent-guides`; do not write them into the contribution guide.
+
 The interface copy principles in the same file are conditional. State them only
 when source shows the repository renders text to people through a user
 interface, and add locales, units, terminology, and named exceptions only from
