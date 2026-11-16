@@ -20,7 +20,7 @@ claude plugin install steward@coachpo
 
 安装或更新后，新建 Codex 任务或 Claude Code 会话加载技能。Codex 调用形式为 `$steward:<skill-name>`，Claude Code 为 `/steward:<skill-name>`。
 
-`analyze-change-request`、`simplify-repository` 和 `simplify-interface-text` 在两个宿主都仅允许显式调用：Codex 使用 `agents/openai.yaml` 的 `policy.allow_implicit_invocation: false`；Claude Code 使用共享 `SKILL.md` 的 `disable-model-invocation: true`。该 Claude Code 扩展字段不替代 Codex 的调用策略；Codex 运行时可加载带该字段的技能，但仅接受通用 frontmatter 字段的校验器会拒绝它，须另用宿主原生加载检查确认兼容性。两宿主的调用控制分别见 [Codex 技能配置](https://learn.chatgpt.com/docs/build-skills#optional-metadata)与 [Claude Code 技能配置](https://code.claude.com/docs/en/skills#control-who-invokes-a-skill)。
+`simplify-repository` 和 `simplify-interface-text` 在两个宿主都仅允许显式调用：Codex 使用 `agents/openai.yaml` 的 `policy.allow_implicit_invocation: false`；Claude Code 使用共享 `SKILL.md` 的 `disable-model-invocation: true`。该 Claude Code 扩展字段不替代 Codex 的调用策略；Codex 运行时可加载带该字段的技能，但仅接受通用 frontmatter 字段的校验器会拒绝它，须另用宿主原生加载检查确认兼容性。两宿主的调用控制分别见 [Codex 技能配置](https://learn.chatgpt.com/docs/build-skills#optional-metadata)与 [Claude Code 技能配置](https://code.claude.com/docs/en/skills#control-who-invokes-a-skill)。
 
 ## 技能用途与边界
 
@@ -29,7 +29,6 @@ claude plugin install steward@coachpo
 | [refine-task](skills/refine-task/SKILL.md) | 改写工程需求，不执行原任务；每次都分别给出 Codex 和 Claude Code 的推荐强度，不切换模型。 |
 | [simplify-repository](skills/simplify-repository/SKILL.md) | 显式调用；联合精简代码、测试、文档及其他产物，保全行为、覆盖、有效知识和必要用途／保留义务。可独立实施与验证；实施请求即授权删除范围内已纳入版本控制的内容，删除未纳入版本控制或被忽略的文件前须先确认。审查只返回发现，不借清理下线功能、改写政策或重建文档体系。 |
 | [simplify-interface-text](skills/simplify-interface-text/SKILL.md) | 显式调用；按角色和状态在渲染出的屏幕上走查界面文案，清理重复、常驻、讲内部机制和解说控件的文字，保留确认、唯一信息和有功能的文字。审查只返回发现；清理按已确认的清单进行，请求点名的文案视为已确认，没有清单时先产出清单并等待确认；清理会改变可见输出，但不改命令、金额、存储事实或服务端契约。不负责新功能文案、翻译或视觉改版。 |
-| [analyze-change-request](skills/analyze-change-request/SKILL.md) | 结合仓库与公开来源分析变更需求，提供引用及可观察验收标准。显式调用；只读，不实施或执行项目。 |
 | [parallel-repository-research](skills/parallel-repository-research/SKILL.md) | 至少两条独立调查线定位代码、梳理架构或追踪依赖，主代理核实证据。调用即授权范围内的只读委派，用户显式调用和被自动选中时相同。只读，不运行测试或判定行为风险。 |
 | [write-agent-guides](skills/write-agent-guides/SKILL.md) | 维护有依据的 AGENTS.md 层级，共享规则在根文件，子树仅记录局部差异。获准新建或更新根 AGENTS.md 时，默认补齐所有适用的根政策。仓库指南不依赖用户级全局指令文件：只读取它们以发现冲突并报告。不维护 CLAUDE.md、技能或子代理提示词，也不编辑用户级全局指令文件。 |
 | [write-project-docs](skills/write-project-docs/SKILL.md) | 按仓库事实和既有约定维护正式项目文档，明确权威来源并同步相关链接。新建或迁移且仓库没有既定布局时使用默认文档集合；获准新建或更新贡献指南等权威项目政策文档时，默认补齐所有适用的项目政策。局部更新不扩展为文档套件。 |
@@ -60,7 +59,7 @@ Codex 可以按意图隐式选择任务指令改写、仓库调查、项目文�
 
 一次代码变更可按下列链路使用技能；每一步都可单独调用，不需要的步骤可以跳过。
 
-1. `analyze-change-request` 在对话中给出带来源和验收标准的需求分析，复杂仓库搜索配合 `parallel-repository-research`；由用户确认需求和决策。
+1. 需要复杂仓库搜索时，用 `parallel-repository-research` 定位代码、梳理架构或追踪依赖。
 2. 开发与验证由宿主按用户当前授权直接完成。
 3. 变更影响文档时，用 `write-project-docs`、`write-agent-guides` 同步正式文档与代理指南；任务运行态不写入这些文档。
 
@@ -93,12 +92,9 @@ Codex 可以按意图隐式选择任务指令改写、仓库调查、项目文�
 
 ## 只读调研
 
-变更分析区分用户要求、实际约束和待决定建议，按目标版本核实代码与公开来源，并随用户纠正更新受影响证据。公开查询不携带私有源码、秘密或个人数据。
-
-仓库调查使用宿主可用的委派工具。Claude Code 使用插件 agent `steward:steward-researcher`：只有读文件和搜索工具，只读由工具限制保证，Git 历史由主代理自己查。Codex 和其他宿主沿用默认 worker，不指定模型。子任务限定在仓库读取，主代理核实决定性证据；调用 `parallel-repository-research` 或 `analyze-change-request` 即授权范围内的只读委派，显式调用和被自动选中时相同；委派不可用或用户限制时直接调查。并行能力不会扩大权限；在 Codex 和宿主默认 worker 上，只读仍只是提示词约束，不构成操作系统隔离。
+仓库调查使用宿主可用的委派工具。Claude Code 使用插件 agent `steward:steward-researcher`：只有读文件和搜索工具，只读由工具限制保证，Git 历史由主代理自己查。Codex 和其他宿主沿用默认 worker，不指定模型。子任务限定在仓库读取，主代理核实决定性证据；调用 `parallel-repository-research` 即授权范围内的只读委派，显式调用和被自动选中时相同；委派不可用或用户限制时直接调查。并行能力不会扩大权限；在 Codex 和宿主默认 worker 上，只读仍只是提示词约束，不构成操作系统隔离。
 
 ```text
-使用 $steward:analyze-change-request 分析批量导入需求，给出来源和验收条件，不修改文件。
 使用 $steward:parallel-repository-research 调查两个独立服务的重试调用链，给出代码证据。
 ```
 

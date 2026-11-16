@@ -14,7 +14,6 @@
     "claude-code",
     "codex",
     "documentation",
-    "requirements-analysis",
     "repository-research",
     "repository-cleanup",
     "workflows",
@@ -24,7 +23,7 @@
   "interface": {
     "displayName": "Steward",
     "shortDescription": "仓库精简、项目文档与调研",
-    "longDescription": "Steward 通过 simplify-repository 联合清理代码、测试、文档及其他仓库产物，保全现行行为、独有回归覆盖、有效知识及必要用途与保留义务；通过 simplify-interface-text 按角色和状态走查并清理界面文案；维护项目文档与 AGENTS.md，执行只读仓库调研和需求分析。write-agent-guides 在根 AGENTS.md 中统一跨压缩或跨会话的 working-state policy；write-project-docs 排除运行态，项目状态仅维护持久事实。Codex 与 Claude Code 读取同一套技能。",
+    "longDescription": "Steward 通过 simplify-repository 联合清理代码、测试、文档及其他仓库产物，保全现行行为、独有回归覆盖、有效知识及必要用途与保留义务；通过 simplify-interface-text 按角色和状态走查并清理界面文案；维护项目文档与 AGENTS.md，执行只读仓库调研。write-agent-guides 在根 AGENTS.md 中统一跨压缩或跨会话的 working-state policy；write-project-docs 排除运行态，项目状态仅维护持久事实。Codex 与 Claude Code 读取同一套技能。",
     "developerName": "CoachPo",
     "category": "Productivity",
     "capabilities": [
@@ -33,7 +32,7 @@
     ],
     "defaultPrompt": [
       "使用 $steward:write-project-docs 维护正式项目文档，再用 $steward:write-agent-guides 同步 AGENTS.md 层级。",
-      "使用 $steward:analyze-change-request 调研当前变更请求；需要复杂仓库搜索时使用 $steward:parallel-repository-research。"
+      "使用 $steward:parallel-repository-research 调查两个独立服务的重试调用链，给出代码证据。"
     ],
     "brandColor": "#1A73E8",
     "websiteURL": "https://github.com/coachpo/3mi-plugins/tree/main/plugins/steward"
