@@ -1,63 +1,63 @@
 ---
 name: plan-delivery
-description: Create, revise, or review persisted delivery-planning documents, namely implementation plans with work packages and acceptance, and Sprint Backlogs, from requirements and accepted decisions. Use when the user wants these planning documents written or reviewed; not for an in-conversation plan before coding, plan mode, or development execution.
+description: Create, revise, or review a persisted implementation plan, Sprint Backlog, or both from requirements and accepted decisions. Plan work, order, dependencies, and acceptance, not schedules or staffing. Not for an in-conversation coding plan, plan mode, or execution.
 ---
 
 # Plan Delivery
 
 Produce the requested implementation plan, Sprint Backlog, or review so an
-executor can tell what to deliver, what can start, who is responsible, and how
-to accept the result. A request for one document does not require the other;
+executor can tell what to deliver, what can start, in what order, and how to
+accept the result. A request for one document does not require the other;
 review requests return findings without editing files.
+
+Plan content, order, and dependencies only. Do not compute or write dates,
+durations, deadlines, milestones, release timelines, effort or capacity
+estimates, staffing, owner or role assignments, budgets, or organizational
+process, and do not add empty fields for them. Keep such fields when the user
+supplies their values or an existing document already has them; do not derive
+or fill them yourself. A Sprint is an ordered group of tasks, not a calendar
+period.
 
 Use the user's paths, language, and structure, then project conventions. If
 none exist, save new artifacts under `docs/planning/implementation-plan.md` and
 `docs/planning/sprint-backlog.md`. Adapt the level of detail to the work; no fixed
 template or extra planning infrastructure is required.
 
-When advising on Codex model selection, recommend `gpt-6.1-sol` for routine
-delivery planning and `gpt-6-astra` for the most demanding cross-package
-dependencies and competing constraints. These are role recommendations, not
-instructions to switch the active model or override user or host choices.
-
 ## Establish the planning baseline
 
 Read the requirements, accepted decisions, and affected existing planning
 content. Distinguish accepted decisions from suggestions, assumptions, and open
 choices. Identify the effect of missing inputs without inventing approval,
-owners, evidence, or a settled solution. Complete unaffected planning when a
-decision blocks only part of the work.
+evidence, or a settled solution. Complete unaffected planning when a decision
+blocks only part of the work.
 
-An implementation plan owns requirement scope, work packages, responsibilities,
-dependencies, and overall acceptance. A Backlog decomposes that plan into tasks,
-task dependencies, iteration placement, and completion conditions. For a
+An implementation plan owns requirement scope, work packages, dependencies, and
+overall acceptance. A Backlog decomposes that plan into tasks, task
+dependencies, Sprint placement and order, and completion conditions. For a
 Backlog-only request, use the existing plan as authoritative and report gaps
 that prevent readiness; creating or changing the plan needs to be in scope.
 
 ## Make the work executable
 
 - Connect requirements to concrete work-package outputs and acceptance. Give
-  each package a stable reference, a scope boundary, accountable and acceptance
-  roles, necessary collaborators, dependencies, and handoffs.
+  each package a stable reference, a scope boundary, dependencies, and handoffs.
 - For a Backlog, relate tasks to package obligations. Give near-term tasks
-  concrete outputs, start conditions, responsibility, and observable completion
-  criteria. Retain future obligations and their missing refinement or readiness
+  concrete outputs, start conditions, and observable completion criteria.
+  Retain future obligations and their missing refinement or readiness
   conditions rather than dropping uncertain work.
-- Arrange Sprints around useful increments, priorities, dependencies, and actual
-  capacity. Roles do not imply staffing or parallel capacity. With unknown
-  availability or estimates, present a proposed sequence and its assumptions
-  rather than committed dates or durations.
+- Arrange Sprints around useful increments, priorities, and dependencies. Give
+  each Sprint its content and its place in the sequence, and state the
+  assumptions that sequence depends on.
 - Define acceptance by the outcome, verification method, necessary conditions,
-  and expected evidence. Include explicit work and ownership for shared business
-  results and final integration. Planned evidence is still evidence to collect.
+  and expected evidence. Include explicit work for shared business results and
+  final integration. Planned evidence is still evidence to collect.
 
 Use existing IDs and preserve them across revisions or Sprint moves. Give each
 delivered plan and Backlog a revision, following any existing convention, and
-increment it when an entry's scope, outputs, dependencies, responsibilities, or
-acceptance change; downstream contracts cite the entry and revision they used.
-Maintain a traceable mapping for splits, merges, or retirements. Coverage views
-should refer to authoritative entries rather than duplicate their scope and
-completion rules.
+increment it when an entry's scope, outputs, dependencies, or acceptance
+change. Maintain a traceable mapping for splits, merges, or retirements.
+Coverage views should refer to authoritative entries rather than duplicate
+their scope and completion rules.
 
 ## Check dependencies and acceptance
 
@@ -82,10 +82,9 @@ acceptance into related entries. Synchronize only authorized artifacts; a
 Backlog revision must not silently change upstream requirements or acceptance.
 Preserve unrelated content and decisions.
 
-Review the final requested artifacts for traceability, coverage, dependencies,
-responsibility, capacity assumptions, and acceptance. When both documents change,
+Review the final requested artifacts for traceability, coverage, order,
+dependencies, and acceptance. When both documents change,
 check their final versions together. Report paths or findings and material gaps,
 including unread or unavailable inputs that limit the consistency review.
 
-This workflow ends at delivery planning. This skill does not dispatch tasks,
-implement changes, or perform acceptance.
+Do not dispatch tasks, implement changes, or perform acceptance.

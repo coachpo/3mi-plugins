@@ -1,7 +1,7 @@
 interface:
   display_name: "Write Project Documentation"
   short_description: "基于仓库事实维护正式项目文档，沿用既有约定并保持更新范围"
-  default_prompt: "使用 $steward:write-project-docs 基于仓库事实维护正式项目文档，仅在授权范围内校正本次请求涉及或影响的架构文档，范围外偏差只报告；纯措辞或链接修改不要求架构审查。新建贡献指南或请求涉及政策时，在贡献指南中记录乐观设计原则与保持源文件内聚、易导航的开发原则，并在相关政策章节明确默认不保留向后兼容；措辞、链接或命令类窄改动只报告缺失政策；遵循用户或项目的明确兼容要求，不因此授权代码或公共 API 变更。"
+  default_prompt: "使用 $steward:write-project-docs 基于仓库事实维护本次请求涉及的正式项目文档；范围外偏差只报告。"
 
 policy:
-  allow_implicit_invocation: false
+  allow_implicit_invocation: true

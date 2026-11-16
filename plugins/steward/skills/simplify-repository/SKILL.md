@@ -1,24 +1,20 @@
 ---
 name: simplify-repository
 disable-model-invocation: true
-description: Review or simplify repository contents across code, tests, documentation, and other artifacts. Remove evidenced redundancy while preserving current behavior, unique regression coverage, valid project knowledge, and necessary consumers or retention obligations. Use for repository cleanup, consolidation, or ablation; not feature retirement, interface copy cleanup, policy redesign, or delivery orchestration.
+description: Review or remove evidenced redundancy in repository code, tests, docs, and other artifacts while preserving behavior, coverage, knowledge, consumers, and retention obligations. Explicit invocation only. Not for feature retirement, visible copy changes, policy redesign, or delivery orchestration.
 ---
 
 # Simplify Repository
 
 Retain repository content that still has a purpose or retention obligation.
-Remove evidenced redundancy and reduce maintenance burden, rather than
-targeting fewer files, lines, tests, documents, or dependencies.
-
-Treat code, tests, documentation, and other artifacts as connected parts of
-the repository. Documentation and artifact cleanup are primary responsibilities,
-not merely follow-up work after code or test changes.
-
-Inspect the categories relevant to the requested scope. Do not require every
-category to change or shrink. Finding no safe deletion is a valid outcome.
+Review the relevant code, tests, documentation, and other artifacts together;
+documentation and artifact cleanup do not depend on code or test changes.
+Remove evidenced redundancy to reduce maintenance burden, not to meet deletion
+quotas. No category must shrink; finding no safe deletion is valid.
 
 Review requests return findings without cleanup changes. Implementation
-requests carry the in-scope changes through validation.
+requests carry the in-scope changes through validation. A request that does
+not say which it is gets a review.
 
 ## Establish scope and authority
 
@@ -41,9 +37,12 @@ default against backward compatibility does not itself authorize removing
 existing behavior or changing public APIs. Do not establish or rewrite project
 policy as a side effect of cleanup.
 
-Deleting files that version control does not track, including ignored files,
-cannot be undone. List those candidates and obtain explicit confirmation before
-deleting them.
+An explicit implementation request for this skill authorizes deletion of
+version-controlled content within scope once the evidence below supports it,
+without per-file confirmation.
+
+List untracked or ignored deletion candidates and obtain explicit confirmation
+before deleting them.
 
 ## Preserve four classes of obligations
 
@@ -99,9 +98,6 @@ the candidates it decides rather than reporting each as retained.
 
 ## Simplify connected content
 
-Organize cohesive changes around obligations and consumer relationships, not
-separate deletion quotas for code, tests, documents, or artifacts.
-
 ### Code
 
 Compare call conditions, validation order, error behavior, state changes,
@@ -146,29 +142,8 @@ Repair affected navigation, links, anchors, and cross-references. Do not rebuild
 the documentation system, impose a document set, or rewrite project policy
 merely to complete cleanup.
 
-#### Current-state cleanup (explicit request only)
-
-When the user explicitly asks for documentation that describes the current
-state rather than the history of work, apply these additional criteria. They
-do not relax the obligations above.
-
-- Check claims against current source, configuration, and migrations; do not
-  infer live state from old logs. A claim that cannot be verified is uncertain,
-  not false.
-- Remove execution and acceptance logs, operation transcripts, completed
-  migration or repair narratives, "previously X, then Y" accounts, and
-  superseded notes or proposals when they carry no continuing obligation.
-- Keep runbooks for repeatable operations such as setup, deployment, migration,
-  and recovery; instructions are not execution logs. Keep historical data or
-  protocol handling that current code still supports.
-- Distinguish execution dates from source-verification dates. A dated heading
-  alone is not grounds for deletion; keep verification dates and required
-  acceptance or audit evidence.
-- Restate warnings about retired resources as current constraints without the
-  chronology, keeping identifiers needed to prevent reuse or accidental
-  operations.
-- Prefer deletion over rewriting valid content. For partly stale sentences,
-  remove only the obsolete clause; do not invent replacement facts.
+For an explicit request to describe the current state rather than the history of
+work, also apply [current-state cleanup](references/current-state-cleanup.md).
 
 ### Other artifacts
 
@@ -250,20 +225,16 @@ establish a simplification baseline.
 
 ## Compose with other Steward skills
 
-This skill owns repository simplification, including substantive documentation
-and artifact cleanup. Other skills support specialized work; they do not exclude
-those categories from this skill's scope.
-
 - Use [parallel-repository-research](../parallel-repository-research/SKILL.md)
-  when independent searches justify it. Workers return facts; the responsible
-  executor owns removal and preservation judgments.
+  when independent searches are useful and authorized. Workers return facts;
+  the responsible executor owns removal and preservation judgments.
 - Use [write-project-docs](../write-project-docs/SKILL.md) for specialized
-  canonical-document maintenance within the requested cleanup.
+  canonical-document maintenance within scope.
 - Use [write-agent-guides](../write-agent-guides/SKILL.md) when agent behavior
   or AGENTS.md hierarchy genuinely requires maintenance.
-- Use [simplify-interface-text](../simplify-interface-text/SKILL.md) for
-  cleanup of user-visible interface text. It changes visible output and is
-  outside this skill's behavior-preserving scope.
+- For cleanup that changes visible copy, suggest
+  [simplify-interface-text](../simplify-interface-text/SKILL.md), which requires
+  explicit invocation and is outside this skill's behavior-preserving scope.
 
 Read another skill only when using it. Its defaults do not expand the cleanup
 scope or authorize new policy. Do not require a plan, contract, subagent, or

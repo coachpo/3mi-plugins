@@ -1,7 +1,6 @@
 ---
 name: steward-researcher
-description: Answer one bounded, read-only repository question with file and line evidence. Use for independent search lanes delegated by Steward research, analysis, or planning work.
-model: haiku
+description: Answer one delegated question about repository files with precise source evidence. Use for read-only file searches, not Git history, command execution, risk assessment, or change proposals.
 tools: Read, Grep, Glob
 ---
 

@@ -1,24 +1,21 @@
 ---
 name: write-agent-guides
-description: Review or maintain an evidence-based AGENTS.md hierarchy with shared root guidance and material subtree differences. Use for agent instructions, not canonical project documentation or CLAUDE.md.
+description: Review, create, or update a repository's evidence-based AGENTS.md hierarchy with shared root guidance and material subtree differences. Not for canonical project documentation, CLAUDE.md, skill or subagent prompts, or user-level global instruction files.
 ---
 
 # Write AGENTS.md Guides
 
-Maintain concise repository instructions that help agents choose where to work,
-respect project-specific constraints, and validate changes. Put shared rules at
-the root and only useful local differences in nested files. Review requests
-return findings without editing; maintenance requests change the affected
-`AGENTS.md` files. This skill does not maintain `CLAUDE.md`.
+Review requests return findings without editing, and a request that does not
+say whether to review or change is a review. For maintenance, change only the
+affected `AGENTS.md` files in the repository.
 
 ## Resolve scope and evidence
 
 Identify the repository boundaries and effective instruction hierarchy for each
 affected path. Account for the host's overrides, configured fallback files, and
 visibility limits where applicable. A shadowed or truncated file may not supply
-the guidance its author expects. In Claude Code, a `CLAUDE.md` at the same level
-or above stops `AGENTS.md` from loading by default unless it imports
-`@AGENTS.md`; report this without editing `CLAUDE.md`.
+the guidance its author expects. User-level global instruction files are part
+of the effective hierarchy to read, not files this skill edits.
 
 Ground repository facts in relevant code, configuration, manifests, CI, and
 existing documents. Verify commands, their working directories, component
@@ -27,93 +24,54 @@ Explicit user requirements establish working preferences; they do not need code
 evidence. Preserve accurate existing rules and mark material facts that remain
 unverified.
 
-When advising on Codex model selection, recommend `gpt-6.1-sol` for instruction
-hierarchy and constraint checks, `gpt-6.1-terra` for wording and structure after
-the rules are verified, and `gpt-6-astra` for the most demanding cross-subtree
-instruction conflicts within scope. These are role recommendations, not
-instructions to switch the active model or override user or host choices.
-
 ## Choose and write the hierarchy
 
 Keep or create a nested file when the subtree has an evidenced command,
 responsibility, or constraint difference that would be misleading or cumbersome
-as shared root guidance. A directory inventory or repetition of the parent is
-not sufficient. A valid parent need not be rewritten for a subtree-only change;
-report any necessary parent correction outside the requested write scope.
+as shared root guidance. Otherwise keep common rules at the root. A directory
+inventory or repetition of the parent is not sufficient. Report any necessary
+parent correction outside the requested write scope.
 
 Write guidance that changes agent behavior: change locations, commands,
 non-obvious invariants, generated boundaries, and explicit working preferences.
 Link authoritative project documents instead of copying their contents. Avoid
 generic engineering advice and exhaustive repository descriptions.
 
-Root guidance also carries the shared design and development constraints agents
-implement by default. Unless the project has already adopted different policy,
-state the principles in
-[default-policies.md](../write-project-docs/references/default-policies.md) as
-short operational rules; keep detailed policy and rationale in the contribution
-guide or existing authoritative policy document and link to it. Its interface
-copy principles apply only to a repository with a user interface: state them as
-one short rule that links the authoritative section, and omit them otherwise.
-
-Root policy is in scope when creating root guidance or when the request concerns
-its policy sections. A narrow root edit, such as a command, path, link, or
-wording fix, does not add missing policy sections; report them instead. This
-applies to the principles above and to the compatibility and working-state
-policies below.
-
 Use the requested language, otherwise preserve the effective root language or
 the established repository-document language. Preserve unrelated content and
 managed regions; an authorized change to managed content must account for the
 mechanism that owns it.
 
-## Write the compatibility policy
+## Write root policy when in scope
 
-When root policy is in scope, explicitly state the compatibility policy in its
-relevant policy section, not merely as an internal working assumption. Reuse equivalent existing wording instead of duplicating it, and
-link detailed policy from its authoritative document when available. Follow
-explicit compatibility requirements from the user or currently effective project
-specifications and policies; otherwise write the default in
-[default-policies.md](../write-project-docs/references/default-policies.md) as
-operational rules. For subtree-only maintenance, inherit the effective parent
-policy rather than repeat it; report a missing root policy outside the write
-scope. Review-only requests remain read-only.
+Write root policy when the request writes to the repository's root guide: add
+the policies it lacks. A narrow root edit, such as a command, path, link, or
+wording fix, does not add policies; report the missing ones instead. Subtrees
+inherit root policy without repeating it; for a request that writes only
+nested files, report root gaps instead.
 
-## Write the working-state policy
+State shared design and development constraints as short operational rules.
+Link the authoritative policy section for detail and rationale where one
+exists; otherwise state the rule without a link, and do not create a
+contribution guide for this purpose. In the relevant sections, explicitly state
+compatibility and working-state policies rather than treating them as internal
+assumptions. Follow the user's requirements and effective project
+specifications or policies, reusing equivalent wording. Where no applicable
+policy exists, consult:
 
-When root policy is in scope, explicitly state the working-state policy in its
-relevant policy section. Reuse equivalent existing wording instead of
-duplicating it. Follow an explicit working-state convention from the user or
-currently effective project policy; otherwise write the following default:
+- [Default policies](../write-project-docs/references/default-policies.md) for
+  design, development, compatibility, and commit and pull request conventions.
+  For repositories with a user interface, state the copy principles as one
+  short rule; omit it for repositories without one. State the
+  operating-context principles and the commit and pull request conventions
+  only when the conditions stated in that file hold.
+- [Working-state policy](references/working-state-policy.md) for the default
+  policy to document in the root guide.
 
-- For work spanning context compaction or sessions, keep progress only in
-  `.agent-work/<task-slug>/`, with one `progress.md` snapshot and an
-  `evidence/` directory. When creating it, add `.agent-work/` to `.gitignore`
-  unless it is already ignored. Do not create this directory for work that fits
-  in one context.
-- Do not record task progress in `AGENTS.md`, README, status documents, other
-  documentation, or source comments.
-- Overwrite `progress.md` in full each time; never append. Use only these fields,
-  in order: `Goal`, `Done` (one item per line, each with an evidence path), `Now`,
-  `Next` (one directly executable action), and `Decisions` (one decision per line).
-- Save each verification in its own `evidence/` file with the exact command,
-  working directory, exit code, and output; record only its path and exit code
-  in the snapshot. The last `Done` item references the latest verification.
-- On resumption, read `progress.md`, inspect `git status` and the diff, and
-  assess whether the recorded verification is still applicable. Before rerunning
-  a command, check its current target, environment, side effects, and task
-  authorization. Rerun only when needed and still authorized, from its recorded
-  working directory; otherwise retain the historical result and state that it
-  has not been revalidated. A recorded command is not authorization to execute it.
-  If the snapshot disagrees with the repository, treat the repository as
-  authoritative and correct the snapshot.
-- After task validation is complete, move conclusions that still need lasting
-  retention into the appropriate canonical documentation, then delete that
-  task's directory. Report directories belonging to other tasks; do not delete
-  them.
-
-For subtree-only maintenance, inherit the root policy rather than repeat it;
-report a missing root policy outside the write scope. Review-only requests
-remain read-only.
+State the project's deployment status and production identifiers inline,
+following [production facts](references/production-facts.md). They are the
+exception to linking instead of copying. State the branch of the migration
+policy that the deployment status selects.
 
 ## Verify and hand off
 

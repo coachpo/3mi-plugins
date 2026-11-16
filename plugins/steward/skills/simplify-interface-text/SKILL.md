@@ -1,20 +1,21 @@
 ---
 name: simplify-interface-text
 disable-model-invocation: true
-description: Review or clean up existing user-interface text for repeated facts, always-on notices, exposed internal mechanics, and narrated controls, judged on rendered screens by role and state. Use only when explicitly requested, for interface copy audits and the cleanup that follows; not for new feature copy, translation, visual redesign, or behavior-preserving repository cleanup.
+description: Audit or clean up redundant copy on existing rendered screens by role and state. Explicit invocation only. Not for new feature copy, translation, visual redesign, or behavior-preserving repository cleanup.
 ---
 
 # Simplify Interface Text
 
-Use this skill only when the user explicitly requests it. Remove interface
-text that does not change what the reader does or knows, and keep the text that
-protects them or informs them uniquely. The measure is what a person sees on
-one screen in one state, not how many strings the repository holds. Finding
-nothing worth removing is a valid outcome.
+Remove interface text that does not change what the reader does or knows; keep
+protective text and unique information. Finding nothing worth removing is valid.
 
-Review requests return findings without changes. Implementation requests work
-from a findings list the user has accepted and carry the in-scope changes
-through validation. Text the request names for change counts as accepted.
+Reviews return findings without editing source, copy, configuration, or
+existing records; see the test-record exception below. A request that does not
+say whether to review or clean up is a review.
+
+Implementation requests work from a findings list the user has accepted and
+carry the in-scope changes through validation. Text the request names for
+change counts as accepted.
 Otherwise, when no accepted list exists, produce the findings list as a review
 does and stop for acceptance before editing. Unlike
 [simplify-repository](../simplify-repository/SKILL.md), this work changes
@@ -29,16 +30,17 @@ principles in
 [default-policies.md](../write-project-docs/references/default-policies.md) and
 say that you did. Do not record project policy as a side effect of an audit.
 
-Identify the interfaces, roles, locales, and environments in scope, and what
-the user has authorized in each environment. Reaching a state often requires
-creating a record and moving it through a workflow; do that only where it is
-authorized, label the records you create, leave other records alone, and do not
-remove test records unless asked. Authorization for one environment does not
-extend to another.
+Identify the interfaces, roles, locales, and environments in scope and what is
+authorized in each. To reproduce a screen state, create labeled test records
+and advance them through the workflow. In a non-production environment the
+request itself covers this; in production it needs the user's instruction for
+that environment, and a review never does it there. Leave other records alone
+and do not remove test records unless asked. Authorization does not carry over
+to another environment.
 
-When an environment cannot be reached, for example because of sign-in or a
-verification step, say so and continue on one that can, such as a local
-instance. Do not guess addresses, credentials, or screen contents.
+If sign-in, verification, or another blocker makes an environment unreachable,
+report it and use another reachable environment only if authorized. Do not guess
+addresses, credentials, or screen contents.
 
 ## Judge rendered screens
 
@@ -79,8 +81,7 @@ the rule's own test of whether removal would mislead the reader or lose a fact.
 
 ## Clean up against the accepted list
 
-Work from the list the user accepted. Report anything found along the way
-instead of adding it silently.
+Report newly found issues rather than adding them to the accepted list.
 
 - Change every supported locale together. When a key is no longer referenced,
   delete it from every locale and its type, following the project's
@@ -102,8 +103,8 @@ instead of adding it silently.
 
 Run the project's checks for the affected code, including interface tests that
 assert the changed screens. When an interface test fails, compare it with the
-pre-change baseline before attributing the failure to the cleanup; stale
-assertions are reported, not rewritten to pass.
+pre-change baseline before attributing the failure to the cleanup. Report
+pre-existing stale assertions rather than rewriting them to pass.
 
 View the changed screens in the affected states where that is possible. State
 which screens were viewed, which were only covered by tests, and which test
@@ -122,11 +123,9 @@ or local state left behind.
 ## Compose with other Steward skills
 
 - Use [write-project-docs](../write-project-docs/SKILL.md) when the user wants
-  the interface copy rules recorded in the contribution guide.
-- Use [simplify-repository](../simplify-repository/SKILL.md) for cleanup that
-  must preserve current behavior.
+  the interface copy rules recorded in project documentation.
+- For behavior-preserving cleanup, suggest
+  [simplify-repository](../simplify-repository/SKILL.md), which requires
+  explicit invocation.
 - Use [parallel-repository-research](../parallel-repository-research/SKILL.md)
-  when locating copy sources across a large interface justifies independent
-  searches.
-
-Read another skill only when using it. Its defaults do not expand this scope.
+  for independent copy-source searches when useful and authorized.

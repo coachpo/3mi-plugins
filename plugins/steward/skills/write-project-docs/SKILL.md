@@ -1,14 +1,14 @@
 ---
 name: write-project-docs
-disable-model-invocation: true
-description: Review, create, update, or migrate canonical repository documentation from verified project facts. Use only for an explicit documentation request. Use write-agent-guides for the AGENTS.md hierarchy.
+description: Review, create, update, or migrate canonical repository docs, such as the README, contribution guide, project status, product, and architecture documents, from verified project facts. Not for delivery plans, task progress, changelogs or release notes, code comments or API docstrings, CLAUDE.md, or agent rules and the AGENTS.md hierarchy.
 ---
 
 # Write Project Documentation
 
 Keep project documentation accurate, useful to its readers, and clear about
-where each fact or policy is authoritative. Review requests are read-only;
-documentation changes stay within the requested scope.
+where each fact or policy is authoritative. Review requests are read-only, and
+a request that does not say whether to review or change is a review.
+Documentation changes stay within the requested scope.
 
 ## Follow the repository's documentation model
 
@@ -25,7 +25,7 @@ not required filenames or a mandatory document set:
 | README / entry point | Purpose, getting started, and links to further documentation. |
 | Project status | Only durable lifecycle, deployment, support, users, data, and compatibility facts; update when those facts change. Exclude task progress, changelogs, plans, and dated work logs. |
 | Contribution guide (commonly `CONTRIBUTING.md`) | Development setup, commands, workflow, completion checks, and the project's design and development principles. |
-| Product documentation | Users, goals, scope, requirements, flows, and acceptance criteria. |
+| Product documentation | Users, goals, scope, requirements, flows, and acceptance criteria; the operating entity, operating location, and launch market; obligations confirmed as applicable and those still unconfirmed. |
 | Architecture documentation | Current components, responsibilities, dependencies, data flow, and design decisions. |
 | Development rules | Established project-specific implementation and review constraints. |
 
@@ -34,16 +34,15 @@ documentation involved in or affected by the request against the current source,
 manifests, configuration, and accepted decisions. Correct verified drift only
 within the authorized scope; report unrelated or out-of-scope drift without
 editing it. A wording or link-only edit does not require an architecture audit.
-Review-only requests remain read-only. Create an architecture document when
-requested or when the work requires documenting an architectural change and none
-exists; do not create one just to complete a fixed document set.
+Create an architecture document when requested or when the work requires
+documenting an architectural change and none exists; do not create one just to
+complete a fixed document set.
 
 Give shared facts and policies one authoritative home and link or summarize
 them where useful. Preserve valuable specialized documents and intentional
 translations. Add an index when it improves navigation. A focused edit changes
-only the documents it affects. Include the default policies below when they are
-in scope; add other documents or policies only when the request calls for them.
-Preserve existing project policy unless changing it is requested.
+only the documents it affects. Preserve existing project policy unless changing
+it is requested.
 
 Task progress, execution records, and evidence are working state, not canonical
 documentation; do not write them into formal documents. The root `AGENTS.md`
@@ -53,20 +52,23 @@ Rewrite status documents in place when facts change. Do not append completion
 lists, next steps, dated entries, or per-session updates. When there are few
 status facts, a small README section is sufficient.
 
-## Write default design and development principles
+## Write project policy when in scope
 
-Default policies are in scope when creating a contribution guide or when the
-request concerns policy sections of the contribution guide or another
-authoritative policy document. A narrow edit, such as a wording, link, or
-command fix, does not add missing policy sections; report them instead. This
-applies to the principles in this section and to the compatibility policy.
+Default policies are in scope when the request writes to the contribution
+guide or another authoritative policy document: add the policy sections the
+project has not stated, rather than repeating a policy that another
+authoritative document already holds. A narrow edit to such a document, such
+as a wording, link, or command fix, does not add policy sections; report the
+missing ones instead. A request that writes only other documents neither adds
+nor reports policy sections.
 
-A contribution guide owns the design and development principles contributors
-follow. When default policies are in scope, state the principles in
-[default-policies.md](references/default-policies.md), with the rationale
-contributors need, unless the project has already adopted a different policy. In review, flag unadopted worst-case constraints and assumptions
-presented as verified facts. Agent operational rules belong to the AGENTS.md
-hierarchy, not the contribution guide.
+In the contribution guide or existing authoritative policy document within
+scope, explain the design and development principles with the rationale
+contributors need. Explicitly state the compatibility policy in its relevant
+section, not merely as an internal assumption. Follow the user's requirements
+and effective project specifications or policies, reusing equivalent policy
+wording. For policies not already established, consult
+[default-policies.md](references/default-policies.md).
 
 The interface copy principles in the same file are conditional. State them only
 when source shows the repository renders text to people through a user
@@ -74,16 +76,17 @@ interface, and add locales, units, terminology, and named exceptions only from
 verified project facts. Do not write them into a repository without an
 interface.
 
-## Write the compatibility policy
+The operating-context principles and the commit and pull request conventions
+in the same file are also conditional. State the operating-context principles
+only for an operated product, and keep its operating entity, market, and
+obligations in product documentation as project facts. State the commit and
+pull request conventions only after checking the commit history, existing
+guide, commit-lint configuration, and pull request templates for an established
+convention, which takes precedence.
 
-When default policies are in scope, explicitly state the compatibility policy
-in the relevant policy section of the contribution guide or existing
-authoritative policy document within scope, not merely as an internal working
-assumption. Reuse equivalent existing wording instead of duplicating it. Follow
-explicit compatibility requirements from the user or currently effective project
-specifications and policies; otherwise write the default in
-[default-policies.md](references/default-policies.md). Review-only requests
-report missing or conflicting policy without editing documents.
+In review, report missing or conflicting policies, unadopted worst-case
+constraints, and assumptions presented as verified facts. Keep agent
+operational rules in the `AGENTS.md` hierarchy, not the contribution guide.
 
 ## Ground the content
 
@@ -96,17 +99,14 @@ whole application or running its entire test suite.
 Distinguish implemented behavior from accepted requirements, proposals, and
 unverified claims. Describe architecture from actual relationships rather than
 inferring a pattern from directory names. Repository contents alone may not
-establish deployment, external users, or data-retention obligations; preserve
-uncertainty rather than inventing status or permission. Link decisive evidence
-where it helps readers verify or maintain the document.
-
-When advising on Codex model selection, recommend `gpt-6.1-terra` for drafting,
-wording, structure, and interpreting visual source material; use `gpt-6.1-sol`
-for code-grounded facts, architecture, and consistency checks, and
-`gpt-6-astra` for the most demanding cross-document authority or architecture
-conflicts within scope. Terra's writing role uses verified facts; visual claims
-still need source checks. These are role recommendations, not instructions to
-switch the active model or override user or host choices.
+establish deployment, external users, the operating entity or market, or
+data-retention and other mandatory obligations; preserve uncertainty rather
+than inventing status or permission, and record an obligation whose
+applicability is unresolved as unconfirmed, not as not applicable. Decide
+whether the project has a production deployment by the deployment-status rule
+in [default-policies.md](references/default-policies.md); a working assumption
+recorded as one is not an invented status. Link decisive evidence where it
+helps readers verify or maintain the document.
 
 ## Edit and migrate within scope
 
@@ -123,8 +123,9 @@ active generator owns them; preserve markers and surrounding content. Ambiguous
 boundaries need resolution before replacing the region, not a whole-file rewrite.
 
 Existing root `AGENTS.md` documentation links or navigation may be updated when
-affected by the requested documentation change. Agent behavior and hierarchy
-belong to `write-agent-guides`; `CLAUDE.md` is outside this skill's scope.
+affected by the requested documentation change. Use
+[write-agent-guides](../write-agent-guides/SKILL.md) for agent behavior or
+hierarchy; `CLAUDE.md` is outside this skill's scope.
 
 ## Verify and report
 

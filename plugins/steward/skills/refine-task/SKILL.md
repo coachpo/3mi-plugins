@@ -1,6 +1,6 @@
 ---
 name: refine-task
-description: Rewrites an engineering request as a refined, copyable prompt without doing the task, and recommends an effort level for GPT-6.1 Sol and Claude Opus 5.5. Use when the user asks to rewrite, refine or turn a request into a prompt. Not for performing the task, analyzing requirements, writing a repository-grounded task contract, or polishing ordinary prose.
+description: Rewrite an engineering request as a copyable prompt and recommend execution effort for GPT-6.1 Sol and Claude Opus 5.5. Use for prompt refinement, not task execution, requirements analysis, delivery planning, or ordinary prose editing.
 ---
 
 # Refine Task
@@ -22,15 +22,10 @@ label the prompt a draft and ask the smallest necessary question.
 Recommend an effort for executing the rewritten task, not for rewriting it.
 Do not ask the user for an effort level.
 
-Models:
+Choose one level independently for each model below. If the task is unclear,
+give the closest level and say what would change it. Do not change settings.
 
-- Always recommend one level for each of GPT-6.1 Sol and Claude Opus 5.5.
-- If the task is unclear, still give the closest level and state what would
-  change it.
-
-Choosing a level:
-
-- Start from the model's default, which is `medium` for both models.
+- Start from `medium` as the recommendation baseline for both models.
 - Move up when the task needs deeper planning, verification of edge cases,
   or long autonomous runs.
 - Move down when the task is well scoped and the user reviews each result.
@@ -42,7 +37,7 @@ Choosing a level:
 
 ### Model levels
 
-GPT-6.1 Sol: `low`, `medium` (default), `high`, `xhigh`, `max`.
+#### GPT-6.1 Sol
 
 - `low`: clear method with few assumptions to check.
 - `medium`: multiple bounded steps with routine verification.
@@ -51,10 +46,10 @@ GPT-6.1 Sol: `low`, `medium` (default), `high`, `xhigh`, `max`.
 - `max`: several dependent hard judgments; identify what extra reasoning beyond
   `xhigh` would resolve.
 
-Claude Opus 5.5: `low`, `medium` (default), `high`, `xhigh`, `max`.
+#### Claude Opus 5.5
 
 - `low`: straightforward work with little need for investigation.
-- `medium`: routine agentic work that balances quality, latency, and cost; the default.
+- `medium`: routine agentic work that balances quality, latency, and cost.
 - `high`: difficult coding or reasoning that benefits from deeper investigation.
 - `xhigh`: long-running agentic work that requires sustained reasoning across
   repeated rounds of tool use and verification.
@@ -71,19 +66,3 @@ user requested or otherwise the user's language. After the block:
    - Chinese: 目标模型：`<model>`；建议推理强度：`<level>`。<任务理由>
    - English: Target model: `<model>`; recommended effort: `<level>`. <reason>
 2. An open question, if any, prefixed `问题：` or `Question:`.
-
-## Example
-
-Request: 把“查清重复扣款原因，先别修”改写成提示词。
-
-Output:
-
-````text
-```text
-调查支付流程中重复扣款的根本原因。只调查，不修改代码、配置或数据，也不提交。
-交付：根因结论，以及支撑它的证据（文件路径与行号、日志或复现步骤）。
-如果证据不足以确定根因，列出仍待确认的假设和各自的验证方法。
-```
-目标模型：`GPT-6.1 Sol`；建议推理强度：`high`。需要在多个模块之间核对相互竞争的假设。
-目标模型：`Claude Opus 5.5`；建议推理强度：`high`。要在现有代码中查证边界情况，验证比速度更重要。
-````
