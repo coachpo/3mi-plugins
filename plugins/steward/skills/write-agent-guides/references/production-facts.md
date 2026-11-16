@@ -1,6 +1,7 @@
 # Production Facts
 
-State these facts inline in the root `AGENTS.md` when root policy is in scope. They
+State these facts inline in the root `AGENTS.md` when documenting deployment
+there is within the authorized fact scope. They
 decide whether an agent may discard data, rewrite migrations, or pass a secret
 directly, so a link alone is not enough; also link the project status document
 when one records them.
@@ -8,8 +9,9 @@ when one records them.
 ## Deployment status
 
 State whether the project has a production deployment, decided by the
-deployment-status rule in the default policies that `SKILL.md` links, and
-apply the branch of the migration policy it selects.
+deployment-status rule in the default policies that `SKILL.md` links. Report
+any conflict with the existing migration rule; do not change that rule
+without explicit policy authorization.
 
 ## Production identifiers
 
@@ -28,6 +30,5 @@ Take each entry from verified configuration, CI, existing documents, or the
 user's statement, and mark an entry that remains unverified. Omit the list for
 a project with no production deployment.
 
-State that the list is not exhaustive: an unlisted target is still production
-when its name, host, branch, project, or configuration marks it as such, when
-it comes from production configuration, or when the user says so.
+Do not present the verified list as exhaustive. How to classify unlisted
+targets is policy, not a deployment fact.

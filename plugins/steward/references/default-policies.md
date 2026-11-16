@@ -1,14 +1,16 @@
 # Default Policies
 
-The single source for the default policies Steward writes into a repository.
-`write-project-docs` states them in full, with the rationale contributors need,
-in the contribution guide or existing authoritative policy document, except
-the sections marked as agent operational policy. `write-agent-guides` states
-them in root `AGENTS.md` as short operational rules and links to the
-authoritative policy where it exists; it states the sections marked as agent
-operational policy in full, because no other document holds them. Explicit
-requirements from the user or currently effective project policy take
-precedence over these defaults.
+Reference for comparing or explicitly adopting Steward's defaults. A gap or
+conflict is a finding, not authorization to write a policy. Adopt only the
+defaults the user explicitly requests, including when the user explicitly
+requests replacing existing policies. Preserve policies outside that scope,
+clauses the user asks to keep, and confirmed mandatory obligations.
+
+When adoption is authorized, `write-project-docs` explains the applicable
+policies in the contribution guide or existing policy authority.
+`write-agent-guides` states short operational rules in root `AGENTS.md` and
+links to authoritative policy where available. Only the root guide states
+adopted agent operational policies in full.
 
 ## Contents
 
@@ -78,10 +80,11 @@ actually accepted.
   or squashed; only the non-production environment's own data handling is
   relaxed.
 
-State the migration branch that applies together with the deployment status it
-rests on, decided as described under Deployment status. This documentation
-default does not itself authorize deleting existing compatibility code,
-changing public APIs, or rewriting existing migrations.
+When adopting the migration policy, state the applicable branch together with
+the deployment status it rests on. Updating deployment facts alone does not
+authorize changing the migration policy. This documentation default does not
+itself authorize deleting existing compatibility code, changing public APIs,
+or rewriting existing migrations.
 
 ## Deployment status
 
@@ -97,8 +100,8 @@ way, wherever they state it:
 
 ## Non-production data and secrets
 
-Agent operational policy: `write-agent-guides` states it in full in root
-`AGENTS.md`. `write-project-docs` does not write it into the contribution guide.
+Agent operational policy: if adoption is authorized, state it in full in root
+`AGENTS.md`, not in the contribution guide.
 
 - Treat an environment and its data as non-production unless it is
   identifiable as production: it is one of the project's listed production
@@ -131,8 +134,8 @@ does not authorize commits, pushes, deployments, or other external writes.
 
 ## Authorization and Git
 
-Agent operational policy: `write-agent-guides` states it in full in root
-`AGENTS.md`. `write-project-docs` does not write it into the contribution guide.
+Agent operational policy: if adoption is authorized, state it in full in root
+`AGENTS.md`, not in the contribution guide.
 
 - Answer, explanation, review, diagnosis, and planning requests are read-only.
   Change, build, and fix requests authorize the in-scope local edits and the
@@ -199,10 +202,10 @@ default.
 
 ## Commit and pull request conventions
 
-Conditional: an established repository convention takes precedence. Check the
-commit history, the contribution guide, commit-lint configuration, and pull
-request templates first, and state these defaults only where no convention
-exists. State the pull request part only for a repository that uses pull
+Check the commit history, the contribution guide, commit-lint configuration,
+and pull request templates for established conventions. Preserve an existing
+convention unless the user explicitly asks to replace it with Steward's
+default. State the pull request part only for a repository that uses pull
 requests.
 
 Commit messages:

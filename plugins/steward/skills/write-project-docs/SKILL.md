@@ -1,14 +1,30 @@
 ---
 name: write-project-docs
-description: Reviews, creates, updates, or migrates canonical repository docs (README, project status, contribution guide, product, and architecture documents) from verified project facts. Completes all applicable project policies whenever creating or updating the contribution guide or another authoritative project policy document within the authorized scope. Not for delivery plans, task progress, changelogs or release notes, code comments or API docstrings, CLAUDE.md, or agent rules and the AGENTS.md hierarchy.
+description: Reviews, creates, updates, or migrates canonical repository docs (README, project status, contribution guide, product, and architecture documents) from verified project facts. Changes policy only with explicit authorization. Not for delivery plans, task progress, changelogs or release notes, code comments or API docstrings, CLAUDE.md, or agent rules and the AGENTS.md hierarchy.
 ---
 
 # Write Project Documentation
 
-Keep project documentation accurate, useful to its readers, and clear about
-where each fact or policy is authoritative. Review requests are read-only, and
-a request that does not say whether to review or change is a review.
-Documentation changes stay within the requested scope.
+## Separate facts from policy
+
+Review-only requests return findings without editing. An explicit skill
+invocation without a more specific request defaults to refreshing verified
+project facts in the authorized scope. If selected implicitly and intent to
+write is unclear, review only.
+
+Invoking the skill, creating a document, or asking to update or rewrite one
+does not authorize policy changes, even for a contribution guide or other
+policy authority. Preserve existing rules and their meaning; report relevant
+missing policies or conflicts with Steward defaults without fixing them.
+Do not insert defaults into new documents either. In mixed passages, edit only
+verifiable facts (such as command names, paths, deployment status, and component
+responsibilities). If a fact cannot be corrected without changing a rule's
+meaning, report it rather than rewriting the rule.
+
+Add, remove, or replace policy only when the user explicitly requests a change
+to the specified policy or explicitly requests replacing existing policy with
+Steward defaults. Stay within that authorization and preserve any clauses the
+user asks to keep and any confirmed mandatory obligations.
 
 ## Follow the repository's documentation model
 
@@ -40,57 +56,28 @@ editing it. A wording or link-only edit does not require an architecture audit.
 
 Give shared facts and policies one authoritative home and link or summarize
 them where useful. Preserve valuable specialized documents and intentional
-translations. Add an index when it improves navigation. Preserve existing
-project policy unless changing it is requested.
+translations. Add an index when it improves navigation.
 
 Task progress, execution records, and evidence are working state, not canonical
-documentation; do not write them into canonical documents. The root `AGENTS.md`
-working-state policy, owned by `write-agent-guides`, says where they belong.
+documentation; do not write them into canonical documents. Follow any
+applicable working-state policy in the root `AGENTS.md`.
 
 Rewrite status documents in place when facts change. Do not append completion
 lists, next steps, dated entries, or per-session updates. When there are few
 status facts, a small README section is sufficient.
 
-## Complete project policy on every authorized policy-document write
+## Write authorized policy
 
-When authorized to create or update the contribution guide or another
-authoritative project policy document, check all applicable project policies
-and fill missing coverage where the document is the authority. Preserve existing
-policies and link to policies held elsewhere instead of copying them. Honor any
-explicit limits on what may be edited; do not create or edit another policy
-document to fill gaps outside the authorized scope. A request that writes only
-non-policy documents neither adds nor reports policy sections.
+Use [Steward defaults](../../references/default-policies.md) to identify
+relevant gaps and conflicts, and adopt defaults only as explicitly requested.
+Apply the reference's conditions when adopting defaults. Use project evidence
+for accompanying facts, such as interface locales or the operating market.
 
-In the contribution guide or existing authoritative policy document within
-scope, explain the design and development principles with the rationale
-contributors need. Explicitly state the compatibility policy in its relevant
-section, not merely as an internal assumption. Follow the user's requirements
-and effective project specifications or policies, reusing equivalent policy
-wording. For policies not already established, consult
-[default-policies.md](../../references/default-policies.md).
-
-The non-production data and secrets section and the authorization and Git
-section in the same file are agent operational policy. Leave them to the root
-`AGENTS.md`, owned by
-`write-agent-guides`; do not write them into the contribution guide.
-
-The interface copy principles in the same file are conditional. State them only
-when source shows the repository renders text to people through a user
-interface, and add locales, units, terminology, and named exceptions only from
-verified project facts. Do not write them into a repository without an
-interface.
-
-The operating-context principles and the commit and pull request conventions
-in the same file are also conditional. State the operating-context principles
-only for an operated product, and keep its operating entity, market, and
-obligations in product documentation as project facts. State the commit and
-pull request conventions only after checking the commit history, existing
-guide, commit-lint configuration, and pull request templates for an established
-convention, which takes precedence.
-
-In review, report missing or conflicting policies, unadopted worst-case
-constraints, and assumptions presented as verified facts. Keep agent
-operational rules in the `AGENTS.md` hierarchy, not the contribution guide.
+Make authorized changes in the contribution guide or other policy authority
+within scope and give the rationale contributors need. If compatibility policy
+is in scope for change, state the resulting rule explicitly. Link to policies
+held elsewhere instead of copying them; leave agent operational policy to the
+`AGENTS.md` hierarchy.
 
 ## Ground the content
 

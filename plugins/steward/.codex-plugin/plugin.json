@@ -1,7 +1,7 @@
 {
   "name": "steward",
-  "version": "0.25.1",
-  "description": "面向 Codex 与 Claude Code 的工程技能，覆盖仓库精简、界面文案清理、任务指令改写、项目文档与只读调研。",
+  "version": "0.25.2",
+  "description": "面向 Codex 与 Claude Code 的仓库精简、界面文案清理、任务指令改写、文档维护与只读调研技能。文档维护默认更新事实，政策变更须明确授权。",
   "author": {
     "name": "coachpo",
     "url": "https://github.com/coachpo"
@@ -23,7 +23,7 @@
   "interface": {
     "displayName": "Steward",
     "shortDescription": "仓库精简、项目文档与调研",
-    "longDescription": "Steward 通过 simplify-repository 联合清理代码、测试、文档及其他仓库产物，保全现行行为、独有回归覆盖、有效知识及必要用途与保留义务；通过 simplify-interface-text 按角色和状态走查并清理界面文案；维护项目文档与 AGENTS.md，执行只读仓库调研。write-agent-guides 在根 AGENTS.md 中统一跨压缩或跨会话的 working-state policy；write-project-docs 排除运行态，项目状态仅维护持久事实。Codex 与 Claude Code 读取同一套技能。",
+    "longDescription": "Steward 通过 simplify-repository 联合清理代码、测试、文档及其他仓库产物，保全现行行为、独有回归覆盖、有效知识及必要用途与保留义务；通过 simplify-interface-text 按角色和状态走查并清理界面文案；维护项目文档与 AGENTS.md，执行只读仓库调研。两个文档技能默认只更新授权范围内的项目事实；审查只读，政策变更须明确授权。Codex 与 Claude Code 读取同一套技能。",
     "developerName": "CoachPo",
     "category": "Productivity",
     "capabilities": [

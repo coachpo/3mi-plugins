@@ -1,7 +1,7 @@
 interface:
   display_name: "Write AGENTS.md Guides"
   short_description: "基于仓库事实维护 AGENTS.md 层级：根规则共享，子树只写差异"
-  default_prompt: "使用 $steward:write-agent-guides 维护本次请求涉及的 AGENTS.md 层级，核对命令、链接和作用域。"
+  default_prompt: "使用 $steward:write-agent-guides 更新授权范围内的 AGENTS.md 项目事实，保留现行政策。"
 
 policy:
   allow_implicit_invocation: true
