@@ -1,6 +1,6 @@
 ---
 name: write-project-docs
-description: Reviews, creates, updates, or migrates canonical repository docs (README, project status, contribution guide, product, and architecture documents) from verified project facts. Use when project documentation needs writing, correcting, or consolidating. Adds default project policies to the contribution guide only when asked or when creating it. Not for delivery plans, task progress, changelogs or release notes, code comments or API docstrings, CLAUDE.md, or agent rules and the AGENTS.md hierarchy.
+description: Reviews, creates, updates, or migrates canonical repository docs (README, project status, contribution guide, product, and architecture documents) from verified project facts. Completes all applicable project policies whenever creating or updating the contribution guide or another authoritative project policy document within the authorized scope. Not for delivery plans, task progress, changelogs or release notes, code comments or API docstrings, CLAUDE.md, or agent rules and the AGENTS.md hierarchy.
 ---
 
 # Write Project Documentation
@@ -51,15 +51,15 @@ Rewrite status documents in place when facts change. Do not append completion
 lists, next steps, dated entries, or per-session updates. When there are few
 status facts, a small README section is sufficient.
 
-## Write project policy when in scope
+## Complete project policy on every authorized policy-document write
 
-Default policies are in scope only when the user asks to write or complete
-project policy, or when the request creates the contribution guide or another
-authoritative policy document. Then add the policy sections the project has
-not stated, rather than repeating a policy that another authoritative document
-already holds. Any other request that writes to such a document does not add
-policy sections; report the missing ones instead. A request that writes only
-other documents neither adds nor reports policy sections.
+When authorized to create or update the contribution guide or another
+authoritative project policy document, check all applicable project policies
+and fill missing coverage where the document is the authority. Preserve existing
+policies and link to policies held elsewhere instead of copying them. Honor any
+explicit limits on what may be edited; do not create or edit another policy
+document to fill gaps outside the authorized scope. A request that writes only
+non-policy documents neither adds nor reports policy sections.
 
 In the contribution guide or existing authoritative policy document within
 scope, explain the design and development principles with the rationale
@@ -125,10 +125,10 @@ managed region, inspect its current generator or checker and follow that
 contract. Ambiguous boundaries need resolution before replacing the region,
 not a whole-file rewrite.
 
-Existing root `AGENTS.md` documentation links or navigation may be updated when
-affected by the requested documentation change. Use
-[write-agent-guides](../write-agent-guides/SKILL.md) for agent behavior or
-hierarchy; `CLAUDE.md` is outside this skill's scope.
+Update affected documentation links or navigation in the root `AGENTS.md`
+only if that file is also within the authorized write scope. Use
+[write-agent-guides](../write-agent-guides/SKILL.md) for root policy, agent
+behavior, or hierarchy; `CLAUDE.md` is outside this skill's scope.
 
 ## Verify and report
 

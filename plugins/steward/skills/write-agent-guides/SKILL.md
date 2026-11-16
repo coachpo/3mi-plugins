@@ -1,6 +1,6 @@
 ---
 name: write-agent-guides
-description: Reviews, creates, or updates a repository's evidence-based AGENTS.md hierarchy with shared root guidance and material subtree differences. Use when agent instructions, commands, or constraints in AGENTS.md need writing or checking. Adds default project policies to the root AGENTS.md only when asked or when creating it. Not for canonical project documentation, CLAUDE.md, skill or subagent prompts, or user-level global instruction files.
+description: Reviews, creates, or updates a repository's evidence-based AGENTS.md hierarchy with shared root guidance and material subtree differences. Completes all applicable root policies whenever creating or updating the root AGENTS.md within the authorized scope. Not for canonical project documentation, CLAUDE.md, skill or subagent prompts, or user-level global instruction files.
 ---
 
 # Write AGENTS.md Guides
@@ -45,13 +45,14 @@ the established repository-document language. Preserve unrelated content and
 managed regions; an authorized change to managed content must account for the
 mechanism that owns it.
 
-## Write root policy when in scope
+## Complete root policy on every authorized root write
 
-Write root policy only when the user asks for it or when the request creates
-the repository's root `AGENTS.md`: add the policies it lacks. Any other root
-edit does not add policies; report the missing ones instead. Subtrees
-inherit root policy without repeating it; for a request that writes only
-nested files, report root gaps instead.
+When authorized to create or update the root `AGENTS.md`, check all applicable
+root policies and fill missing coverage as part of that write. Preserve existing
+policies and equivalent wording; add only what is missing rather than rewriting
+the file. Honor any explicit limits on what may be edited. Subtrees inherit root
+policy without repeating it. If only nested files are in scope, leave the root
+unchanged and report any root gaps found.
 
 State shared design and development constraints as short operational rules.
 Link the authoritative policy section for detail and rationale where one
