@@ -1,6 +1,6 @@
 # Steward
 
-Steward 为 Codex 与 Claude Code 提供仓库精简、界面文案清理、任务指令改写、项目文档、仓库调研与交付规划技能。两个宿主读取同一份 `skills/` 目录。
+Steward 为 Codex 与 Claude Code 提供仓库精简、界面文案清理、任务指令改写、项目文档与仓库调研技能。两个宿主读取同一份 `skills/` 目录。
 
 ## 安装与调用
 
@@ -31,11 +31,10 @@ claude plugin install steward@coachpo
 | [simplify-interface-text](skills/simplify-interface-text/SKILL.md) | 显式调用；按角色和状态在渲染出的屏幕上走查界面文案，清理重复、常驻、讲内部机制和解说控件的文字，保留确认、唯一信息和有功能的文字。审查只返回发现；清理按已确认的清单进行，请求点名的文案视为已确认，没有清单时先产出清单并等待确认；清理会改变可见输出，但不改命令、金额、存储事实或服务端契约。不负责新功能文案、翻译或视觉改版。 |
 | [analyze-change-request](skills/analyze-change-request/SKILL.md) | 结合仓库与公开来源分析变更需求，提供引用及可观察验收标准。显式调用；只读，不实施或执行项目。 |
 | [parallel-repository-research](skills/parallel-repository-research/SKILL.md) | 至少两条独立调查线定位代码、梳理架构或追踪依赖，主代理核实证据。调用即授权范围内的只读委派。只读，不运行测试或判定行为风险。 |
-| [plan-delivery](skills/plan-delivery/SKILL.md) | 创建、修订或审查实施计划和／或 Sprint Backlog，明确交付内容、顺序、依赖及验收；不计算也不写日期、里程碑、估算、负责人分配或组织流程；用户给定或现有文档已有的这类字段予以保留，不推导、不新填。计划和 Backlog 只写任务是什么、依赖什么、怎样算完成，不写任务状态、进度或完成标记。只规划，不执行开发；不用于编码前的对话内计划或 plan mode。 |
 | [write-agent-guides](skills/write-agent-guides/SKILL.md) | 维护有依据的 AGENTS.md 层级，共享规则在根文件，子树仅记录局部差异。仅在用户要求或新建根 AGENTS.md 时写入默认政策。仓库指南不依赖用户级全局指令文件：只读取它们以发现冲突并报告。不维护 CLAUDE.md、技能或子代理提示词，也不编辑用户级全局指令文件。 |
 | [write-project-docs](skills/write-project-docs/SKILL.md) | 按仓库事实和既有约定维护正式项目文档，明确权威来源并同步相关链接。新建或迁移且仓库没有既定布局时使用默认文档集合；仅在用户要求或新建贡献指南时写入默认政策。局部更新不扩展为文档套件。 |
 
-Codex 可以按意图隐式选择任务指令改写、仓库调查、交付规划、项目文档和代理指南技能；其他技能保持各自的调用策略。审查请求只返回发现；创建、修改请求在指定范围内落盘；`simplify-repository`、`simplify-interface-text`、`write-agent-guides` 和 `write-project-docs` 在请求未说明审查还是修改时按审查处理。Claude Code 版另带只读调研插件 agent `steward:steward-researcher`，用法见下文的只读调研一节。
+Codex 可以按意图隐式选择任务指令改写、仓库调查、项目文档和代理指南技能；其他技能保持各自的调用策略。审查请求只返回发现；创建、修改请求在指定范围内落盘；`simplify-repository`、`simplify-interface-text`、`write-agent-guides` 和 `write-project-docs` 在请求未说明审查还是修改时按审查处理。Claude Code 版另带只读调研插件 agent `steward:steward-researcher`，用法见下文的只读调研一节。
 
 ## 仓库精简
 
@@ -62,15 +61,14 @@ Codex 可以按意图隐式选择任务指令改写、仓库调查、交付规�
 一次代码变更可按下列链路使用技能；每一步都可单独调用，不需要的步骤可以跳过。
 
 1. `analyze-change-request` 在对话中给出带来源和验收标准的需求分析，复杂仓库搜索配合 `parallel-repository-research`；由用户确认需求和决策。
-2. 需要拆工作包或排 Sprint 时，用 `plan-delivery` 编写带修订号的实施计划和／或 Backlog；该技能到规划为止，不派发任务、不实施或验收。
-3. 开发与验证由宿主按用户当前授权直接完成。
-4. 变更影响文档时，用 `write-project-docs`、`write-agent-guides` 同步正式文档与代理指南；任务运行态不写入这些文档。
+2. 开发与验证由宿主按用户当前授权直接完成。
+3. 变更影响文档时，用 `write-project-docs`、`write-agent-guides` 同步正式文档与代理指南；任务运行态不写入这些文档。
 
 ## 模型分工
 
 技能不改会话或调研 worker 的模型与 effort 设置，沿用用户或宿主配置。`refine-task` 只在改写结果中分别给出 Codex 和 Claude Code 的推荐强度。
 
-## 文档与规划
+## 项目文档
 
 文档维护沿用项目的语言、路径、信息结构和政策。新建文档，或在没有既定布局的仓库里迁移时，使用默认文档集合：`README.md`（用途、上手、链接）、`STATUS.md`（持久的生命周期、部署、支持、用户、数据和兼容事实）、`CONTRIBUTING.md`（开发环境、命令、流程、完成检查，以及设计、开发和评审政策）、`docs/PRODUCT.md`（用户、目标、范围、需求、流程、验收，以及运营主体、运营地、首发市场和义务）、`docs/ARCHITECTURE.md`（现有组件、职责、依赖、数据流和设计决策）。每份文档只在其创建条件成立且有已核实内容时创建，不为凑齐集合建空文档；已有路径和权威划分优先。写入、更新或迁移文档时，仅在授权范围内对照当前代码、配置和已采纳决策校正本次请求涉及或影响的架构文档，范围外偏差只报告，纯措辞或链接修改不要求架构审查。用户要求写入或补齐项目政策，或请求新建贡献指南或其他权威政策文档时，记录乐观设计原则，以及保持源文件内聚、易导航并在规模妨碍理解或评审时拆分的开发原则。`write-agent-guides` 在用户要求或新建根 `AGENTS.md` 时将这些原则转为项目根 `AGENTS.md` 中的可执行约束，详细政策与理由链接贡献指南等已有权威文档。仓库源码确有面向用户的界面文字时，贡献指南另外记录界面文案原则：同屏只说一次、正常状态不提示、不讲内部机制、不解说控件，同时保留确认、唯一信息和有功能的文字；语言、单位、术语和具体例外按项目事实写，没有界面的仓库不写入。`write-agent-guides` 在根 `AGENTS.md` 只写一条短规则；有权威章节则链接，没有则只写规则、不加链接，也不因此新建贡献指南。已有文档中有用的内容、翻译和托管标记予以保留；有仓库生成器管理的区域遵循其契约。默认政策的单一来源是插件级的 [references/default-policies.md](references/default-policies.md)，三个技能共用。
 
@@ -86,14 +84,9 @@ Codex 可以按意图隐式选择任务指令改写、仓库调查、交付规�
 
 恢复任务时先检查历史验证是否仍适用，以及命令的当前目标、环境、副作用和任务授权；仅在需要且仍获授权时重跑。未重跑时保留历史结果并注明未重新验证，历史命令本身不构成执行授权。
 
-规划可以只处理实施计划、只处理 Backlog，或联合维护两者。实施计划拥有范围、工作包与总体验收，Backlog 拥有任务拆分、具体依赖和迭代顺序；说明迭代顺序依赖的假设，不做容量估算。采用用户及项目的格式，没有约定时默认放在 `docs/planning/`。
-
-计划文件沿用用户或项目指定位置；若放在本仓库被 `.gitignore` 忽略的 `/docs/` 下，跨工作区交付时必须另行传送该文件、代码差异和必要证据，不能假定 Git 会同步它。
-
 ```text
 使用 $steward:write-project-docs 更新 README 中受本次变更影响的用法与链接。
 使用 $steward:write-agent-guides 维护 packages/api/AGENTS.md 的局部命令差异。
-使用 $steward:plan-delivery 根据已有实施计划创建 Sprint Backlog，只编写 Backlog。
 ```
 
 ## 只读调研
