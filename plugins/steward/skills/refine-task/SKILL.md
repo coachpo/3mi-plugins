@@ -1,6 +1,6 @@
 ---
 name: refine-task
-description: Rewrite an engineering request as a copyable prompt and recommend execution effort for GPT-6.1 Sol and Claude Opus 5.5. Use for prompt refinement, not task execution, requirements analysis, delivery planning, or ordinary prose editing.
+description: Rewrites an engineering request as a copyable prompt and recommends execution effort for Codex and Claude Code. Use when the user asks to refine, rewrite, or improve a task prompt. Not for task execution, requirements analysis, delivery planning, or ordinary prose editing.
 ---
 
 # Refine Task
@@ -22,22 +22,22 @@ label the prompt a draft and ask the smallest necessary question.
 Recommend an effort for executing the rewritten task, not for rewriting it.
 Do not ask the user for an effort level.
 
-Choose one level independently for each model below. If the task is unclear,
+Choose one level independently for each host below. If the task is unclear,
 give the closest level and say what would change it. Do not change settings.
 
-- Start from `medium` as the recommendation baseline for both models.
+- Start from `medium` as the recommendation baseline for both hosts.
 - Move up when the task needs deeper planning, verification of edge cases,
   or long autonomous runs.
 - Move down when the task is well scoped and the user reviews each result.
 - Use `xhigh` or `max` only when a clear gain over the level below is
   expected. Most tasks need neither.
 - Length or volume alone does not justify a higher level.
-- Level names are calibrated per model. Judge each model by its own
-  criteria and never carry a level over from another model.
+- Level names are calibrated per host. Judge each host by its own
+  criteria and never carry a level over from another host.
 
-### Model levels
+### Host levels
 
-#### GPT-6.1 Sol
+#### Codex
 
 - `low`: clear method with few assumptions to check.
 - `medium`: multiple bounded steps with routine verification.
@@ -46,7 +46,7 @@ give the closest level and say what would change it. Do not change settings.
 - `max`: several dependent hard judgments; identify what extra reasoning beyond
   `xhigh` would resolve.
 
-#### Claude Opus 5.5
+#### Claude Code
 
 - `low`: straightforward work with little need for investigation.
 - `medium`: routine agentic work that balances quality, latency, and cost.
@@ -61,8 +61,8 @@ give the closest level and say what would change it. Do not change settings.
 Put only the refined prompt in one copyable code block, in the language the
 user requested or otherwise the user's language. After the block:
 
-1. One effort line per model, naming the model, one level and the concrete
+1. One effort line per host, naming the host, one level and the concrete
    reason. Mark a line provisional if it depends on an open question.
-   - Chinese: 目标模型：`<model>`；建议推理强度：`<level>`。<任务理由>
-   - English: Target model: `<model>`; recommended effort: `<level>`. <reason>
+   - Chinese: 目标宿主：`<host>`；建议推理强度：`<level>`。<任务理由>
+   - English: Target host: `<host>`; recommended effort: `<level>`. <reason>
 2. An open question, if any, prefixed `问题：` or `Question:`.

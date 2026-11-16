@@ -1,7 +1,7 @@
 ---
 name: simplify-interface-text
 disable-model-invocation: true
-description: Audit or clean up redundant copy on existing rendered screens by role and state. Explicit invocation only. Not for new feature copy, translation, visual redesign, or behavior-preserving repository cleanup.
+description: Audits or cleans up redundant copy on existing rendered screens by role and state. Use when the user asks to trim interface text that repeats, narrates controls, or explains internals. Explicit invocation only. Not for new feature copy, translation, visual redesign, or behavior-preserving repository cleanup.
 ---
 
 # Simplify Interface Text
@@ -27,7 +27,7 @@ facts, or server contracts.
 Use the project's adopted interface copy rules when its contribution guide or
 another authoritative document states them. Otherwise apply the interface copy
 principles in
-[default-policies.md](../write-project-docs/references/default-policies.md) and
+[default-policies.md](../../references/default-policies.md) and
 say that you did. Do not record project policy as a side effect of an audit.
 
 Identify the interfaces, roles, locales, and environments in scope and what is
@@ -128,4 +128,4 @@ or local state left behind.
   [simplify-repository](../simplify-repository/SKILL.md), which requires
   explicit invocation.
 - Use [parallel-repository-research](../parallel-repository-research/SKILL.md)
-  for independent copy-source searches when useful and authorized.
+  for independent copy-source searches when useful.

@@ -8,6 +8,16 @@ and links to the authoritative policy where it exists. Explicit requirements
 from the user or currently effective project policy take precedence over these
 defaults.
 
+## Contents
+
+- [Design and development principles](#design-and-development-principles)
+- [Compatibility policy](#compatibility-policy)
+- [Deployment status](#deployment-status)
+- [Non-production data and secrets](#non-production-data-and-secrets)
+- [Interface copy](#interface-copy)
+- [Operating context](#operating-context)
+- [Commit and pull request conventions](#commit-and-pull-request-conventions)
+
 ## Design and development principles
 
 - Platform billing tiers and quotas are not design inputs. Whether or not the
@@ -29,6 +39,10 @@ defaults.
   project size limits; without them, use cohesion, navigability, and
   reviewability rather than a universal line-count cap. Do not create needless
   fragments or abstractions merely to shorten a file.
+- Scope design, planning, and implementation around enabling core business
+  flows and correct business outcomes. Do not proactively add requirements
+  that are unnecessary at the current stage unless they are requested or
+  required by an accepted constraint.
 - Incorporate a confirmed applicable mandatory requirement as a requirement or
   design constraint even when it does not block a core flow, and meet an
   obligation the current work triggers when it is due. Recording an obligation
@@ -78,6 +92,30 @@ way, wherever they state it:
   write that it has none. Record this as a working assumption resting on the
   absence of those signs, and name them as what would trigger a revisit.
 
+## Non-production data and secrets
+
+- Treat an environment and its data as non-production unless it is
+  identifiable as production: it is one of the project's listed production
+  identifiers; its name, host, branch, project, or configuration is marked
+  `prod`, `production`, or `live`; it comes from production configuration or
+  environment files; it shows real customer data or real payments; or the user
+  says it is production.
+- Non-production data is disposable. When a task changes schema or data there,
+  cut over directly: drop, truncate, reset, recreate, or reseed as the simplest
+  path requires, without backups, dry runs, staged or reversible migrations,
+  backfills, or confirmation steps. Confine such operations to the environment
+  the task targets.
+- Treat a secret as a test value unless it is identifiable as production or
+  real-account: a live-marked name or prefix, a value from production
+  configuration or environment files, or one the project lists as such. Pass
+  test values directly as command arguments, environment variables, or tool
+  arguments. Do not commit any secret or print it in logs or reports.
+- In production, every destructive or migration action and every use of a
+  production or real-account secret needs the user's explicit instruction.
+
+This policy removes confirmation for non-production data operations only. It
+does not authorize commits, pushes, deployments, or other external writes.
+
 ## Interface copy
 
 Conditional: state these only for a repository whose source renders text to
@@ -109,6 +147,9 @@ Conditional: state these only for a repository that is an operated product, as
 shown by its product documentation or stated by the user. Omit the section for
 libraries, tools, and internal utilities.
 
+- Do not assume an operating entity, operating location, or launch market that
+  the user has not specified or the project has not established; design
+  market-neutrally wherever those details are unresolved.
 - A known operating location is business context, not a request to localize
   for that market or to analyze its compliance.
 - Analyze a specific market or operating arrangement only when the user

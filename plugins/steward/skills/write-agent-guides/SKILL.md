@@ -1,6 +1,6 @@
 ---
 name: write-agent-guides
-description: Review, create, or update a repository's evidence-based AGENTS.md hierarchy with shared root guidance and material subtree differences. Not for canonical project documentation, CLAUDE.md, skill or subagent prompts, or user-level global instruction files.
+description: Reviews, creates, or updates a repository's evidence-based AGENTS.md hierarchy with shared root guidance and material subtree differences. Use when agent instructions, commands, or constraints in AGENTS.md need writing or checking. Adds default project policies to the root AGENTS.md only when asked or when creating it. Not for canonical project documentation, CLAUDE.md, skill or subagent prompts, or user-level global instruction files.
 ---
 
 # Write AGENTS.md Guides
@@ -15,7 +15,10 @@ Identify the repository boundaries and effective instruction hierarchy for each
 affected path. Account for the host's overrides, configured fallback files, and
 visibility limits where applicable. A shadowed or truncated file may not supply
 the guidance its author expects. User-level global instruction files are part
-of the effective hierarchy to read, not files this skill edits.
+of the effective hierarchy to read, not files this skill edits. Read them only
+to find conflicts with repository guidance, and report those. Repository
+guidance must stand without them: keep a rule the repository needs even when a
+user-level file states it too.
 
 Ground repository facts in relevant code, configuration, manifests, CI, and
 existing documents. Verify commands, their working directories, component
@@ -44,9 +47,9 @@ mechanism that owns it.
 
 ## Write root policy when in scope
 
-Write root policy when the request writes to the repository's root guide: add
-the policies it lacks. A narrow root edit, such as a command, path, link, or
-wording fix, does not add policies; report the missing ones instead. Subtrees
+Write root policy only when the user asks for it or when the request creates
+the repository's root `AGENTS.md`: add the policies it lacks. Any other root
+edit does not add policies; report the missing ones instead. Subtrees
 inherit root policy without repeating it; for a request that writes only
 nested files, report root gaps instead.
 
@@ -59,24 +62,26 @@ assumptions. Follow the user's requirements and effective project
 specifications or policies, reusing equivalent wording. Where no applicable
 policy exists, consult:
 
-- [Default policies](../write-project-docs/references/default-policies.md) for
-  design, development, compatibility, and commit and pull request conventions.
+- [Default policies](../../references/default-policies.md) for
+  design, development, compatibility, non-production data and secrets, and
+  commit and pull request conventions.
   For repositories with a user interface, state the copy principles as one
   short rule; omit it for repositories without one. State the
   operating-context principles and the commit and pull request conventions
   only when the conditions stated in that file hold.
 - [Working-state policy](references/working-state-policy.md) for the default
-  policy to document in the root guide.
+  policy to document in the root `AGENTS.md`.
 
 State the project's deployment status and production identifiers inline,
-following [production facts](references/production-facts.md). They are the
+following [production facts](references/production-facts.md) and the
+deployment-status rule in the default policies. They are the
 exception to linking instead of copying. State the branch of the migration
 policy that the deployment status selects.
 
 ## Verify and hand off
 
 Re-read changed files in their effective hierarchy. Check scopes, conflicts,
-parent repetition, links, command accuracy, and the value of nested files. Use
+repetition of a parent `AGENTS.md` in the repository, links, command accuracy, and the value of nested files. Use
 the smallest non-destructive checks that resolve uncertainty in the changed
 guidance; a prose or preference update does not require unrelated project tests.
 

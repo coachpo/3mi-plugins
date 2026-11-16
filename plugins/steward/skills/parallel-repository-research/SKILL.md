@@ -1,13 +1,13 @@
 ---
 name: parallel-repository-research
-description: Investigate a repository through at least two useful independent search lanes to locate code, map architecture, inventory implementations, or trace dependencies. Read-only research; excludes code changes, test execution, and behavioral-risk adjudication.
+description: Investigates a repository through at least two useful independent read-only search lanes. Use when locating code, mapping architecture, inventorying implementations, or tracing dependencies needs several separate searches. Not for code changes, test execution, or behavioral-risk adjudication.
 ---
 
 # Parallel Repository Research
 
-Use parallel workers when authorized and at least two independent repository
-searches help answer the question. Handle single-point or dependent lookups
-directly.
+Invoking this skill authorizes read-only delegation within the requested
+scope. Use parallel workers when at least two independent repository searches
+help answer the question. Handle single-point or dependent lookups directly.
 
 This is repository research only: inspect source, configuration, tests as text,
 and read-only Git history. Do not modify files or Git state, run project code,
@@ -29,7 +29,7 @@ should let the main agent reopen the evidence without exposing secret values.
 
 Adapt searches as evidence or user corrections change what needs investigation.
 Recheck results affected by a changed target, scope, or revision. If delegation
-is unavailable or unauthorized, perform the useful searches directly within
+is unavailable or the user has restricted it, perform the useful searches directly within
 the same scope and permissions. Report the fallback when it materially limits
 coverage or affects a user requirement.
 

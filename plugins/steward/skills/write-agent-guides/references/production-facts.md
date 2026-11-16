@@ -1,6 +1,6 @@
 # Production Facts
 
-State these facts inline in the root guide when root policy is in scope. They
+State these facts inline in the root `AGENTS.md` when root policy is in scope. They
 decide whether an agent may discard data, rewrite migrations, or pass a secret
 directly, so a link alone is not enough; also link the project status document
 when one records them.
@@ -8,9 +8,8 @@ when one records them.
 ## Deployment status
 
 State whether the project has a production deployment, decided by the
-deployment-status rule in
-[default policies](../../write-project-docs/references/default-policies.md#deployment-status),
-and apply the branch of the migration policy it selects.
+deployment-status rule in the default policies that `SKILL.md` links, and
+apply the branch of the migration policy it selects.
 
 ## Production identifiers
 

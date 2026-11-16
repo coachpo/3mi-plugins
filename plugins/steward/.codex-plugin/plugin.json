@@ -1,6 +1,6 @@
 {
   "name": "steward",
-  "version": "0.22.3",
+  "version": "0.23.0",
   "description": "面向 Codex 与 Claude Code 的工程技能，覆盖仓库精简、界面文案清理、任务指令改写、项目文档、只读调研与交付规划。",
   "author": {
     "name": "coachpo",
@@ -34,7 +34,7 @@
       "Write"
     ],
     "defaultPrompt": [
-      "使用 $steward:write-project-docs 维护 canonical 项目文档，再用 $steward:write-agent-guides 同步 AGENTS.md 层级。",
+      "使用 $steward:write-project-docs 维护正式项目文档，再用 $steward:write-agent-guides 同步 AGENTS.md 层级。",
       "使用 $steward:analyze-change-request 调研当前变更请求；需要复杂仓库搜索时使用 $steward:parallel-repository-research。",
       "使用 $steward:plan-delivery 按需创建或修订实施计划、Sprint Backlog 或两者。"
     ],

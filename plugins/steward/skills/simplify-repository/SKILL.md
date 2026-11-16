@@ -1,7 +1,7 @@
 ---
 name: simplify-repository
 disable-model-invocation: true
-description: Review or remove evidenced redundancy in repository code, tests, docs, and other artifacts while preserving behavior, coverage, knowledge, consumers, and retention obligations. Explicit invocation only. Not for feature retirement, visible copy changes, policy redesign, or delivery orchestration.
+description: Reviews or removes evidenced redundancy in repository code, tests, docs, and other artifacts while preserving behavior, coverage, knowledge, consumers, and retention obligations. Use when the user asks to simplify, deduplicate, or clean up a repository or subtree. Explicit invocation only. Not for feature retirement, visible copy changes, policy redesign, or delivery orchestration.
 ---
 
 # Simplify Repository
@@ -226,7 +226,7 @@ establish a simplification baseline.
 ## Compose with other Steward skills
 
 - Use [parallel-repository-research](../parallel-repository-research/SKILL.md)
-  when independent searches are useful and authorized. Workers return facts;
+  when independent searches are useful. Workers return facts;
   the responsible executor owns removal and preservation judgments.
 - Use [write-project-docs](../write-project-docs/SKILL.md) for specialized
   canonical-document maintenance within scope.

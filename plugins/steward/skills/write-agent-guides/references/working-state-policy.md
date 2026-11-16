@@ -1,6 +1,6 @@
 # Default Working-State Policy
 
-Document these rules in the root guide when working-state policy is in scope
+Document these rules in the root `AGENTS.md` when working-state policy is in scope
 and the user or effective project policy does not specify a convention.
 
 - For work spanning context compaction or sessions, keep progress only in

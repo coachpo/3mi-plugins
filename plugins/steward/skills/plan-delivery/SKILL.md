@@ -1,6 +1,6 @@
 ---
 name: plan-delivery
-description: Create, revise, or review a persisted implementation plan, Sprint Backlog, or both from requirements and accepted decisions. Plan work, order, dependencies, and acceptance, not schedules or staffing. Not for an in-conversation coding plan, plan mode, or execution.
+description: Creates, revises, or reviews a persisted implementation plan, Sprint Backlog, or both from requirements and accepted decisions. Use when work needs written work packages, order, dependencies, and acceptance. Not for schedules, staffing, task status, an in-conversation coding plan, plan mode, or execution.
 ---
 
 # Plan Delivery
@@ -17,6 +17,11 @@ process, and do not add empty fields for them. Keep such fields when the user
 supplies their values or an existing document already has them; do not derive
 or fill them yourself. A Sprint is an ordered group of tasks, not a calendar
 period.
+
+A plan or Backlog says what each task is, what it depends on, and how it is
+complete, never how far it has progressed. Do not write or update task status,
+progress, or completion marks, and do not add fields for them; report existing
+ones instead.
 
 Use the user's paths, language, and structure, then project conventions. If
 none exist, save new artifacts under `docs/planning/implementation-plan.md` and

@@ -1,6 +1,6 @@
 ---
 name: write-project-docs
-description: Review, create, update, or migrate canonical repository docs, such as the README, contribution guide, project status, product, and architecture documents, from verified project facts. Not for delivery plans, task progress, changelogs or release notes, code comments or API docstrings, CLAUDE.md, or agent rules and the AGENTS.md hierarchy.
+description: Reviews, creates, updates, or migrates canonical repository docs (README, project status, contribution guide, product, and architecture documents) from verified project facts. Use when project documentation needs writing, correcting, or consolidating. Adds default project policies to the contribution guide only when asked or when creating it. Not for delivery plans, task progress, changelogs or release notes, code comments or API docstrings, CLAUDE.md, or agent rules and the AGENTS.md hierarchy.
 ---
 
 # Write Project Documentation
@@ -17,35 +17,34 @@ the request. Preserve established paths, structure, terminology, and language
 unless the user requests a change. New documents follow the user's language or
 the repository's existing convention, without restricting supported languages.
 
-Use the existing authority map. When establishing one, these are useful roles,
-not required filenames or a mandatory document set:
+The repository's existing paths and authority map win. When creating documents,
+or migrating in a repository with no established layout, use this default set:
 
-| Document role | Content it owns |
-| --- | --- |
-| README / entry point | Purpose, getting started, and links to further documentation. |
-| Project status | Only durable lifecycle, deployment, support, users, data, and compatibility facts; update when those facts change. Exclude task progress, changelogs, plans, and dated work logs. |
-| Contribution guide (commonly `CONTRIBUTING.md`) | Development setup, commands, workflow, completion checks, and the project's design and development principles. |
-| Product documentation | Users, goals, scope, requirements, flows, and acceptance criteria; the operating entity, operating location, and launch market; obligations confirmed as applicable and those still unconfirmed. |
-| Architecture documentation | Current components, responsibilities, dependencies, data flow, and design decisions. |
-| Development rules | Established project-specific implementation and review constraints. |
+| Document | Default path | Owns | Leaves out | Create when |
+| --- | --- | --- | --- | --- |
+| README | `README.md` | Purpose, getting started, and links to further documentation. | Detail another document in this set owns; link it. | The repository has no entry point. |
+| Project status | `STATUS.md` | Only durable lifecycle, deployment, support, users, data, and compatibility facts. | Task progress, changelogs, plans, and dated work logs. | Those facts outgrow a short README section. |
+| Contribution guide | `CONTRIBUTING.md` | Development setup, commands, workflow, completion checks, and the project's design, development, and review policies. | Agent operational rules, which belong in the `AGENTS.md` hierarchy. | Contributors need setup or workflow guidance, or project policy needs a home. |
+| Product documentation | `docs/PRODUCT.md` | Users, goals, scope, requirements, flows, and acceptance criteria; the operating entity, operating location, and launch market; obligations confirmed as applicable and those still unconfirmed. | Implementation structure and delivery plans. | The user or accepted decisions state product facts to record. |
+| Architecture documentation | `docs/ARCHITECTURE.md` | Current components, responsibilities, dependencies, data flow, and design decisions. | Requirements and contributor workflow. | Requested, or the work documents an architectural change and none exists. |
+
+Create a document only when its condition holds and verified content exists
+for it; do not create empty documents to complete the set. A focused edit
+changes only the documents it affects and creates no others.
 
 For documentation write, update, and migration requests, inspect architecture
 documentation involved in or affected by the request against the current source,
 manifests, configuration, and accepted decisions. Correct verified drift only
 within the authorized scope; report unrelated or out-of-scope drift without
 editing it. A wording or link-only edit does not require an architecture audit.
-Create an architecture document when requested or when the work requires
-documenting an architectural change and none exists; do not create one just to
-complete a fixed document set.
 
 Give shared facts and policies one authoritative home and link or summarize
 them where useful. Preserve valuable specialized documents and intentional
-translations. Add an index when it improves navigation. A focused edit changes
-only the documents it affects. Preserve existing project policy unless changing
-it is requested.
+translations. Add an index when it improves navigation. Preserve existing
+project policy unless changing it is requested.
 
 Task progress, execution records, and evidence are working state, not canonical
-documentation; do not write them into formal documents. The root `AGENTS.md`
+documentation; do not write them into canonical documents. The root `AGENTS.md`
 working-state policy, owned by `write-agent-guides`, says where they belong.
 
 Rewrite status documents in place when facts change. Do not append completion
@@ -54,13 +53,13 @@ status facts, a small README section is sufficient.
 
 ## Write project policy when in scope
 
-Default policies are in scope when the request writes to the contribution
-guide or another authoritative policy document: add the policy sections the
-project has not stated, rather than repeating a policy that another
-authoritative document already holds. A narrow edit to such a document, such
-as a wording, link, or command fix, does not add policy sections; report the
-missing ones instead. A request that writes only other documents neither adds
-nor reports policy sections.
+Default policies are in scope only when the user asks to write or complete
+project policy, or when the request creates the contribution guide or another
+authoritative policy document. Then add the policy sections the project has
+not stated, rather than repeating a policy that another authoritative document
+already holds. Any other request that writes to such a document does not add
+policy sections; report the missing ones instead. A request that writes only
+other documents neither adds nor reports policy sections.
 
 In the contribution guide or existing authoritative policy document within
 scope, explain the design and development principles with the rationale
@@ -68,7 +67,7 @@ contributors need. Explicitly state the compatibility policy in its relevant
 section, not merely as an internal assumption. Follow the user's requirements
 and effective project specifications or policies, reusing equivalent policy
 wording. For policies not already established, consult
-[default-policies.md](references/default-policies.md).
+[default-policies.md](../../references/default-policies.md).
 
 The interface copy principles in the same file are conditional. State them only
 when source shows the repository renders text to people through a user
@@ -104,7 +103,7 @@ data-retention and other mandatory obligations; preserve uncertainty rather
 than inventing status or permission, and record an obligation whose
 applicability is unresolved as unconfirmed, not as not applicable. Decide
 whether the project has a production deployment by the deployment-status rule
-in [default-policies.md](references/default-policies.md); a working assumption
+in [default-policies.md](../../references/default-policies.md); a working assumption
 recorded as one is not an invented status. Link decisive evidence where it
 helps readers verify or maintain the document.
 
@@ -118,9 +117,8 @@ outside the authorized scope instead of silently changing source or CI.
 
 Preserve generated content and regions owned by other tools. For an affected
 managed region, inspect its current generator or checker and follow that
-contract. Existing `write-project-docs:*` regions can be edited directly when no
-active generator owns them; preserve markers and surrounding content. Ambiguous
-boundaries need resolution before replacing the region, not a whole-file rewrite.
+contract. Ambiguous boundaries need resolution before replacing the region,
+not a whole-file rewrite.
 
 Existing root `AGENTS.md` documentation links or navigation may be updated when
 affected by the requested documentation change. Use
@@ -138,8 +136,8 @@ in-scope failures.
 During review or migration, flag scattered progress files such as `PROGRESS.md`,
 `NOTES.md`, and leftover `.agent-work/` directories, as well as progress content
 in status documents. For authorized migrations, move still-valid durable facts
-to their appropriate canonical documents and report the rest as deletion
-candidates. Review-only requests report the proposed moves without editing;
+to the document that owns them, in the repository's authority map or else the
+default set, and report the rest as deletion candidates. Review-only requests report the proposed moves without editing;
 do not delete other tasks' working-state directories.
 
 When documenting or reviewing a workflow or operational decision within the

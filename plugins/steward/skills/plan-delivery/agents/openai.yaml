@@ -2,3 +2,6 @@ interface:
   display_name: "Plan Delivery"
   short_description: "按需创建、修订或审查实施计划、Sprint Backlog 或两者"
   default_prompt: "使用 $steward:plan-delivery 按请求创建、修订或审查实施计划、Sprint Backlog 或两者。"
+
+policy:
+  allow_implicit_invocation: true
