@@ -12,9 +12,14 @@ documentation and artifact cleanup do not depend on code or test changes.
 Remove evidenced redundancy to reduce maintenance burden, not to meet deletion
 quotas. No category must shrink; finding no safe deletion is valid.
 
-Review requests return findings without cleanup changes. Implementation
-requests carry the in-scope changes through validation. A request that does
-not say which it is gets a review.
+Every invocation starts with a review that returns findings without cleanup
+changes. Present the candidates, ask once whether to clean up, and on
+confirmation carry the in-scope changes through validation. Ask about the
+findings as a whole, not file by file; the user may exclude candidates.
+
+Two kinds of request change this. A request for a review only ends after the
+findings without asking. A request that says to clean up directly without
+asking skips the question.
 
 ## Establish scope and authority
 
@@ -35,14 +40,16 @@ Follow effective compatibility requirements. Preserving current contracts does
 not mean retaining every historical API or compatibility path. Conversely, a
 default against backward compatibility does not itself authorize removing
 existing behavior or changing public APIs. Do not establish or rewrite project
-policy as a side effect of cleanup.
+policy as a side effect of cleanup; removing duplicate rule clauses as
+described under [Documentation](#documentation) keeps policy unchanged.
 
-An explicit implementation request for this skill authorizes deletion of
-version-controlled content within scope once the evidence below supports it,
-without per-file confirmation.
+The user's confirmation, or a request to clean up directly, authorizes deletion
+of version-controlled content within scope once the evidence below supports
+it, without per-file confirmation.
 
-List untracked or ignored deletion candidates and obtain explicit confirmation
-before deleting them.
+List untracked or ignored deletion candidates separately in the same question
+and delete them only when the confirmation explicitly covers them. A request
+to clean up directly does not cover them; ask.
 
 ## Preserve four classes of obligations
 
@@ -154,6 +161,20 @@ necessary historical context have been carried forward. Preserve unresolved
 acceptance gaps rather than converting past partial results into current
 completion claims.
 
+Rules in the `AGENTS.md` hierarchy and the contribution guide are within a
+confirmed cleanup: reduce them to one statement of each rule without
+changing what any rule requires.
+
+- Remove a clause that repeats another, keeping the copy in its authoritative
+  home: shared agent rules in the root `AGENTS.md`, project policy in the
+  contribution guide with at most a short operational rule in `AGENTS.md`.
+- Delete a nested `AGENTS.md` that only repeats its parent.
+- Remove a rule whose subject no longer exists in the repository.
+- Clauses with similar wording but different conditions or scope are not
+  duplicates. Report them as a conflict.
+- Do not remove a rule that still applies because it seems unnecessary, or
+  because a user-level instruction file states it too.
+
 Repair affected navigation, links, anchors, and cross-references. Do not rebuild
 the documentation system, impose a document set, or rewrite project policy
 merely to complete cleanup.
@@ -219,10 +240,12 @@ Passing checks and deletion metrics support, but do not replace, this review.
 
 ## Iterate to a simplification baseline
 
-For implementation requests, repeat candidate discovery, obligation and consumer
+Once cleanup is confirmed, repeat candidate discovery, obligation and consumer
 checks, justified removal or consolidation, and validation. After each validated
 round, inspect new candidates exposed by the changes and remaining unreviewed
-relationships material to the requested scope. Continue while safe, authorized
+relationships material to the requested scope. Present candidates found in a
+later round and ask before changing them, unless the request said to clean up
+directly. Continue while safe, authorized
 changes with concrete maintenance benefit remain; do not require a full repository
 rescan each round.
 

@@ -1,7 +1,8 @@
 # Default Working-State Policy
 
 Use these rules for comparison, or document them in the root `AGENTS.md`
-when the user explicitly asks to adopt Steward's working-state default.
+when creating that file or when the user explicitly asks to adopt Steward's
+working-state default.
 
 - For work spanning context compaction or sessions, keep progress only in
   `.agent-work/<task-slug>/`, with one `progress.md` snapshot and an

@@ -1,12 +1,18 @@
 # Default Policies
 
-Reference for comparing or explicitly adopting Steward's defaults. A gap or
-conflict is a finding, not authorization to write a policy. Adopt only the
-defaults the user explicitly requests, including when the user explicitly
-requests replacing existing policies. Preserve policies outside that scope,
-clauses the user asks to keep, and confirmed mandatory obligations.
+Reference for comparing or adopting Steward's defaults. Adopt the applicable
+defaults when a skill creates the file that holds them: `write-agent-guides`
+creating the root `AGENTS.md`, or `write-project-docs` creating the
+contribution guide. A rule the user has stated for the project, such as
+keeping backward compatibility, replaces the default it contradicts.
 
-When adoption is authorized, `write-project-docs` explains the applicable
+In an existing file, a gap or conflict is a finding, not authorization to
+write a policy. Adopt only the defaults the user explicitly requests, including
+when the user explicitly requests replacing existing policies. Preserve
+policies outside that scope, clauses the user asks to keep, and confirmed
+mandatory obligations.
+
+When defaults are adopted, `write-project-docs` explains the applicable
 policies in the contribution guide or existing policy authority.
 `write-agent-guides` states short operational rules in root `AGENTS.md` and
 links to authoritative policy where available. Only the root guide states
@@ -100,7 +106,7 @@ way, wherever they state it:
 
 ## Non-production data and secrets
 
-Agent operational policy: if adoption is authorized, state it in full in root
+Agent operational policy: when adopted, state it in full in root
 `AGENTS.md`, not in the contribution guide.
 
 - Treat an environment and its data as non-production unless it is
@@ -134,7 +140,7 @@ does not authorize commits, pushes, deployments, or other external writes.
 
 ## Authorization and Git
 
-Agent operational policy: if adoption is authorized, state it in full in root
+Agent operational policy: when adopted, state it in full in root
 `AGENTS.md`, not in the contribution guide.
 
 - Answer, explanation, review, diagnosis, and planning requests are read-only.

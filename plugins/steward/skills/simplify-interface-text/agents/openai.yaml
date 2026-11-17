@@ -1,7 +1,7 @@
 interface:
   display_name: "Simplify Interface Text"
   short_description: "按角色和状态走查界面文案，清理重复、常驻、讲内部机制和解说控件的文字"
-  default_prompt: "使用 $steward:simplify-interface-text 按角色和状态审查当前范围内的界面文案，只交付发现清单。"
+  default_prompt: "使用 $steward:simplify-interface-text 按角色和状态走查当前范围内的界面文案，给出发现清单并询问是否清理。"
 
 policy:
   allow_implicit_invocation: false

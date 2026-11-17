@@ -1,23 +1,25 @@
 ---
 name: simplify-interface-text
 disable-model-invocation: true
-description: Audits or cleans up redundant copy on existing rendered screens by role and state. Use when the user asks to trim interface text that repeats, narrates controls, or explains internals. Explicit invocation only. Not for new feature copy, translation, visual redesign, or behavior-preserving repository cleanup.
+description: Audits or cleans up redundant or wordy copy on existing rendered screens by role and state. Use when the user asks to trim or tighten interface text that repeats, narrates controls, explains internals, or says a needed thing at length. Explicit invocation only. Not for new feature copy, translation, visual redesign, or behavior-preserving repository cleanup.
 ---
 
 # Simplify Interface Text
 
 Remove interface text that does not change what the reader does or knows; keep
-protective text and unique information. Finding nothing worth removing is valid.
+protective text and unique information. Shorten text that is needed but wordy,
+keeping everything it tells the reader. Finding nothing worth changing is valid.
 
-Reviews return findings without editing source, copy, configuration, or
-existing records; see the test-record exception below. A request that does not
-say whether to review or clean up is a review.
+Every invocation starts with a review: a scan that returns findings without
+editing source, copy, configuration, or existing records; see the test-record
+exception below. Present the findings list, ask once whether to clean up, and
+on confirmation carry the in-scope changes through validation. Ask about the
+list as a whole, not finding by finding; the user may exclude findings.
 
-Implementation requests work from a findings list the user has accepted and
-carry the in-scope changes through validation. Text the request names for
-change counts as accepted.
-Otherwise, when no accepted list exists, produce the findings list as a review
-does and stop for acceptance before editing. Unlike
+Two kinds of request change this. A request for a review only ends after the
+findings list without asking. A request that says to change the text directly
+without asking, or that supplies or refers to a list the user already accepted,
+skips the question. Unlike
 [simplify-repository](../simplify-repository/SKILL.md), this work changes
 visible output on purpose. It still does not change commands, amounts, stored
 facts, or server contracts.
@@ -34,7 +36,7 @@ Identify the interfaces, roles, locales, and environments in scope and what is
 authorized in each. To reproduce a screen state, create labeled test records
 and advance them through the workflow. In a non-production environment the
 request itself covers this; in production it needs the user's instruction for
-that environment, and a review never does it there. Leave other records alone
+that environment, and a review-only request never does it there. Leave other records alone
 and do not remove test records unless asked. Authorization does not carry over
 to another environment.
 
@@ -70,7 +72,8 @@ it, and record:
 - The screen and the condition under which the text appears.
 - The exact text.
 - Which rule it breaks, and why the reader does not need it there.
-- The proposed change: remove, shorten, move, or show conditionally.
+- The proposed change: remove, shorten, move, or show conditionally, with the
+  replacement text for a shortened text.
 - The source location, or that it is instance data.
 - Whether it was observed or read from source.
 
@@ -79,13 +82,19 @@ that keeps it. Record text that looks redundant but must stay, with the reason,
 so a later pass does not remove it. Do not pad the list: a finding has to pass
 the rule's own test of whether removal would mislead the reader or lose a fact.
 
-## Clean up against the accepted list
+## Clean up
 
-Report newly found issues rather than adding them to the accepted list.
+When working from a list the user accepted, report newly found issues rather
+than adding them to it.
 
-- Change every supported locale together. When a key is no longer referenced,
-  delete it from every locale and its type, following the project's
-  compatibility policy.
+- A shortened text keeps every fact, condition, number, unit, named term, and
+  required action of the original, in the project's established terminology.
+  If a text cannot be shortened without losing one of these, leave it and
+  report why.
+- Change every supported locale together. Write each locale's shortened text
+  from the meaning rather than translating another locale's result. When a key
+  is no longer referenced, delete it from every locale and its type, following
+  the project's compatibility policy.
 - A copy change includes the condition that renders it. Implement "do not show
   this in the normal state" from facts the screen already has, as narrowly as
   the finding requires. If a finding needs new business logic or a contract
@@ -113,8 +122,9 @@ suites were updated but not run. Later edits invalidate affected results.
 ## Report the result
 
 For each finding identifier, state whether it was changed, changed in part and
-how the result differs from the proposal, or left unchanged and why. Call out
-every deviation from the accepted list.
+how the result differs from the proposal, or left unchanged and why. Give the
+text before and after for each changed text. Call out every deviation from a
+list the user accepted.
 
 State the validation actually run and its results, the scope left unverified,
 the instance-data findings that remain for their owner, and any test records

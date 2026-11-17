@@ -1,6 +1,6 @@
 ---
 name: refine-task
-description: Rewrites an engineering request as a copyable prompt and recommends execution effort for Codex and Claude Code. Use when the user asks to refine, rewrite, or improve a task prompt. Not for task execution, requirements analysis, delivery planning, or ordinary prose editing.
+description: Rewrites an engineering request as a copyable prompt and recommends execution effort for Codex and Claude Code. Use when the user asks to refine, rewrite, or improve a task prompt, whether the task is research, requirements analysis, or implementation, before or during development. Not for performing the task, including the analysis or planning it asks for, or for ordinary prose editing.
 ---
 
 # Refine Task
@@ -14,6 +14,13 @@ Preserve the goal, constraints and authorization: investigating a cause is not
 permission to fix it. Include the deliverable and observable completion criteria
 when useful; one sentence can be enough. Turn unknown repository facts into
 checks in the prompt rather than inventing files, causes or metrics.
+
+Write the prompt to stand on its own: the executor may be a new session or
+another host without this conversation. Include the facts and decisions this
+conversation has established that the task depends on, stated as confirmed,
+and keep them distinct from what the executor must still verify. Leave out
+context the task does not need.
+
 If only the user can resolve a question that changes the deliverable or authority,
 label the prompt a draft and ask the smallest necessary question.
 
