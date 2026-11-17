@@ -1,6 +1,6 @@
 # Steward
 
-Steward 为 Codex 与 Claude Code 提供仓库精简、界面文案清理、任务指令改写、项目文档与仓库调研技能。两个宿主读取同一份 `skills/` 目录。
+Steward 为 Codex 与 Claude Code 提供最终实现收敛、仓库精简、界面文案清理、任务指令改写、项目文档与仓库调研技能。两个宿主读取同一份 `skills/` 目录。
 
 ## 安装与调用
 
@@ -26,6 +26,7 @@ claude plugin install steward@coachpo
 
 | 技能 | 主要结果与边界 |
 | --- | --- |
+| [finalize-implementation](skills/finalize-implementation/SKILL.md) | 把已确定的目标收敛为唯一现行实现：在迁移政策允许时重建单一数据库基线，移除已授权退役的路径并同步代码、配置、测试和文档。设计和审查只读；实施范围明确时直接修改并验证。可自动发现，不用于普通重构、日常迁移或泛称清理。 |
 | [refine-task](skills/refine-task/SKILL.md) | 改写工程需求，不执行原任务；调研、需求分析和实现任务的提示词都在范围内，开发前和开发中都可使用。提示词自足：写入会话中已确定且任务依赖的事实和决定，并与仍需执行方核实的内容分开。每次都分别给出 Codex 和 Claude Code 的推荐强度，不切换模型。 |
 | [simplify-repository](skills/simplify-repository/SKILL.md) | 显式调用；联合精简代码、测试、文档及其他产物，保全行为、覆盖、有效知识和必要用途／保留义务。每次调用先审查并给出候选，问一次是否清理，确认后实施并验证；请求明说只审查时不询问，明说直接清理时不询问。确认即授权删除范围内已纳入版本控制的内容；未纳入版本控制或被忽略的文件在同一次询问里单独列出，确认明确覆盖时才删除。清理也把 AGENTS.md 层级和贡献指南里的规则清理到无重复，不改变规则含义；条件或范围不同的相近条款按冲突报告。审查只返回发现，不借清理下线功能、改写政策或重建文档体系。 |
 | [simplify-interface-text](skills/simplify-interface-text/SKILL.md) | 显式调用；按角色和状态在渲染出的屏幕上走查界面文案，清理重复、常驻、讲内部机制和解说控件的文字，缩写必要但冗长的文字，保留确认、唯一信息和有功能的文字。每次调用先走查并给出清单，对整份清单问一次是否清理，确认后改完；请求明说只审查时不询问，明说直接改或给出已确认清单时不询问；缩写保留原文的事实、条件、数值、单位、专有名词和要求的动作，报告给出改前和改后文本；清理会改变可见输出，但不改命令、金额、存储事实或服务端契约。不负责新功能文案、翻译或视觉改版。 |
@@ -33,7 +34,16 @@ claude plugin install steward@coachpo
 | [write-agent-guides](skills/write-agent-guides/SKILL.md) | 维护有依据的 AGENTS.md 层级，共享规则在根文件，子树仅记录局部差异。仓库指南不依赖用户级全局指令文件：只读取它们以发现冲突并报告。新建根 AGENTS.md 时写入适用的默认政策。不维护 CLAUDE.md、技能或子代理提示词，也不编辑用户级全局指令文件。 |
 | [write-project-docs](skills/write-project-docs/SKILL.md) | 按仓库事实和既有约定维护正式项目文档，明确权威来源并同步相关链接。新建贡献指南时写入适用的默认政策；建立文档体系时沿用已有文档，有已核实的技术方案才建架构文档。局部更新不扩展为文档套件。 |
 
-Codex 可以按意图隐式选择任务指令改写、仓库调查、项目文档和代理指南技能；其他技能保持各自的调用策略。审查请求只返回发现。显式调用 `write-agent-guides` 或 `write-project-docs` 默认更新授权范围内的项目事实；隐式选择且写入意图不清楚时只审查。两个技能不修改已有文件里的政策；新建根 `AGENTS.md` 或贡献指南时写入适用的默认政策。`simplify-repository` 和 `simplify-interface-text` 调用时不必说明审查还是清理：默认先审查，给出发现后询问一次，确认后清理。Claude Code 版另带只读调研插件 agent `steward:steward-researcher`，用法见下文。
+Codex 可以按意图隐式选择最终实现收敛、任务指令改写、仓库调查、项目文档和代理指南技能；其他技能保持各自的调用策略。审查请求只返回发现。显式调用 `write-agent-guides` 或 `write-project-docs` 默认更新授权范围内的项目事实；隐式选择且写入意图不清楚时只审查。两个技能不修改已有文件里的政策；新建根 `AGENTS.md` 或贡献指南时写入适用的默认政策。`simplify-repository` 和 `simplify-interface-text` 调用时不必说明审查还是清理：默认先审查，给出发现后询问一次，确认后清理。Claude Code 版另带只读调研插件 agent `steward:steward-researcher`，用法见下文。
+
+## 收敛到最终实现
+
+使用 `finalize-implementation` 落实已授权的替换和退役，而不是像 `simplify-repository` 一样只清理不改变现行契约的冗余。它不替用户选目标实现。目标库的数据可丢弃，不等于已发布迁移可以重写；如果当前政策或升级、恢复流程仍需要旧迁移，保留旧链并报告受阻范围。
+
+```text
+使用 $steward:finalize-implementation 把订单模块收敛到已确定的新实现，退役旧路径；迁移政策允许时重建数据库基线并验证，不提交或推送。
+使用 /steward:finalize-implementation 只审查已确定的订单实现还需要切换哪些入口，以及能否重建数据库基线，不修改文件或数据库。
+```
 
 ## 仓库精简
 

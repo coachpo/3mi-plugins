@@ -10,7 +10,7 @@ CoachPo 的 Codex 与 Claude Code 插件市场。两个宿主从同一个 Git �
 
 | Plugin | Category | 简介 |
 | --- | --- | --- |
-| [`steward`](plugins/steward/README.md) | Productivity | 仓库精简、界面文案清理、任务指令改写、项目文档与只读调研。 |
+| [`steward`](plugins/steward/README.md) | Productivity | 最终实现收敛、仓库精简、界面文案清理、任务指令改写、项目文档与只读调研。 |
 
 ## Steward 工作流
 

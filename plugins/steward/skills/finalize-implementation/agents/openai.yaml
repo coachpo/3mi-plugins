@@ -1,0 +1,7 @@
+interface:
+  display_name: "Finalize Implementation"
+  short_description: "收敛到唯一现行实现，重建数据库基线并移除已退役路径及产物"
+  default_prompt: "使用 $steward:finalize-implementation 将已确认的目标实现收敛为唯一现行实现，在迁移政策允许时重建数据库基线，并验证当前路径。"
+
+policy:
+  allow_implicit_invocation: true
