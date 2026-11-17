@@ -5,8 +5,8 @@ These criteria supplement the preservation obligations in
 
 - Enumerate all write sites for the stored field or variant. If writes produce
   only constant values or never write it, treat readers for values that cannot
-  arise on new data as existing-data paths. Base removal on whether the affected
-  data can be discarded. Name any discardability fact the repository cannot
+  arise on new data as existing-data paths. Check whether the affected data
+  can be discarded. Name any discardability fact the repository cannot
   establish and group the candidates that depend on it.
 - Classify each candidate as removable, historical-looking but still live, or
   unresolved. Judge reachability, not labels: a legacy-named variant can still
@@ -14,6 +14,8 @@ These criteria supplement the preservation obligations in
 - When removal is authorized and the change yields a net maintenance benefit,
   make the retired state unrepresentable in the affected types, validation, and
   storage constraints rather than deleting only the reader branch.
-- If cleanup changes accepted persisted shapes, identify which existing data
-  would become invalid and stop that change until authorized. Rebuilds,
-  migrations, imports, and releases are outside this skill's scope.
+- If cleanup changes accepted persisted shapes, identify what would no longer
+  be accepted and which existing data would become invalid. Discardable old
+  data does not waive the [current-contract boundary](../SKILL.md#establish-scope-and-authority)
+  or grant migration or deployment permission. Rebuilds, migrations, imports,
+  releases, and deployments are outside this skill's scope.

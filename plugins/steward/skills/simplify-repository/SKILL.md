@@ -12,20 +12,27 @@ documentation and artifact cleanup do not depend on code or test changes.
 Remove evidenced redundancy to reduce maintenance burden, not to meet deletion
 quotas. No category must shrink; finding no safe deletion is valid.
 
-Every invocation starts with a review that returns findings without cleanup
-changes. Present the candidates, ask once whether to clean up, and on
-confirmation carry the in-scope changes through validation. Ask about the
-findings as a whole, not file by file; the user may exclude candidates.
-
-Two kinds of request change this. A request for a review only ends after the
-findings without asking. A request that says to clean up directly without
-asking skips the question.
-
 ## Establish scope and authority
 
 Identify the requested repository or subtree, explicit exclusions, authoritative
 requirements and policies, accepted decisions, known validation baseline, and
 material gaps.
+
+Verify candidates before making any changes:
+
+- **Review only:** Report findings without editing or asking whether to clean up.
+- **Default:** Present evidenced, actionable candidates and ask once per batch,
+  not per file. Do not ask if there are none. Include known supporting changes
+  in the batch. Carry out approved work without asking again; seek batch approval
+  for later candidates outside that approval. Do not re-propose excluded items.
+- **Direct cleanup:** An explicit request to clean up directly lets you proceed
+  without routine confirmation for evidenced redundancy in version-controlled
+  content within scope, including later candidates.
+
+In either write mode, deleting untracked or ignored files requires explicit
+authorization covering those items. In default mode, list them separately in
+the same batch question. Retain content you are not authorized to change;
+proceed with independent authorized work and validate it.
 
 Inspect actual relationships among implementation, callers, tests, documentation,
 configuration, generators, assets, scripts, and development or delivery entry
@@ -36,20 +43,13 @@ Current contracts come from effective requirements, policies, and accepted
 decisions. Existing implementation is evidence, not automatically a requirement.
 Historical assumptions and permissions do not establish current facts.
 
-Follow effective compatibility requirements. Preserving current contracts does
-not mean retaining every historical API or compatibility path. Conversely, a
-default against backward compatibility does not itself authorize removing
-existing behavior or changing public APIs. Do not establish or rewrite project
-policy as a side effect of cleanup; removing duplicate rule clauses as
-described under [Documentation](#documentation) keeps policy unchanged.
-
-The user's confirmation, or a request to clean up directly, authorizes deletion
-of version-controlled content within scope once the evidence below supports
-it, without per-file confirmation.
-
-List untracked or ignored deletion candidates separately in the same question
-and delete them only when the confirmation explicitly covers them. A request
-to clean up directly does not cover them; ask.
+Preserve current observable contracts, not every historical API or compatibility
+path. A default against backward compatibility is not authority to change a
+current contract. If a proposed change alters what callers can observe
+(such as accepted inputs, errors, or side effects), report the differences and
+proposed outcome. Keep it out of ordinary cleanup and do not implement the
+behavior change without explicit user authorization for that change. Do not
+establish or rewrite project policy as a side effect of cleanup.
 
 ## Preserve four classes of obligations
 
@@ -100,8 +100,9 @@ report. Investigate or retain unresolved candidates rather than presenting
 them as confirmed redundancy.
 
 When retention depends on a fact the repository cannot establish, such as
-deployment state, live data, or client-held records, name that fact and group
-the candidates it decides rather than reporting each as retained.
+deployment state, live data, or client-held records, name it and group the
+affected candidates. Ask about missing facts together only when the answer
+can change what to retain. If material uncertainty remains, keep the content.
 
 ## Simplify connected content
 
@@ -110,9 +111,9 @@ the candidates it decides rather than reporting each as retained.
 Compare call conditions, validation order, error behavior, state changes,
 rollback, and other relevant effects before merging similar implementations.
 
-When duplicates have already diverged, report the divergence and which side
-is authoritative. Consolidating them is a behavior change that needs its own
-decision.
+If diverged implementations can be consolidated while preserving their
+respective current contracts, evaluate the consolidation like any other
+candidate.
 
 A production member referenced only by tests is a candidate, not confirmed
 dead. Determine whether it is a deliberate test seam, a fixture that belongs
@@ -161,17 +162,18 @@ necessary historical context have been carried forward. Preserve unresolved
 acceptance gaps rather than converting past partial results into current
 completion claims.
 
-Rules in the `AGENTS.md` hierarchy and the contribution guide are within a
-confirmed cleanup: reduce them to one statement of each rule without
-changing what any rule requires.
+Deduplicate `AGENTS.md` and contribution-guide rules by effective constraint,
+not wording. Before removing a clause or a wholly redundant nested file, check
+actual loading, applicability, and precedence for the affected paths before
+and after the change. Keep shared agent rules in the root `AGENTS.md` and
+project policy in the contribution guide when those are their authoritative
+homes. Keep a short operational rule or an effective reference where needed
+to preserve the constraint.
 
-- Remove a clause that repeats another, keeping the copy in its authoritative
-  home: shared agent rules in the root `AGENTS.md`, project policy in the
-  contribution guide with at most a short operational rule in `AGENTS.md`.
-- Delete a nested `AGENTS.md` that only repeats its parent.
 - Remove a rule whose subject no longer exists in the repository.
-- Clauses with similar wording but different conditions or scope are not
-  duplicates. Report them as a conflict.
+- Rules with different conditions or scope are not duplicates. Report a
+  conflict only where their applicability overlaps and their requirements are
+  incompatible.
 - Do not remove a rule that still applies because it seems unnecessary, or
   because a user-level instruction file states it too.
 
@@ -187,9 +189,11 @@ work, also apply [current-state cleanup](references/current-state-cleanup.md).
 Check actual consumers and retention obligations before removing assets,
 screenshots, reports, generated files, configuration, dependencies, or scripts.
 
-For operator-run tools, the consumer is the documented scenario, such as setup,
-release, recovery, or account maintenance. Absence of code callers is not
-evidence of redundancy.
+Trace operator-run tools to actual workflows such as setup, release, or recovery.
+Missing repository references or documentation do not establish redundancy.
+When there is a concrete sign of external use, check accessible runbooks or
+other evidence. Do not exhaustively search for hypothetical external users of
+every unreferenced script.
 
 For screenshots, distinguish disposable captures from comparison baselines,
 required evidence, and documentation assets. For generated files, distinguish
@@ -240,14 +244,12 @@ Passing checks and deletion metrics support, but do not replace, this review.
 
 ## Iterate to a simplification baseline
 
-Once cleanup is confirmed, repeat candidate discovery, obligation and consumer
-checks, justified removal or consolidation, and validation. After each validated
-round, inspect new candidates exposed by the changes and remaining unreviewed
-relationships material to the requested scope. Present candidates found in a
-later round and ask before changing them, unless the request said to clean up
-directly. Continue while safe, authorized
-changes with concrete maintenance benefit remain; do not require a full repository
-rescan each round.
+In write modes, repeat candidate discovery, obligation and consumer checks,
+authorized cleanup, and validation. After each validated round, inspect new
+candidates exposed by the changes and remaining unreviewed relationships
+material to the requested scope. Apply [scope and authority](#establish-scope-and-authority)
+to later candidates. Continue while safe, authorized changes with concrete
+maintenance benefit remain; do not require a full repository rescan each round.
 
 Judge net maintenance benefit, including any added abstraction, indirection,
 configuration, or coupling. Do not consolidate merely for uniformity or introduce
