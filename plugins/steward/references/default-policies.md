@@ -61,6 +61,11 @@ adopted agent operational policies in full.
   stage. Assess applicability from the actual business context, not from a
   label; treat unresolved applicability as unconfirmed, not as
   non-applicability.
+- Do not run the full regression test suite unless the user or this project's
+  guidance requires it. Verify a change with the narrowest existing targeted
+  tests and the checks that exercise the changed behavior. Broaden targeted
+  validation according to risk; after it passes, repeat or expand it only for
+  later edits, failures, or unresolved material concerns.
 
 When a document records a tier or quota choice made under the first principle,
 record it as a working assumption, not as observed platform behavior, with the
