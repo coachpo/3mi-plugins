@@ -41,9 +41,9 @@ claude plugin install repo-craft@coachpo
 
 并行调查可由问题触发，也可供其他技能取证。调用 `investigate-repo` 即授权范围内的只读委派，显式调用和被自动选中时相同；Claude Code 中文件搜索使用只有读取和搜索工具的插件子代理 `repo-craft:repo-researcher`，Git 历史由主 agent 自己查，其他宿主使用默认 subagent，只读在那里只是提示词约束。宿主没有可用的 subagent 或用户限制了委派时，只能报告串行或部分调查。
 
-项目规则和文档均可只审查而不写入；只给出技能名、没有说是否写入时按审查处理。同一次工作两个维护技能都要运行时，先文档后规则。`simplify-repo` 清理已证实的冗余并保全行为、覆盖、知识和保留义务，不改变可见输出；`simplify-interface-text` 有意改变可见文案，但不改命令、金额、已存储的事实或服务端契约。技能不授予额外操作权限。
+项目规则和文档均可只审查而不写入；只给出技能名、没有说是否写入时按审查处理。同一次工作两个维护技能都要运行时，先文档后规则。固定文档结构之外，端点表、状态机、数据格式等契约级细节写成 `docs/` 下的专题文档，按需建立、不建空占位；项目确立的产品与业务约束归贡献指南。子目录 `AGENTS.md` 只写该子树的构建、验证、生成文件处理差异，或只读父级就会违反的约束。`simplify-repo` 清理已证实的冗余并保全行为、覆盖、知识和保留义务，不改变可见输出；`simplify-interface-text` 有意改变可见文案，但不改命令、金额、已存储的事实或服务端契约。技能不授予额外操作权限。
 
-两个维护技能各自带一份模板：[根 AGENTS.md](skills/maintain-agent-rules/references/AGENTS.template.md) 规定 Agent 如何操作；[CONTRIBUTING.md](skills/maintain-project-docs/references/CONTRIBUTING.template.md) 说明贡献者如何实现、验证和提交变更。初始化或维护时，目标缺失或为零字节就写入完整模板，空项目也不例外。非空文件按规则合并：等义不重复，缺失不冲突的直接补入，冲突的逐条询问是覆盖原政策还是跳过模板规则。两个技能均不按项目情况筛选模板条目；`simplify-repo` 去重规则时也不因主题暂不存在而删除模板条款，不因为是空的而删除固定结构中的占位文件。目标缺失时，用户已明确说明的项目规则取代与之矛盾的模板条款。
+两个维护技能各自带一份模板：[根 AGENTS.md](skills/maintain-agent-rules/references/AGENTS.template.md) 规定 Agent 如何操作；[CONTRIBUTING.md](skills/maintain-project-docs/references/CONTRIBUTING.template.md) 说明贡献者如何实现、验证和提交变更。初始化或维护时，目标缺失或为零字节就写入完整模板，空项目也不例外。非空文件按规则合并：等义不重复，缺失不冲突的直接补入，冲突的逐条询问是覆盖原政策还是跳过模板规则。模板已有的主题，项目专有规则写在该小节的模板条款之后，不另起同主题的小节；模板条款逐字保留，一级标题可换成项目自己的标题。两个技能均不按项目情况筛选模板条目；`simplify-repo` 去重规则时也不因主题暂不存在而删除模板条款，不因为是空的而删除固定结构中的占位文件。目标缺失时，用户已明确说明的项目规则取代与之矛盾的模板条款。
 
 [验证记录](VERIFICATION.md)区分了宿主发现、隔离样例中的实际执行，以及未测试的安装后路由。
 
