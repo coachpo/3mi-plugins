@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <title>Repo Craft</title>
+  <rect x="4" y="4" width="120" height="120" rx="26" fill="#292929" stroke="#888" stroke-width="4"/>
+  <g stroke="#fafafa" stroke-width="8" stroke-linejoin="round">
+    <path d="M42 36v56m0-20h12c19 0 32-11 32-29" fill="none"/>
+    <g fill="#292929">
+      <circle cx="42" cy="34" r="9"/>
+      <circle cx="42" cy="94" r="9"/>
+      <circle cx="86" cy="36" r="9"/>
+    </g>
+  </g>
+</svg>

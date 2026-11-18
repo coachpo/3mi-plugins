@@ -1,14 +1,20 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "repo-craft",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Codex 仓库工作流：提示词润色、并行调查、项目规则、项目文档和清零式收敛。",
   "extensions": {
     "com.openai": {
       "interface": {
         "displayName": "Repo Craft",
         "shortDescription": "从任务提示词、仓库调查到项目维护与实现收敛",
-        "category": "Productivity"
+        "category": "Productivity",
+        "logo": "./assets/repo-craft.svg",
+        "composerIcon": "./assets/repo-craft.svg",
+        "defaultPrompt": [
+          "使用 $repo-craft:investigate-repo 只读调查这个仓库的运行入口和验证入口，分别给出文件依据。",
+          "使用 $repo-craft:maintain-agent-rules 审查项目规则：哪些是全仓共用的，哪些只适用于某个模块？不要修改文件。"
+        ]
       }
     }
   }
