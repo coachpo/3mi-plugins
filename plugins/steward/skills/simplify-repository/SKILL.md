@@ -171,9 +171,10 @@ homes. Keep a short operational rule or an effective reference where needed
 to preserve the constraint.
 
 - Remove a rule whose subject no longer exists in the repository.
-- Rules with different conditions or scope are not duplicates. Report a
-  conflict only where their applicability overlaps and their requirements are
-  incompatible.
+- Differences in declared conditions or scope matter when they change an
+  effective constraint. A narrower clause can be redundant if removing it
+  leaves the same requirements in force throughout its scope. Report a conflict
+  only where applicable requirements overlap and are incompatible.
 - Do not remove a rule that still applies because it seems unnecessary, or
   because a user-level instruction file states it too.
 
