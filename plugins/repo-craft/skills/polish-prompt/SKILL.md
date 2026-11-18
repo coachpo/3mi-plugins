@@ -13,4 +13,6 @@ description: 用户主动调用时，把任务初稿改写成可独立执行的�
 
 **按执行难点独立校准，不按字数，也不靠提高强度弥补缺少授权。** 对 Codex，常规调查可用 `medium`，需要跨系统验证因果时考虑 `high`，多种原因相互作用时考虑 `xhigh`。对 Claude Code（Opus 5.5），从 `medium` 衡量；机械且易核对的操作可用 `low`，有实质推理困难再考虑 `high`，不要在没有质量收益依据时推到 `xhigh` 或 `max`。这些是建议，不是对所有模型档位的保证。
 
-依据：[OpenAI 的 GPT-6.2 提示指南](https://learn.chatgpt.com/guides/prompting-gpt-6-2-astra)强调从验收视角描述目标、按调查深度选强度；[Anthropic 的 Opus 5.5 提示指南](https://platform.claude.com/docs/zh-CN/build-with-claude/prompt-engineering/prompting-claude-opus-5-5)区分粘贴内容和指令，并按模型单独校准 effort。无需联网即可润色；若任务要求核对当前指南而链接无法访问，点名未核对的来源，不把以上摘要说成本次查证。
+写验收条件时，说明用户能凭什么结果判断任务完成，不把“执行了哪些步骤”当作结果。改写后的提示词若保留了日志、对话或示例，将它们标为待分析的材料，与执行指令分开。
+
+为调查任务建议 Codex 强度时，指出需要追踪的因果链或需要区分的可能原因；为 Claude Code 建议强度时，按目标模型支持的档位选择，不从另一模型照搬同名档位。普通润色无需联网；若用户要求核对当前指南，区分已核实的内容与未能核实的来源。
