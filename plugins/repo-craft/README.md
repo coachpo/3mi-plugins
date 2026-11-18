@@ -25,6 +25,6 @@ codex plugin add repo-craft@coachpo
 
 提示词润色只支持主动调用；并行调查可由问题触发，也可供两个维护技能取证。宿主没有可用或获准的 subagent 时，只能报告串行或部分调查。项目规则和文档均可只审查而不写入；清零式收敛须明确请求和确认设计，不能用普通清理请求代替。技能不授予额外操作权限。
 
-两个维护技能各自带一份模板：[根 AGENTS.md 片段](skills/maintain-agent-rules/references/AGENTS.template.md)规定 Agent 如何操作；[CONTRIBUTING.md 片段](skills/maintain-project-docs/references/CONTRIBUTING.template.md)说明贡献者如何实现、验证和提交变更。新建时只写适用且不冲突的片段；维护已有文件不自动补入默认政策。空项目初始化固定文档仍只建空占位，不填贡献模板。两份模板都不依赖用户主目录。
+两个维护技能各自带一份模板：[根 AGENTS.md](skills/maintain-agent-rules/references/AGENTS.template.md) 规定 Agent 如何操作；[CONTRIBUTING.md](skills/maintain-project-docs/references/CONTRIBUTING.template.md) 说明贡献者如何实现、验证和提交变更。初始化或维护时，目标缺失或为零字节就写入完整模板，空项目也不例外。非空文件按规则合并：等义不重复，缺失不冲突的直接补入，冲突的逐条询问是覆盖原政策还是跳过模板规则。两个技能均不按项目情况筛选模板条目。
 
 [验证记录](VERIFICATION.md)区分了宿主发现、隔离样例中的实际执行，以及未测试的安装后路由。
