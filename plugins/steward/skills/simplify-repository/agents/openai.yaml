@@ -1,7 +1,0 @@
-interface:
-  display_name: "Simplify Repository"
-  short_description: "精简代码、测试、文档及其他仓库产物，保全行为、覆盖、知识与必要用途"
-  default_prompt: "使用 $steward:simplify-repository 审查当前范围内的冗余，按批确认有证据且可执行的候选后清理和验证，并报告未验证范围。"
-
-policy:
-  allow_implicit_invocation: false

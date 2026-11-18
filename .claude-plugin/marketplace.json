@@ -7,10 +7,10 @@
   },
   "plugins": [
     {
-      "name": "steward",
-      "source": "./plugins/steward",
-      "displayName": "Steward",
-      "description": "面向 Codex 与 Claude Code 的最终实现收敛、仓库精简、界面文案清理、任务指令改写、文档维护与只读调研技能。文档维护默认更新事实；新建根 AGENTS.md 或贡献指南时写入适用的默认政策，已有文件的政策变更须明确授权。",
+      "name": "repo-craft",
+      "source": "./plugins/repo-craft",
+      "displayName": "Repo Craft",
+      "description": "面向 Codex 与 Claude Code 的仓库工作流：提示词润色、并行调查、项目规则、项目文档、仓库精简和界面文案清理。",
       "category": "Productivity",
       "license": "MIT"
     }

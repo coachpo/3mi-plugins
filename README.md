@@ -10,41 +10,38 @@ CoachPo 的 Codex 与 Claude Code 插件市场。各插件的适用宿主见下�
 
 | Plugin | 宿主 | 简介 |
 | --- | --- | --- |
-| [`steward`](plugins/steward/README.md) | Codex、Claude Code | 最终实现收敛、仓库精简、界面文案清理、任务指令改写、项目文档与只读调研。 |
-| [`repo-craft`](plugins/repo-craft/README.md) | Codex | 润色提示词、并行调查仓库、维护项目规则和固定文档结构、按已定设计收敛实现。 |
+| [`repo-craft`](plugins/repo-craft/README.md) | Codex、Claude Code | 润色提示词、并行调查仓库、维护项目规则和固定文档结构、精简仓库、清理界面文案。 |
 
-## Steward 工作流
-
-Steward 的[技能用途与边界](plugins/steward/README.md#技能用途与边界)、[交付链路](plugins/steward/README.md#交付链路)、[模型分工](plugins/steward/README.md#模型分工)和[授权边界](plugins/steward/README.md#授权边界)见插件文档。各技能可按任务独立使用，不要求经过完整交付链路。
+各技能的[调用示例](plugins/repo-craft/README.md#调用示例)和[调用策略与边界](plugins/repo-craft/README.md#调用策略与边界)见插件文档。各技能可按任务独立使用。
 
 ## Codex 安装
 
 ```bash
 codex plugin marketplace add coachpo/3mi-plugins --ref main
-codex plugin add steward@coachpo
+codex plugin add repo-craft@coachpo
 ```
 
-调用共享技能：
+调用技能：
 
 ```text
-$steward:<skill-name>
+$repo-craft:<skill-name>
 ```
 
 ## Claude Code 安装
 
 ```bash
 claude plugin marketplace add coachpo/3mi-plugins@main
-claude plugin install steward@coachpo
+claude plugin install repo-craft@coachpo
 ```
 
-调用共享技能：
+调用技能：
 
 ```text
-/steward:<skill-name>
+/repo-craft:<skill-name>
 ```
 
 安装或更新后，新建 Codex 任务或 Claude Code 会话以加载当前技能。
 
 ## 许可证
 
-Steward 与仓库整合内容按 [`MIT`](LICENSE) 许可证发布。
+Repo Craft 与仓库整合内容按 [`MIT`](LICENSE) 许可证发布。

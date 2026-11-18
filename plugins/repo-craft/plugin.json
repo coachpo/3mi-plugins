@@ -1,13 +1,29 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "repo-craft",
-  "version": "0.1.1",
-  "description": "Codex 仓库工作流：提示词润色、并行调查、项目规则、项目文档和清零式收敛。",
+  "version": "0.2.0",
+  "description": "面向 Codex 与 Claude Code 的仓库工作流：提示词润色、并行调查、项目规则、项目文档、仓库精简和界面文案清理。",
+  "author": {
+    "name": "coachpo",
+    "url": "https://github.com/coachpo"
+  },
+  "homepage": "https://github.com/coachpo/3mi-plugins/tree/main/plugins/repo-craft#readme",
+  "repository": "https://github.com/coachpo/3mi-plugins",
+  "license": "MIT",
+  "keywords": [
+    "agents-md",
+    "claude-code",
+    "codex",
+    "documentation",
+    "repository-research",
+    "repository-cleanup",
+    "workflows"
+  ],
   "extensions": {
     "com.openai": {
       "interface": {
         "displayName": "Repo Craft",
-        "shortDescription": "从任务提示词、仓库调查到项目维护与实现收敛",
+        "shortDescription": "从任务提示词、仓库调查到项目维护与仓库精简",
         "category": "Productivity",
         "logo": "./assets/repo-craft.svg",
         "composerIcon": "./assets/repo-craft.svg",

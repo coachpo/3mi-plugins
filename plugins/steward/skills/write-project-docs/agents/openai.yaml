@@ -1,7 +1,0 @@
-interface:
-  display_name: "Write Project Documentation"
-  short_description: "基于仓库事实维护正式项目文档，沿用既有约定并保持更新范围"
-  default_prompt: "使用 $steward:write-project-docs 更新授权范围内的正式文档事实，保留现行政策。"
-
-policy:
-  allow_implicit_invocation: true
