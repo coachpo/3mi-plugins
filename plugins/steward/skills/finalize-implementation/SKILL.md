@@ -72,8 +72,14 @@ is authorized.
 
 Use the actual supported database engine and normal initialization entry point
 on an authorized empty database. Exercise core reads and writes plus affected
-constraints and failure cases with targeted behavior tests. A successful fresh
-install does not verify an upgrade of an existing database.
+constraints and failure cases with targeted behavior tests.
+
+If the change affects retained data or a supported upgrade or recovery path,
+verify that behavior in isolation even if migration files are unchanged. Use
+fixtures with representative existing records for read/write checks. For an
+affected upgrade or recovery path, exercise its normal entry point from a
+representative supported prior database state or backup. A fresh-install check
+does not substitute for these checks.
 
 Inspect the combined diff and search affected entry points and references for
 one-time cleanup. Keep tests that enforce current behavior, not tests whose only
@@ -81,8 +87,9 @@ purpose is to prove a file or symbol was removed.
 
 Report full consolidation only when active entry points use the chosen target,
 requested baselines are in place and verified from empty databases, core
-behavior is verified, and retired paths are removed with no remaining required
-consumers. Report the checks actually run. Distinguish completed scope (such as
-the runtime cutover) from blocked scope (such as rebaselining), with retained
-items, their reasons, and validation gaps. Keep this evidence in the handoff,
-not a permanent cleanup log.
+behavior and any affected retained-data, upgrade, or recovery behavior are
+verified, and retired paths are removed with no remaining required consumers.
+Report the checks actually run. Distinguish completed scope (such as the runtime
+cutover) from blocked scope (such as rebaselining), with retained items, their
+reasons, and validation gaps. Keep this evidence in the handoff, not a permanent
+cleanup log.
