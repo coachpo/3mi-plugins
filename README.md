@@ -1,6 +1,6 @@
 # 3mi-plugins
 
-CoachPo 的 Codex 与 Claude Code 插件市场。两个宿主从同一个 Git 仓库安装插件，并共享插件内的技能。
+CoachPo 的 Codex 与 Claude Code 插件市场。各插件的适用宿主见下表。
 
 ## 插件市场
 
@@ -8,9 +8,10 @@ CoachPo 的 Codex 与 Claude Code 插件市场。两个宿主从同一个 Git �
 - 显示名称：`CoachPo`
 - 仓库：`github.com/coachpo/3mi-plugins`
 
-| Plugin | Category | 简介 |
+| Plugin | 宿主 | 简介 |
 | --- | --- | --- |
-| [`steward`](plugins/steward/README.md) | Productivity | 最终实现收敛、仓库精简、界面文案清理、任务指令改写、项目文档与只读调研。 |
+| [`steward`](plugins/steward/README.md) | Codex、Claude Code | 最终实现收敛、仓库精简、界面文案清理、任务指令改写、项目文档与只读调研。 |
+| [`repo-craft`](plugins/repo-craft/README.md) | Codex | 润色提示词、并行调查仓库、维护项目规则和固定文档结构、按已定设计收敛实现。 |
 
 ## Steward 工作流
 

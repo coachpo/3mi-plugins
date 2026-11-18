@@ -1,0 +1,15 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "repo-craft",
+  "version": "0.1.0",
+  "description": "Codex 仓库工作流：提示词润色、并行调查、项目规则、项目文档和清零式收敛。",
+  "extensions": {
+    "com.openai": {
+      "interface": {
+        "displayName": "Repo Craft",
+        "shortDescription": "从任务提示词、仓库调查到项目维护与实现收敛",
+        "category": "Productivity"
+      }
+    }
+  }
+}
