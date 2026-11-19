@@ -35,17 +35,13 @@ claude plugin install repo-craft@coachpo
 
 ## 调用策略与边界
 
-`polish-prompt` 在两个宿主都只接受主动调用：Codex 使用 `agents/openai.yaml` 的 `policy.allow_implicit_invocation: false`，Claude Code 使用 `SKILL.md` 的 `disable-model-invocation: true`。该 Claude Code 字段不替代 Codex 的调用策略；只接受通用 frontmatter 字段的校验器会拒绝它，须另用宿主原生的加载检查确认兼容性。两个宿主的调用控制分别见 [Codex 技能配置](https://learn.chatgpt.com/docs/build-skills#optional-metadata)与 [Claude Code 技能配置](https://code.claude.com/docs/en/skills#control-who-invokes-a-skill)。
+各技能的行为、边界和授权规则以各自的 `SKILL.md` 为准：[`polish-prompt`](skills/polish-prompt/SKILL.md)、[`investigate-repo`](skills/investigate-repo/SKILL.md)、[`maintain-docs-and-rules`](skills/maintain-docs-and-rules/SKILL.md)、[`constraint-manager`](skills/constraint-manager/SKILL.md)。技能不授予额外操作权限。本节只写技能正文之外的宿主差异。
 
-并行调查可由问题触发，也可供其他技能取证。调用 `investigate-repo` 即授权范围内的只读委派，显式调用和被自动选中时相同；Claude Code 中文件搜索使用只有读取和搜索工具的插件子代理 `repo-craft:repo-researcher`，Git 历史由主 agent 自己查，其他宿主使用默认 subagent，只读在那里只是提示词约束。宿主没有可用的 subagent 或用户限制了委派时，只能报告串行或部分调查。
+- **调用控制**：`polish-prompt` 在两个宿主都只接受主动调用。Codex 使用 `agents/openai.yaml` 的 `policy.allow_implicit_invocation: false`，Claude Code 使用 `SKILL.md` 的 `disable-model-invocation: true`；后者不替代前者。只接受通用 frontmatter 字段的校验器（如 Skill Creator 的 `quick_validate.py`）会拒绝这个字段，须另用宿主原生的加载检查确认兼容性。两个宿主的调用控制分别见 [Codex 技能配置](https://learn.chatgpt.com/docs/build-skills#optional-metadata)与 [Claude Code 技能配置](https://code.claude.com/docs/en/skills#control-who-invokes-a-skill)。
+- **并行调查**：Claude Code 中文件搜索使用只有读取和搜索工具的插件子代理 `repo-craft:repo-researcher`；其他宿主使用默认 subagent，只读在那里只是提示词约束。宿主没有可用的 subagent 或用户限制了委派时，只能报告串行或部分调查。
+- **模板**：`maintain-docs-and-rules` 带两份模板：[根 AGENTS.md](skills/maintain-docs-and-rules/references/AGENTS.template.md) 规定 Agent 如何操作，[CONTRIBUTING.md](skills/maintain-docs-and-rules/references/CONTRIBUTING.template.md) 说明贡献者如何实现、验证和提交变更。写入与合并按[模板合并规则](skills/maintain-docs-and-rules/references/template-merge.md)处理。
 
-`maintain-docs-and-rules` 可只审查而不写入；只给出技能名、没有说是否写入时按审查处理。默认文档和规则都做，先文档后规则；请求只提其中一部分时只做那一部分。固定文档结构之外，端点表、状态机、数据格式等契约级细节写成 `docs/` 下的专题文档，按需建立、不建空占位；项目确立的产品与业务约束归贡献指南。没有证据的固定文档建为只含一行注释的占位文档。内容属于固定结构、却在固定位置之外的旧文档默认被取代：有效内容收进固定结构后删除原件，舍弃的内容在报告中逐项列出。子目录 `AGENTS.md` 只写该子树的构建、验证、生成文件处理差异，或只读父级就会违反的约束。约束索引 `CONSTRAINTS.md` 不算旧文档：迁移被它引用的文档时保持约束含义并更新索引里的链接，条目的增删和状态不由本技能改。技能不授予额外操作权限。
-
-`constraint-manager` 管理项目约束，即限制“做出来的东西”的要求：技术选型、架构边界、质量与资源指标、产品范围。限制“做事方式”的工作流程规范和两份模板的条款不在范围内。有资格不等于纳入：只有用户明确要约束的条目才进 `CONSTRAINTS.md`；盘点只在用户要求时进行，产出的都是候选，仅从实现推断的现状单独列出。条目有出处时条文以出处文档为准，新立而没有出处的约束只写在索引里。删除、修改、放宽和替换都先在对话里给提案，用户同意后才应用；应用只改出处条文、重述位置和索引，强制该约束的代码、测试和配置只列为后续项。废止和被取代的条目保留在索引里，编号不复用。首次建立索引时提议在根 `AGENTS.md` 加一条入口：任务与现行约束冲突时停下报告，要新立或变更约束时用本技能给出提案。未收录的文档条文照常遵循，但不走变更流程。
-
-技能带两份模板：[根 AGENTS.md](skills/maintain-docs-and-rules/references/AGENTS.template.md) 规定 Agent 如何操作；[CONTRIBUTING.md](skills/maintain-docs-and-rules/references/CONTRIBUTING.template.md) 说明贡献者如何实现、验证和提交变更。初始化或维护时，目标缺失或为零字节就写入完整模板，空项目也不例外。非空文件按[规则](skills/maintain-docs-and-rules/references/template-merge.md)合并：等义不重复，缺失不冲突的直接补入，冲突的逐条询问是覆盖原政策还是跳过模板规则；属于另一份模板的条款，在对方文件已有后从这份文件删除。模板已有的主题，项目专有规则写在该小节的模板条款之后，不另起同主题的小节；模板条款逐字保留，一级标题可换成项目自己的标题。不按项目情况筛选模板条目。目标缺失时，用户已明确说明的项目规则取代与之矛盾的模板条款。
-
-[验证记录](VERIFICATION.md)区分了宿主发现、隔离样例中的实际执行，Claude Code 安装后的加载与调用控制实测，以及未测试的 Codex 安装后路由。
+[验证记录](VERIFICATION.md)给出验证方法、已验证的行为和未验证的范围。
 
 ## 许可证
 

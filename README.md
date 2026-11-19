@@ -44,4 +44,4 @@ claude plugin install repo-craft@coachpo
 
 ## 许可证
 
-Repo Craft 与仓库整合内容按 [`MIT`](LICENSE) 许可证发布。
+本仓库按 [`MIT`](LICENSE) 许可证发布。
