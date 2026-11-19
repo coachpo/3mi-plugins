@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "repo-craft",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "面向 Codex 与 Claude Code 的仓库工作流：提示词润色、并行调查、项目文档与规则维护、项目约束管理。",
   "author": {
     "name": "coachpo",
@@ -24,12 +24,16 @@
       "interface": {
         "displayName": "Repo Craft",
         "shortDescription": "从任务提示词、仓库调查到项目文档、规则与约束管理",
+        "longDescription": "面向在 Codex 或 Claude Code 中维护代码仓库的开发者。四项技能可分别使用：把任务初稿改写成可交接的提示词；把仓库问题拆成独立方向并行只读调查；初始化和维护固定文档结构与 AGENTS.md 层级；把用户选定的项目约束登记进 CONSTRAINTS.md，并在用户同意提案后变更。插件只提供技能指令、模板和一个只读调研子代理，不注册服务、钩子或凭据，也不授予额外操作权限；写入只在用户请求实现或同意提案后进行。",
+        "developerName": "coachpo",
+        "capabilities": ["Read", "Write"],
         "category": "Productivity",
         "logo": "./assets/repo-craft.svg",
         "composerIcon": "./assets/repo-craft.svg",
         "defaultPrompt": [
           "使用 $repo-craft:investigate-repo 只读调查这个仓库的运行入口和验证入口，分别给出文件依据。",
-          "使用 $repo-craft:maintain-docs-and-rules 审查项目规则：哪些是全仓共用的，哪些只适用于某个模块？不要修改文件。"
+          "使用 $repo-craft:maintain-docs-and-rules 审查项目规则：哪些是全仓共用的，哪些只适用于某个模块？不要修改文件。",
+          "使用 $repo-craft:constraint-manager 盘点这个项目的约束候选，先不要写入。"
         ]
       }
     }

@@ -1,5 +1,27 @@
 # 验证记录
 
+## 0.4.1 · 补齐两个宿主的清单元信息 · 2026-11-19
+
+`claude plugin validate` 一直报 `ICON_MISSING`：校验器要求 512 到 2048 像素的正方形 PNG 或 JPEG，包里只有 SVG。Codex 的提交文档要求 `interface` 带 `longDescription`、`developerName` 和 `capabilities`，原清单没有。
+
+修订：
+
+- 用 Quick Look 把 `assets/repo-craft.svg` 渲染成 1024 × 1024 的 `assets/icon.png`（带透明通道，约 59 KB），在 `.claude-plugin/plugin.json` 设 `icon`。按官方清单文档，这个字段只供官方目录展示，Claude Code 加载时不读。
+- 根 `plugin.json` 的 `interface` 补 `longDescription`、`developerName`、`capabilities`，`defaultPrompt` 加第三条 `constraint-manager` 的示例。Codex 的 `logo` 和 `composerIcon` 仍用 SVG，它是正方形 128 × 128，符合 Codex 对 SVG 的要求。
+
+技能正文和模板没有改动。
+
+已验证：
+
+- `claude plugin validate plugins/repo-craft`（含 `--profile directory`）和 `claude plugin validate .` 均通过，`ICON_MISSING` 不再出现；剩下的警告只有本机磁盘上被 `.gitignore` 排除的 `.DS_Store`。
+- 两份插件清单均可解析，共有字段逐项相同，版本同为 0.4.1。`longDescription` 213 个字符，三条示例提示都在 128 个字符以内。
+- Codex CLI 0.167.0 在空白的临时 `CODEX_HOME` 下添加本地市场后，`codex plugin list` 列出 `repo-craft@coachpo`。
+
+未验证：
+
+- 没有在 Codex 或 Claude Code 的界面里看图标和新字段的实际显示，也没有提交到任何官方目录。
+- `capabilities` 取 `Read`、`Write` 两个标签，沿用 Codex 文档示例的写法，没有核对官方目录对标签取值的要求。
+
 ## 0.4.0 · 新增项目约束管理技能 · 2026-11-19
 
 新增技能 `constraint-manager`：正文加两份参考文件（约束索引格式、变更控制）。它只管限制产物的项目约束，不管工作流程规范；只有用户点名的条目才进 `CONSTRAINTS.md`；删除、修改、放宽和替换先给提案，用户同意后才应用，应用只改出处条文、重述位置和索引。不带脚本。
