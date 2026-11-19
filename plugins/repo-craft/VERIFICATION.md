@@ -32,6 +32,7 @@
 - 模板里的局部规则入口条款：Claude Code 上 Sonnet 做改函数任务时有入口读贡献指南 2 次、无入口 0 次；Opus、Codex 以及 Sonnet 做补 README 任务时，没有入口也会读；Haiku 两次都没有照入口去读。
 - 遮蔽条件：根目录有 `CLAUDE.local.md` 的项目上，报告指出 Claude Code 默认读不到两份 `AGENTS.md`，没有改该文件。
 - 有约束索引的项目上请求只维护文档：旧设计说明并入 `ARCHITECTURE.md` 后删除；`CONSTRAINTS.md` 的条目状态和陈述不变，只有两处链接更新，索引和全部相对链接通过核对（1 次）。
+- 旧组织的项目完全转换（当前技能正文，Sonnet，1 次）：样例有根目录 `STATUS.md`（测试按路径断言其中一句）、按 § 编号的 `docs/architecture.md`、`docs/coding-rules.md`、`docs/operations/restart.md`、夹着架构和部署段落的 README，以及只复述父级的 `src/AGENTS.md`。四份旧文档和 `src/AGENTS.md` 都被删除，内容归入 `ARCHITECTURE.md`、`docs/http-api.md` 与 `docs/persistence.md`（章节编号和 `§3.1` 引用已去掉）、`docs/operations.md` 和 `CONTRIBUTING.md` 的对应小节；README 只留用途、快速开始和文档入口；测试改读 `CONTRIBUTING.md`，被断言的句子原样迁入，`npm test` 通过。两份模板按条款比对通过，只缺一条与“staging 数据必须保留”冲突、按规则等待询问的条款。提交后用同一提示再跑一次，没有改动。
 
 ### `constraint-manager`（0.4.0，定稿措辞）
 
@@ -59,6 +60,7 @@
 - 贡献指南模板的“根因”条款（0.3.4 加入、0.3.5 缩短）、根规则模板的四条授权条款（0.3.7）以及 `af9305c` 对两份模板的删减（去掉提交、推送、修改 PR 的授权要求和默认新增测试的要求），都没有在删改后重跑初始化样例。上文“与模板逐字节一致”指试跑当时的模板。
 - 按旧版模板初始化的项目，合并规则是否把已写入的类似规则当作项目专有规则保留、当作等义沿用，或当作冲突询问，没有逐项观察。
 - 按 0.4.0 技能正文：`maintain-docs-and-rules` 的四处约束索引相关修改只由一个样例覆盖；“拟舍弃的内容是现行约束时不动它”和“有效性存疑时不改条目状态”两处没有出现对应情形，有索引的项目上也没有试规则部分。
+- 完全转换只有上面一个样例、一种模型，没有在 Codex 上跑；约束索引下的重组与改名、受生成器管理的区域、原本已作为专题文档、但混有非契约内容的 `docs/` 文件、已有 ADR 改名，以及外部工具约定路径的例外判断都没有出现。
 
 `constraint-manager`：
 
