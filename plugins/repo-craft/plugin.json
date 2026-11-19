@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "repo-craft",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "面向 Codex 与 Claude Code 的仓库工作流：提示词润色、并行调查、项目规则、项目文档、仓库精简和界面文案清理。",
   "author": {
     "name": "coachpo",
