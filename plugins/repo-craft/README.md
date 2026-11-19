@@ -1,6 +1,6 @@
 # Repo Craft
 
-六项可分别使用的技能，面向 Codex 与 Claude Code；两个宿主读取同一份 `skills/` 目录。插件只提供技能指令、文档片段模板和一个只读调研子代理，不注册服务、钩子或凭据。
+三项可分别使用的技能，面向 Codex 与 Claude Code；两个宿主读取同一份 `skills/` 目录。插件只提供技能指令、文档片段模板和一个只读调研子代理，不注册服务、钩子或凭据。
 
 ## 安装与调用
 
@@ -30,20 +30,17 @@ claude plugin install repo-craft@coachpo
 | --- | --- |
 | `polish-prompt` | `$repo-craft:polish-prompt 把这段初稿改成可交接的任务：“只读排查重试为何失效。”` |
 | `investigate-repo` | `$repo-craft:investigate-repo 分别查明导入与导出走哪个入口，给出直接证据。` |
-| `maintain-agent-rules` | `$repo-craft:maintain-agent-rules 初始化项目规则，只在验证要求不同的模块下写局部规则。` |
-| `maintain-project-docs` | `$repo-craft:maintain-project-docs 初始化固定文档结构，保留现有手册。` |
-| `simplify-repo` | `$repo-craft:simplify-repo 只审查当前目录的冗余候选及保留义务，不实施清理。` |
-| `simplify-interface-text` | `$repo-craft:simplify-interface-text 只审查顾客端的界面文案，给出带页面、出现条件和源码位置的清单。` |
+| `maintain-docs-and-rules` | `$repo-craft:maintain-docs-and-rules 初始化固定文档结构和项目规则，只在验证要求不同的模块下写局部规则。` |
 
 ## 调用策略与边界
 
-`polish-prompt`、`simplify-repo` 和 `simplify-interface-text` 在两个宿主都只接受主动调用：Codex 使用 `agents/openai.yaml` 的 `policy.allow_implicit_invocation: false`，Claude Code 使用 `SKILL.md` 的 `disable-model-invocation: true`。该 Claude Code 字段不替代 Codex 的调用策略；只接受通用 frontmatter 字段的校验器会拒绝它，须另用宿主原生的加载检查确认兼容性。两个宿主的调用控制分别见 [Codex 技能配置](https://learn.chatgpt.com/docs/build-skills#optional-metadata)与 [Claude Code 技能配置](https://code.claude.com/docs/en/skills#control-who-invokes-a-skill)。
+`polish-prompt` 在两个宿主都只接受主动调用：Codex 使用 `agents/openai.yaml` 的 `policy.allow_implicit_invocation: false`，Claude Code 使用 `SKILL.md` 的 `disable-model-invocation: true`。该 Claude Code 字段不替代 Codex 的调用策略；只接受通用 frontmatter 字段的校验器会拒绝它，须另用宿主原生的加载检查确认兼容性。两个宿主的调用控制分别见 [Codex 技能配置](https://learn.chatgpt.com/docs/build-skills#optional-metadata)与 [Claude Code 技能配置](https://code.claude.com/docs/en/skills#control-who-invokes-a-skill)。
 
 并行调查可由问题触发，也可供其他技能取证。调用 `investigate-repo` 即授权范围内的只读委派，显式调用和被自动选中时相同；Claude Code 中文件搜索使用只有读取和搜索工具的插件子代理 `repo-craft:repo-researcher`，Git 历史由主 agent 自己查，其他宿主使用默认 subagent，只读在那里只是提示词约束。宿主没有可用的 subagent 或用户限制了委派时，只能报告串行或部分调查。
 
-项目规则和文档均可只审查而不写入；只给出技能名、没有说是否写入时按审查处理。同一次工作两个维护技能都要运行时，先文档后规则。固定文档结构之外，端点表、状态机、数据格式等契约级细节写成 `docs/` 下的专题文档，按需建立、不建空占位；项目确立的产品与业务约束归贡献指南。子目录 `AGENTS.md` 只写该子树的构建、验证、生成文件处理差异，或只读父级就会违反的约束。`simplify-repo` 清理已证实的冗余并保全行为、覆盖、知识和保留义务，不改变可见输出；`simplify-interface-text` 有意改变可见文案，但不改命令、金额、已存储的事实或服务端契约。技能不授予额外操作权限。
+`maintain-docs-and-rules` 可只审查而不写入；只给出技能名、没有说是否写入时按审查处理。默认文档和规则都做，先文档后规则；请求只提其中一部分时只做那一部分。固定文档结构之外，端点表、状态机、数据格式等契约级细节写成 `docs/` 下的专题文档，按需建立、不建空占位；项目确立的产品与业务约束归贡献指南。没有证据的固定文档建为只含一行注释的占位文档。内容属于固定结构、却在固定位置之外的旧文档默认被取代：有效内容收进固定结构后删除原件，舍弃的内容在报告中逐项列出。子目录 `AGENTS.md` 只写该子树的构建、验证、生成文件处理差异，或只读父级就会违反的约束。技能不授予额外操作权限。
 
-两个维护技能各自带一份模板：[根 AGENTS.md](skills/maintain-agent-rules/references/AGENTS.template.md) 规定 Agent 如何操作；[CONTRIBUTING.md](skills/maintain-project-docs/references/CONTRIBUTING.template.md) 说明贡献者如何实现、验证和提交变更。初始化或维护时，目标缺失或为零字节就写入完整模板，空项目也不例外。非空文件按规则合并：等义不重复，缺失不冲突的直接补入，冲突的逐条询问是覆盖原政策还是跳过模板规则。模板已有的主题，项目专有规则写在该小节的模板条款之后，不另起同主题的小节；模板条款逐字保留，一级标题可换成项目自己的标题。两个技能均不按项目情况筛选模板条目；`simplify-repo` 去重规则时也不因主题暂不存在而删除模板条款，不因为是空的而删除固定结构中的占位文件。目标缺失时，用户已明确说明的项目规则取代与之矛盾的模板条款。
+技能带两份模板：[根 AGENTS.md](skills/maintain-docs-and-rules/references/AGENTS.template.md) 规定 Agent 如何操作；[CONTRIBUTING.md](skills/maintain-docs-and-rules/references/CONTRIBUTING.template.md) 说明贡献者如何实现、验证和提交变更。初始化或维护时，目标缺失或为零字节就写入完整模板，空项目也不例外。非空文件按[规则](skills/maintain-docs-and-rules/references/template-merge.md)合并：等义不重复，缺失不冲突的直接补入，冲突的逐条询问是覆盖原政策还是跳过模板规则。模板已有的主题，项目专有规则写在该小节的模板条款之后，不另起同主题的小节；模板条款逐字保留，一级标题可换成项目自己的标题。不按项目情况筛选模板条目。目标缺失时，用户已明确说明的项目规则取代与之矛盾的模板条款。
 
 [验证记录](VERIFICATION.md)区分了宿主发现、隔离样例中的实际执行，以及未测试的安装后路由。
 

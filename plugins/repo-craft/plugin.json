@@ -1,8 +1,8 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "repo-craft",
-  "version": "0.2.2",
-  "description": "面向 Codex 与 Claude Code 的仓库工作流：提示词润色、并行调查、项目规则、项目文档、仓库精简和界面文案清理。",
+  "version": "0.3.0",
+  "description": "面向 Codex 与 Claude Code 的仓库工作流：提示词润色、并行调查、项目文档与规则维护。",
   "author": {
     "name": "coachpo",
     "url": "https://github.com/coachpo"
@@ -16,20 +16,19 @@
     "codex",
     "documentation",
     "repository-research",
-    "repository-cleanup",
     "workflows"
   ],
   "extensions": {
     "com.openai": {
       "interface": {
         "displayName": "Repo Craft",
-        "shortDescription": "从任务提示词、仓库调查到项目维护与仓库精简",
+        "shortDescription": "从任务提示词、仓库调查到项目文档与规则维护",
         "category": "Productivity",
         "logo": "./assets/repo-craft.svg",
         "composerIcon": "./assets/repo-craft.svg",
         "defaultPrompt": [
           "使用 $repo-craft:investigate-repo 只读调查这个仓库的运行入口和验证入口，分别给出文件依据。",
-          "使用 $repo-craft:maintain-agent-rules 审查项目规则：哪些是全仓共用的，哪些只适用于某个模块？不要修改文件。"
+          "使用 $repo-craft:maintain-docs-and-rules 审查项目规则：哪些是全仓共用的，哪些只适用于某个模块？不要修改文件。"
         ]
       }
     }

@@ -1,5 +1,25 @@
 # 验证记录
 
+## 0.3.0 · 技能去留与合并 · 2026-11-19
+
+本版删除了 `simplify-repo` 和 `simplify-interface-text`，把 `maintain-project-docs` 与 `maintain-agent-rules` 合并为 `maintain-docs-and-rules`，模板合并规则随之移入该技能的 `references/`。合并后的技能有两处行为变化：内容属于固定结构、却在固定位置之外的旧文档默认被取代，不先询问；没有证据的固定文档从零字节文件改为只含一行注释的占位文档。贡献指南模板的“界面文案”一节保留；“验证改动”一节新增两条测试政策：不为让检查通过而削弱测试，不留只证明一次性清理的测试但保留负向契约测试。以下各节中的旧技能名指当时的技能集合。
+
+已验证：
+
+- Claude Code 2.1.322 的 `claude plugin validate plugins/repo-craft` 和 `claude plugin validate .` 均通过，前者仍报 `ICON_MISSING` 警告。
+- 两份市场清单和两份插件清单均可解析；两份插件清单的名称、版本、描述、关键词、作者和许可证逐字段相同。
+- Skill Creator 的 `quick_validate.py`：`maintain-docs-and-rules`、`investigate-repo` 通过。
+- 三个 `SKILL.md` 的 frontmatter 名称与目录一致；包内文档和仓库根 README 的 14 个相对链接及锚点全部可解析；除本文件外没有对已删除技能名或旧模板路径的引用。
+
+未通过：
+
+- `polish-prompt` 的 `quick_validate.py` 仍因 `disable-model-invocation` 失败，原因同 0.2.0。
+
+未验证：
+
+- 合并后技能的实际行为。正文由两个旧技能的条款拼合而成，只做过文本层面的核对，没有试跑；默认取代旧文档和占位注释两处新行为均未做样例试验。
+- Codex 侧的宿主发现和两个宿主安装后的路由，本版都没有重跑。
+
 ## 0.2.2 · 第二轮试跑与措辞修订 · 2026-11-19
 
 ### 0.2.1 的试跑

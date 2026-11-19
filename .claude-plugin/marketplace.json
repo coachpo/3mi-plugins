@@ -10,7 +10,7 @@
       "name": "repo-craft",
       "source": "./plugins/repo-craft",
       "displayName": "Repo Craft",
-      "description": "面向 Codex 与 Claude Code 的仓库工作流：提示词润色、并行调查、项目规则、项目文档、仓库精简和界面文案清理。",
+      "description": "面向 Codex 与 Claude Code 的仓库工作流：提示词润色、并行调查、项目文档与规则维护。",
       "category": "Productivity",
       "license": "MIT"
     }
