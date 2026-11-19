@@ -7,14 +7,14 @@
 Codex：
 
 ```sh
-codex plugin marketplace add coachpo/3mi-plugins --ref main
+codex plugin marketplace add coachpo/plugins --ref main
 codex plugin add repo-craft@coachpo
 ```
 
 Claude Code：
 
 ```sh
-claude plugin marketplace add coachpo/3mi-plugins@main
+claude plugin marketplace add coachpo/plugins@main
 claude plugin install repo-craft@coachpo
 ```
 

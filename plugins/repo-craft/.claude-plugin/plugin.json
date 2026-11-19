@@ -2,16 +2,18 @@
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "repo-craft",
   "displayName": "Repo Craft",
-  "version": "0.4.2",
+  "version": "0.0.1",
   "description": "面向 Codex 与 Claude Code 的仓库工作流：提示词润色、并行调查、项目文档与规则维护、项目约束管理。",
   "author": {
     "name": "coachpo",
     "url": "https://github.com/coachpo"
   },
-  "homepage": "https://github.com/coachpo/3mi-plugins/tree/main/plugins/repo-craft#readme",
-  "repository": "https://github.com/coachpo/3mi-plugins",
+  "homepage": "https://github.com/coachpo/plugins/tree/main/plugins/repo-craft#readme",
+  "repository": "https://github.com/coachpo/plugins",
   "license": "MIT",
   "icon": "./assets/icon.png",
+  "documentationUrl": "https://github.com/coachpo/plugins/tree/main/plugins/repo-craft#readme",
+  "supportUrl": "https://github.com/coachpo/plugins/issues",
   "keywords": [
     "agents-md",
     "claude-code",

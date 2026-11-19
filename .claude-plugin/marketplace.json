@@ -12,6 +12,7 @@
       "displayName": "Repo Craft",
       "description": "面向 Codex 与 Claude Code 的仓库工作流：提示词润色、并行调查、项目文档与规则维护、项目约束管理。",
       "category": "Productivity",
+      "tags": ["agents-md", "constraints", "documentation", "repository-research", "workflows"],
       "license": "MIT"
     }
   ]
