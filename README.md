@@ -10,7 +10,7 @@ CoachPo 的 Codex 与 Claude Code 插件市场。各插件的适用宿主见下�
 
 | Plugin | 宿主 | 简介 |
 | --- | --- | --- |
-| [`repo-craft`](plugins/repo-craft/README.md) | Codex、Claude Code | 润色提示词、并行调查仓库、维护固定文档结构和项目规则。 |
+| [`repo-craft`](plugins/repo-craft/README.md) | Codex、Claude Code | 润色提示词、并行调查仓库、维护固定文档结构和项目规则、管理项目约束。 |
 
 各技能的[调用示例](plugins/repo-craft/README.md#调用示例)和[调用策略与边界](plugins/repo-craft/README.md#调用策略与边界)见插件文档。各技能可按任务独立使用。
 
