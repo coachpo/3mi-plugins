@@ -17,7 +17,23 @@
 未验证：
 
 - 没有重做模板的全量写入与逐条合并样例。已按旧模板初始化的项目再次维护时，凭据一行是改写而非新增，预期会作为冲突逐条询问，这一点没有试验。
-- 0.3.0 列出的未验证项仍然未验证。
+- 0.3.0 列出的未验证项仍然未验证；其中 Claude Code 安装后的加载与调用控制已在下一小节实测。
+
+### Claude Code 安装后实测
+
+在 Claude Code 2.1.322 上，对从市场安装的 `repo-craft@coachpo` 0.3.1（用户级，已启用）做了实测。安装缓存中的 `skills/` 与仓库源码逐文件相同。
+
+已验证：
+
+- **技能加载**：新开的无界面会话（`claude -p … --output-format stream-json`）的初始化事件列出三个技能 `repo-craft:investigate-repo`、`repo-craft:maintain-docs-and-rules`、`repo-craft:polish-prompt`，以及子代理 `repo-craft:repo-researcher`，插件路径指向 0.3.1 的安装缓存。
+- **`polish-prompt` 不接受模型调用**：交互会话中提供给模型的技能清单只有 `investigate-repo` 和 `maintain-docs-and-rules`。模型用技能工具直接调用 `repo-craft:polish-prompt` 被宿主拒绝，报错写明原因是 `disable-model-invocation`，须由用户自己运行。
+- **`polish-prompt` 接受用户主动调用**：在无界面会话中以 `/repo-craft:polish-prompt 把这段初稿改成可交接的任务：“只读排查重试为何失效。”` 调用，一轮内返回：一个只含提示词的代码块（标为草稿）、Codex 和 Claude Code 各一行强度建议（均标暂定）、以 `问题：` 开头的待决事项。期间没有任何工具调用，初稿中的任务没有被执行。
+- **`repo-craft:repo-researcher` 可被委派**：主 agent 把一个限定在 `plugins/repo-craft/` 的只读问题委派给它，它返回了带文件路径和行号的结论、冲突和未搜索范围。主 agent 重新打开了其中关于 `disable-model-invocation` 所在行的证据，相符。它实际使用的工具只有 `Read`、`Grep`、`Glob`，并自报没有运行命令或写文件的工具。
+
+未验证：
+
+- `investigate-repo` 和 `maintain-docs-and-rules` 安装后的自然语言触发率，以及技能正文在安装后路径下的完整行为。
+- Codex 侧安装后的全部行为。
 
 ## 0.3.0 · 技能去留与合并 · 2026-11-19
 

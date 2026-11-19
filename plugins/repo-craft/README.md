@@ -42,7 +42,7 @@ claude plugin install repo-craft@coachpo
 
 技能带两份模板：[根 AGENTS.md](skills/maintain-docs-and-rules/references/AGENTS.template.md) 规定 Agent 如何操作；[CONTRIBUTING.md](skills/maintain-docs-and-rules/references/CONTRIBUTING.template.md) 说明贡献者如何实现、验证和提交变更。初始化或维护时，目标缺失或为零字节就写入完整模板，空项目也不例外。非空文件按[规则](skills/maintain-docs-and-rules/references/template-merge.md)合并：等义不重复，缺失不冲突的直接补入，冲突的逐条询问是覆盖原政策还是跳过模板规则。模板已有的主题，项目专有规则写在该小节的模板条款之后，不另起同主题的小节；模板条款逐字保留，一级标题可换成项目自己的标题。不按项目情况筛选模板条目。目标缺失时，用户已明确说明的项目规则取代与之矛盾的模板条款。
 
-[验证记录](VERIFICATION.md)区分了宿主发现、隔离样例中的实际执行，以及未测试的安装后路由。
+[验证记录](VERIFICATION.md)区分了宿主发现、隔离样例中的实际执行，Claude Code 安装后的加载与调用控制实测，以及未测试的 Codex 安装后路由。
 
 ## 许可证
 
