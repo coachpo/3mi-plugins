@@ -1,8 +1,8 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "repo-craft",
-  "version": "0.3.7",
-  "description": "面向 Codex 与 Claude Code 的仓库工作流：提示词润色、并行调查、项目文档与规则维护。",
+  "version": "0.4.0",
+  "description": "面向 Codex 与 Claude Code 的仓库工作流：提示词润色、并行调查、项目文档与规则维护、项目约束管理。",
   "author": {
     "name": "coachpo",
     "url": "https://github.com/coachpo"
@@ -14,6 +14,7 @@
     "agents-md",
     "claude-code",
     "codex",
+    "constraints",
     "documentation",
     "repository-research",
     "workflows"
@@ -22,7 +23,7 @@
     "com.openai": {
       "interface": {
         "displayName": "Repo Craft",
-        "shortDescription": "从任务提示词、仓库调查到项目文档与规则维护",
+        "shortDescription": "从任务提示词、仓库调查到项目文档、规则与约束管理",
         "category": "Productivity",
         "logo": "./assets/repo-craft.svg",
         "composerIcon": "./assets/repo-craft.svg",
