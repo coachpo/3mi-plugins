@@ -40,7 +40,7 @@ claude plugin install repo-craft@coachpo
 
 `maintain-docs-and-rules` 可只审查而不写入；只给出技能名、没有说是否写入时按审查处理。默认文档和规则都做，先文档后规则；请求只提其中一部分时只做那一部分。固定文档结构之外，端点表、状态机、数据格式等契约级细节写成 `docs/` 下的专题文档，按需建立、不建空占位；项目确立的产品与业务约束归贡献指南。没有证据的固定文档建为只含一行注释的占位文档。内容属于固定结构、却在固定位置之外的旧文档默认被取代：有效内容收进固定结构后删除原件，舍弃的内容在报告中逐项列出。子目录 `AGENTS.md` 只写该子树的构建、验证、生成文件处理差异，或只读父级就会违反的约束。技能不授予额外操作权限。
 
-技能带两份模板：[根 AGENTS.md](skills/maintain-docs-and-rules/references/AGENTS.template.md) 规定 Agent 如何操作；[CONTRIBUTING.md](skills/maintain-docs-and-rules/references/CONTRIBUTING.template.md) 说明贡献者如何实现、验证和提交变更。初始化或维护时，目标缺失或为零字节就写入完整模板，空项目也不例外。非空文件按[规则](skills/maintain-docs-and-rules/references/template-merge.md)合并：等义不重复，缺失不冲突的直接补入，冲突的逐条询问是覆盖原政策还是跳过模板规则。模板已有的主题，项目专有规则写在该小节的模板条款之后，不另起同主题的小节；模板条款逐字保留，一级标题可换成项目自己的标题。不按项目情况筛选模板条目。目标缺失时，用户已明确说明的项目规则取代与之矛盾的模板条款。
+技能带两份模板：[根 AGENTS.md](skills/maintain-docs-and-rules/references/AGENTS.template.md) 规定 Agent 如何操作；[CONTRIBUTING.md](skills/maintain-docs-and-rules/references/CONTRIBUTING.template.md) 说明贡献者如何实现、验证和提交变更。初始化或维护时，目标缺失或为零字节就写入完整模板，空项目也不例外。非空文件按[规则](skills/maintain-docs-and-rules/references/template-merge.md)合并：等义不重复，缺失不冲突的直接补入，冲突的逐条询问是覆盖原政策还是跳过模板规则；属于另一份模板的条款，在对方文件已有后从这份文件删除。模板已有的主题，项目专有规则写在该小节的模板条款之后，不另起同主题的小节；模板条款逐字保留，一级标题可换成项目自己的标题。不按项目情况筛选模板条目。目标缺失时，用户已明确说明的项目规则取代与之矛盾的模板条款。
 
 [验证记录](VERIFICATION.md)区分了宿主发现、隔离样例中的实际执行，Claude Code 安装后的加载与调用控制实测，以及未测试的 Codex 安装后路由。
 
